@@ -30,17 +30,6 @@
       specialArgs = { inherit inputs; };
     };
 
-    nixosConfigurations.tanto = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        overlayModule
-        ./hosts/tanto/system/configuration.nix
-        home-manager.nixosModules.home-manager
-        { home-manager.extraSpecialArgs = { inherit inputs; }; }
-      ];
-      specialArgs = { inherit inputs; };
-    };
-
     packages.aarch64-darwin.homeConfigurations."dan" = home-manager.lib.homeManagerConfiguration {
       pkgs = nixpkgsOverlayed "aarch64-darwin";
 
