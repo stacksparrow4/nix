@@ -16,12 +16,6 @@
     ./slack.nix
     ./tmux.nix
     ./zshrc.nix
-    ({ config, ...}:
-    {
-      home.file = lib.mkIf config.sprrw.sshConfig {
-        ".ssh/config".text = builtins.readFile ./dotfiles/ssh/config;
-      };
-    })
   ];
 
   options.sprrw = {
