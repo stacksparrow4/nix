@@ -1,0 +1,16 @@
+% bloodhound
+@ windows-variables
+
+# Start bloodhound server
+(docker volume rm bloodhound_neo4j-data bloodhound_postgres-data; mkdir -p bloodhound && cd bloodhound && wget 'https://raw.githubusercontent.com/SpecterOps/BloodHound/refs/heads/main/examples/docker-compose/docker-compose.yml' && echo 'BLOODHOUND_PORT=8081 BLOODHOUND_TAG=7.4.1 docker compose up -d' > start.sh && chmod +x start.sh && ./start.sh && sleep 3 && docker compose logs | grep -oE '[^"]+Initial Password Set To[^"]+')
+
+# Bloodhound python ingestor
+mkdir -p '<outdir>' && bloodhound-ce-python -d '<domain>' -u '<user_with_password>' -p '<password_for_user>' -c All -dc '<fqdn_for_domain>' -ns <ip_for_domain> -op '<outdir>/'
+
+# Rusthound
+mkdir -p '<outdir>' && rusthound-ce -d '<domain>' -u '<user_with_password>@<domain>' -p '<password_for_user>' -c All -o '<outdir>/'
+
+# Sharphound
+.\sh.exe -c All --zipfilename sh.zip
+
+$ outdir: find . -type d

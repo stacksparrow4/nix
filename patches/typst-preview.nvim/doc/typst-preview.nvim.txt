@@ -1,0 +1,193 @@
+*typst-preview.nvim.txt* Preview your typst documents.
+
+Author: Richard Li <a13323600@gmail.com>
+
+==============================================================================
+CONTENTS                                         *typst-preview*
+
+  1. Usage
+  2. Configuration
+
+==============================================================================
+ 1. Usage
+
+==============================================================================
+ 1.1 Commands                                     *typst-preview-commands*
+
+*:TypstPreviewUpdate*
+
+  Download the necessary binaries to
+  `vim.fn.fnamemodify(vim.fn.stdpath 'data' .. '/typst-preview/', ':p')`.
+
+  This must be run before any other commands can be run.
+
+  If you followed the installation instructions, your package manager should
+  automatically run this for you.
+
+  Calls: `require 'typst-preview'.update()`
+
+*:TypstPreview*
+
+  Start the preview. Optionally, the desired preview mode can be specified:
+  `:TypstPreview document` (default) or `:TypstPreview slide` for slide mode.
+
+  If a preview is already running, will open another front end for that
+  preview.
+
+*:TypstPreviewStop*
+
+  Stop the preview.
+
+*:TypstPreviewToggle*
+
+  Toggle the preview.
+
+  If the preview has been opened before, will open the preview with the same
+  mode as last time.
+
+*:TypstPreviewFollowCursor*
+
+  Scroll preview as cursor moves. This is the default.
+
+  Calls: `require 'typst-preview'.set_follow_cursor(true)`
+
+*:TypstPreviewNoFollowCursor*
+
+  Don't scroll preview as cursor moves.
+
+  Calls: `require 'typst-preview'.set_follow_cursor(false)`:
+
+*:TypstPreviewFollowCursorToggle*
+
+  Start or stop scrolling preview as cursor moves.
+
+  Calls:
+  `require 'typst-preview'.set_follow_cursor(
+    not require 'typst-preview'.get_follow_cursor()
+  )`.
+
+*:TypstPreviewSyncCursor*
+
+  Scroll preview to the current cursor position. This can be used in
+  combination with |:TypstPreviewNoFollowCursor| so that the preview only
+  scroll to the current cursor position when you want it to.
+
+  Calls: `require 'typst-preview.sync_with_cursor()`
+
+==============================================================================
+ 1.2 Lua Functions                                *typst-preview-lua*
+
+*typst-preview.update()*
+
+  Download the necessary binaries to
+  `vim.fn.fnamemodify(vim.fn.stdpath 'data' .. '/typst-preview/', ':p')`.
+
+  This must be run before any other commands can be run.
+
+  If you followed the installation instructions, your package manager should
+  automatically run this for you.
+
+*typst-preview.set_follow_cursor({bool})*
+
+  Calling `require 'typst-preview'.set_follow_cursor(true)` will make preview
+  scroll when cursor moves.
+
+  Calling `require 'typst-preview'.set_follow_cursor(false)` will stop preview
+  from scrolling when cursor moves
+
+  Default: `true`
+
+  Parameters: ~
+    - {follow_cursor} (boolean) whether to scroll preview when cursor moves.
+
+*typst-preview.get_follow_cursor()*
+
+  Returns whether the preview is currently following cursor or not.
+
+  Return: ~
+    (boolean) whether preview is currently following cursor.
+
+*typst-preview.sync_with_cursor()*
+
+  Scroll preview to the current cursor position. This can be used in
+  combination with |:TypstPreviewNoFollowCursor| so that the preview only
+  scroll to the current cursor position when you want it to.
+
+==============================================================================
+ 2. Configuration                                 *typst-preview-configuration*
+
+*typst-preview.debug*
+Setting this true will enable logging debug information to
+`vim.fn.stdpath 'data' .. '/typst-preview/log.txt'`
+  Type: `boolean`, Default: `false`
+
+*typst-preview.open_cmd*
+Provide a custom format string to open the output link in `%s`.
+Example value for open_cmd: `'firefox %s -P typst-preview --class typst-preview'`.
+  Type: `string`, Default: `nil`
+
+*typst-preview.port*
+Provide a custom port for the preview server. If the port  (e.g. 8000) is
+already in use, the plugin will try to use the next port (e.g. 8001).
+  Type: `number`, Default: `0` (i.e. random)
+
+*typst-preview.invert_colors*
+Can be used to invert colors in preview.
+Set to `'never'` to disable.
+Set to `'always'` to enable.
+Set to `'auto'` to enable if environment (usually browser) has enabled darkmode.
+Set to `'{"rest": "<option>","image": "<option>"}'` where <option> means
+selecting one of the options above to specify separately for images and the
+rest.
+  Type: `string`, Default: `'never'`
+
+*typst-preview.follow_cursor*
+Set this to false to stop the preview from scrolling as the cursor moves.
+  Type: `boolean`, Default: `true`
+
+*typst-preview.dependencies_bin*
+Provide the path to binaries for dependencies.
+Setting this will skip the download of the binary by the plugin.
+Warning: Be aware that your version might be older than the one
+required.
+  Type: `table`, Default: `{['tinymist'] = nil, ['websocat'] = nil}`
+
+*typst-preview.extra_args*
+A list of extra arguments (or nil) to be passed to previewer.
+For example, `{ "--input=ver=draft", "--ignore-system-fonts" }`
+  Type: `table`, Default: `nil`
+
+*typst-preview.get_main_file*
+This function will be called to determine the main file of the typst project
+
+  Parameters: ~
+  - {path} (string) The path of the current buffer. This is the buffer that
+    was focused when `:TypstPreview` is called.
+
+  Return: ~
+    (string) The path to the main file of the typst project.
+
+  Type: `function`, Default: `function(path) return path end`
+
+*typst-preview.get_root*
+This function will be called to determine the root of the typst project
+
+  Parameters: ~
+  - {path} (string) The path to the main file. This is the string returned by
+    |typst-preview.get_main_file|.
+
+  Return: ~
+    (string) The path to the root of the typst project.
+
+  Type: `function`,
+  Default: >lua
+  function(path_of_main_file)
+    local root = os.getenv 'TYPST_ROOT'
+    if root then
+      return root
+    end
+    return vim.fn.fnamemodify(path_of_main_file, ':p:h')
+  end
+<
+
+vim:tw=78:ts=2:sw=2:et:ft=help:norl:

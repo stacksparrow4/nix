@@ -1,0 +1,82 @@
+% enum, windows, powershell, pwsh
+
+# list all users
+Get-LocalUser
+
+# list all groups
+Get-LocalGroup
+
+# list all users - requires GUI or admin privs
+Get-CimInstance -ClassName Win32_UserAccount -Filter "LocalAccount = TRUE" | Select-Object -Expand Caption
+
+# list all groups - requires GUI or admin privs
+Get-CimInstance -ClassName Win32_Group -Filter "LocalAccount = TRUE" | Select-Object -Expand Caption
+
+# list all members in a group
+Get-LocalGroupMember "<group>"
+
+# list all members in Administrators group
+Get-LocalGroupMember Administrators
+
+# list running processes
+Get-Process
+
+# list details for specific process
+Get-Process <processname> | Format-List *
+
+# list installed apps (displayname only)
+Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
+Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
+
+# list installed apps (all properties)
+Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+
+# find files matching a specific name
+Get-ChildItem -Path <search-path> -Include <filename> -Force -File -Recurse -ErrorAction SilentlyContinue
+
+# find interesting files
+Get-ChildItem -Path <search-path> -Include *.txt,*.pdf,*.xls,*.xlsx,*.doc,*.docx,*.log,*.dmp -File -Force -Recurse -ErrorAction SilentlyContinue
+
+# recursive grep
+Get-ChildItem -Path <search-path> -File -Recurse -ErrorAction SilentlyContinue -Force | Select-String -Pattern "<search-pattern>"
+
+# list all file paths
+gci -recurse -force -erroraction SilentlyContinue | ? {-not $_.PSIsContainer } |select pspath
+
+# get command history for pwsh
+Get-History
+
+# get command history for pwsh via PSReadline
+(Get-PSReadlineOption).HistorySavePath
+
+# list running services - requires GUI or admin privs
+Get-CimInstance -ClassName win32_Service | Select Name,State,PathName | Where-Object {$_.State -like 'Running'}
+
+# list running services (excluding those in system32) - requires GUI or admin privs
+Get-CimInstance -ClassName win32_Service | Select Name,State,PathName | Where-Object {$_.State -like 'Running' -and $_.PathName -notlike 'C:\Windows\System32\*' -and $_.PathName -notlike 'C:\Windows\system32\*'}
+
+# check startup type of running service - requires GUI or admin privs
+Get-CimInstance -ClassName win32_service | Select Name, StartMode | Where-Object {$_.Name -like '<service-name>'}
+
+# check permissions for a file or directory
+Get-Acl -Path <file-or-directory-path>
+
+# list scheduled tasks (excluding tasks authored by Microsoft)
+Get-ScheduledTask | 
+Where-Object { 
+    $_.Author -ne $null -and 
+    $_.Author -ne "" -and 
+    $_.Author -notlike "*Microsoft*" -and 
+    $_.Author -ne "Microsoft Corporation" 
+} | 
+Select-Object TaskName, Author, @{ n = 'UserId'; e = { $_.Principal.UserId }}
+
+# list scheduled tasks
+Get-ScheduledTask | Select-Object Author,@{Name='TaskPath';Expression={$_.TaskPath}},TaskName | Format-Table -AutoSize
+
+# list installed security patches
+Get-CimInstance -Class win32_quickfixengineering | Where-Object { $_.Description -eq "Security Update" }
+
+# Get open ports
+Get-NetTCPConnection

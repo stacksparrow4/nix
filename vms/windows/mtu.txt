@@ -1,0 +1,2 @@
+netsh interface ipv4 set interface "Ethernet" mtu=1280
+netsh interface ipv4 show interface

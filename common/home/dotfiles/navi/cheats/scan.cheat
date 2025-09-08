@@ -1,0 +1,14 @@
+% feroxbuster
+# feroxbuster scan web http endpoints
+feroxbuster -u '<url>' -w '<wordlist>' --output '<outputpath>' -n
+
+% nmap
+# nmap through proxychains
+proxychains nmap -v -sT -Pn -p-
+
+% rustscan
+# rustscan TCP
+sudo rustscan -r 1-65535 --ulimit 5000 -a <ip> -- -sC -sV | tee rustscan-tcp.log
+
+# rustscan UDP
+sudo rustscan -r 1-65535 --ulimit 5000 -a <ip> --udp -- -sC -sV | tee rustscan-udp.log

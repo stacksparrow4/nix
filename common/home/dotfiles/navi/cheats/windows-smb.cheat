@@ -1,0 +1,5 @@
+% smb
+@ windows-variables
+
+# smbclient
+smbclient \\\\'<ip_or_fqdn>'\\'<share>' -U '<user_with_password>' --password '<password_for_user>'

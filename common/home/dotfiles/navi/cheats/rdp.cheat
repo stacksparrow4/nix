@@ -1,0 +1,19 @@
+% remote desktop, rdp
+@ windows-variables
+
+# Connect with RDP
+xfreerdp /u:'<user_with_password>' /p:'<password_for_user>' /v:'<ip_or_fqdn>' /dynamic-resolution
+
+# RDP and shared drive (current dir)
+xfreerdp /u:'<user_with_password>' /p:'<password_for_user>' /v:'<ip_or_fqdn>' /dynamic-resolution /drive:./,share
+
+# RDP and share specific directory
+xfreerdp /u:'<user_with_password>' /p:'<password_for_user>' /v:'<ip_or_fqdn>' /dynamic-resolution /drive:'<local_directory_name>','<remote_directory_name>'
+
+% remote desktop, rdp, ad
+
+# Connect with RDP on domain
+xfreerdp /u:'<user_with_password>' /p:'<password_for_user>' /v:'<ip_or_fqdn>' /d:'<domain>' /dynamic-resolution 
+
+# RDP on domain with shared drive (current dir)
+xfreerdp /u:'<user_with_password>' /p:'<password_for_user>' /v:'<ip_or_fqdn>' /d:'<domain>' /dynamic-resolution /drive:./,share

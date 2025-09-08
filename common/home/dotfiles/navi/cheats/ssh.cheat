@@ -1,0 +1,7 @@
+% ssh
+
+# Port forward and listen remotely
+ssh -R <remoteinterface>:<remoteport>:<localinterface>:<localport> <sshinfo>
+
+# Port forward and listen locally
+ssh -L <localinterface>:<localport>:<remoteinterface>:<remoteport> <sshinfo>

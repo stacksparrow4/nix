@@ -1,0 +1,7 @@
+% windows, evil-winrm
+@ windows-variables
+
+# connect via WinRM (evil-winrm)
+evil-winrm -i '<ip_or_fqdn>' -u '<user_with_auth_method>' <auth_method>
+
+$ auth_method: if [[ -f windows.yaml ]]; then USER='<user_with_auth_method>' yq '.users[] | select(.username == strenv(USER)) | .t = "" | with(select(.password != null); .t = "-p '"'"'" + .password + "'"'"'") | with(select(.password == null and .nt_hash != null); .t = "-H " + .nt_hash) | .t' windows.yaml; fi

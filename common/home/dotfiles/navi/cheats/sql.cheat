@@ -1,0 +1,6 @@
+% mysql
+# connect mysql
+mysql -h <host> -u <user> -p
+
+% postgresql
+psql -h <host> -U <user> <db>

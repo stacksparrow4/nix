@@ -1,0 +1,10 @@
+# Requirements
+regedit
+HKLM\SYSTEM\Setup
+New Key > LabConfig
+BypassTPMCheck = 1 (DWORD 32)
+BypassSecureBootCheck = 1
+BypassCPUCheck = 1
+
+# Local user
+start ms-cxh:localonly

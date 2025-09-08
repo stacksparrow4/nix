@@ -1,0 +1,6 @@
+% bloodyAD
+@ windows-variables
+
+# bloodyAD
+bloodyAD -d '<domain>' --host '<fqdn_for_domain>' -u '<user_with_password>' -p '<password_for_user>' --help
+

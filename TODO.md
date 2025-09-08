@@ -1,0 +1,8 @@
+- [ ] Add sudo to docker
+- [ ] Figure out how to fix the alacritty squiggles deterministically
+- [ ] image.nvim + ghostty + don't use CMP nvim
+- [ ] Somehow evaluate every package that is used and diff that in diff-protected
+    - Looks like this could potentially be done using `nix build --dry-build -vvv` and grepping for nixpkgs
+- [ ] Figure out method to update regularly without breaking things that break often.
+    - Maybe I just overlay all those things?
+    - Need a way of keeping dev-shells working without forcing all overlays to be in one file

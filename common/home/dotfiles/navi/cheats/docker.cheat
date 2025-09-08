@@ -1,0 +1,17 @@
+% docker
+
+# Kill a docker container
+docker kill <container>
+
+# Start a shell in a docker container
+docker exec -it <container> sh
+
+# Remove a docker container
+docker rm <container_all>
+
+# Run a docker container temporarily
+docker run --rm -it <image>
+
+$ container: docker ps --- --column 1 --header-lines 1  --delimiter '\s\s+'
+$ container_all: docker ps -a --- --column 1 --header-lines 1  --delimiter '\s\s+'
+$ image: docker images --- --column 1 --header-lines 1 --delimiter '\s\s+'

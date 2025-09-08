@@ -1,0 +1,10 @@
+% privesc, windows, cmd
+
+# run program as different user - requires GUI as it opens a new window
+runas /user:<user_with_password> <program>
+
+# start a powershell session as a different user - requires GUI
+runas /user:<user_with_password> powershell.exe
+
+# add user to localgroup RDP
+net localgroup "Remote Desktop Users" /add <user>

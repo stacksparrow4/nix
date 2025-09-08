@@ -1,0 +1,88 @@
+% windows-variables
+
+$ user: if [[ -f windows.yaml ]]; then yq '.users[].username | select (. != null)' windows.yaml; fi
+$ user_or_userlist: if [[ -f windows.yaml ]]; then yq '.users[].username | select (. != null)' windows.yaml > .windows-yaml-allusers.txt; echo .windows-yaml-allusers.txt; cat .windows-yaml-allusers.txt; ls; fi
+$ userlist: if [[ -f windows.yaml ]]; then yq '.users[].username | select (. != null)' windows.yaml > .windows-yaml-allusers.txt; echo .windows-yaml-allusers.txt; ls; fi
+$ password: if [[ -f windows.yaml ]]; then yq '.users[].password | select (. != null)' windows.yaml; fi
+$ user_with_password: if [[ -f windows.yaml ]]; then yq '.users[] | select (.username != null) | select (.password != null) | .username' windows.yaml; fi
+$ user_with_auth_method: if [[ -f windows.yaml ]]; then yq '.users[] | select (.username != null and (.password != null or .nt_hash != null)) | .username' windows.yaml; fi
+$ password_for_user: if [[ -f windows.yaml ]]; then USER='<user_with_password>' yq '.users[] | select (.username == strenv(USER)) | .password' windows.yaml; fi
+$ group: if [[ -f windows.yaml ]]; then yq '.groups[]' windows.yaml; fi
+$ ip: if [[ -f windows.yaml ]]; then yq '.hosts[].ip | select (. != null)' windows.yaml; fi
+$ domain: if [[ -f windows.yaml ]]; then yq '.hosts[].dcdomain | select (. != null)' windows.yaml; fi
+$ ip_for_domain: if [[ -f windows.yaml ]]; then DOMAIN='<domain>' yq '.hosts[] | select (.dcdomain == strenv(DOMAIN)) | .ip' windows.yaml; fi
+$ fqdn: if [[ -f windows.yaml ]]; then yq '.hosts[].fqdn | select (. != null)' windows.yaml; fi
+$ ip_for_fqdn: if [[ -f windows.yaml ]]; then FQDN='<fqdn>' yq '.hosts[] | select (.fqdn == strenv(FQDN)) | .ip' windows.yaml; fi
+$ fqdn_for_domain: if [[ -f windows.yaml ]]; then DOMAIN='<domain>' yq '.hosts[] | select (.dcdomain == strenv(DOMAIN)) | select (.fqdn != null) | .fqdn' windows.yaml; fi
+$ ip_or_fqdn: if [[ -f windows.yaml ]]; then yq '.hosts[].fqdn | select (. != null)' windows.yaml; yq '.hosts[].ip | select (. != null)' windows.yaml; fi
+$ ip_or_fqdn_or_list: if [[ -f windows.yaml ]]; then windows-yaml.sh writelist && yq '.hosts[].fqdn | select (. != null)' windows.yaml; yq '.hosts[].ip | select (. != null)' windows.yaml; echo .ips; fi
+
+% windows-yaml, windows yaml
+@ windows-variables
+
+# init windows yaml
+windows-yaml.sh init
+
+# add user
+windows-yaml.sh adduser '<new_username>'<addedpassword>
+
+$ ifaddpassword: echo yes; echo no --- --header "Do you want to specify a password?"
+$ addedpassword: if [[ "<ifaddpassword>" == "yes" ]]; then echo " '<new_password_prompt>'"; else echo ""; fi
+$ new_password_prompt: if [[ "<ifaddpassword>" == "yes" ]]; then echo -e "\n"; else echo ""; fi
+
+# add users
+windows-yaml.sh addusers '<new_users_file>'
+
+# add password
+windows-yaml.sh addpassword '<new_password>'
+
+# add password to existing user
+windows-yaml.sh adduserpassword '<user>' '<new_password>'
+
+# add user ntlm
+windows-yaml.sh addntlm '<user>' '<new_ntlm_hash>'
+
+# add user pfx
+windows-yaml.sh addpfx '<user>' '<new_pfx_file>'
+
+# add user ccache
+windows-yaml.sh addccache '<user>' '<new_ccache_file>'
+
+# add ip
+windows-yaml.sh addip <new_ip>
+
+# add ips from file
+windows-yaml.sh addips <ips_file>
+
+# add fqdn
+windows-yaml.sh addfqdn <ip> '<new_fqdn>'
+
+# add dc domain name
+windows-yaml.sh adddc <ip> '<new_domain>'
+
+# add group
+windows-yaml.sh addgroup '<new_group>'
+
+# add groups from file
+windows-yaml.sh addgroups '<new_groups_file>'
+
+# get user list
+yq '.users[].username | select (. != null)' windows.yaml
+
+# get password list
+yq '.users[].password | select (. != null)' windows.yaml
+
+# get group list
+yq '.groups[]' windows.yaml
+
+# get ip list
+yq '.hosts[].ip | select (. != null)' windows.yaml
+
+# generate hosts file
+yq '.hosts[] | .t = "" | with(select(.fqdn != null); .t = .t + .fqdn + " " + (.fqdn | split(".") | .[0]) + " ") | with(select(.dcdomain != null); .t = .t + .dcdomain) | select(.t != "") | .ip + " " + .t | trim' windows.yaml
+
+# write tmp files list
+windows-yaml.sh writelist
+
+$ new_pfx_file: find . -name '*.pfx'
+$ new_ccache_file: find . -name '*.ccache'

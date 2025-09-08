@@ -1,0 +1,33 @@
+% windows-downloads
+# Download winpeas
+<download_peas>
+$ download_peas: echo 'wget -O peas.exe https://github.com/peass-ng/PEASS-ng/releases/download/20250701-bdcab634/winPEASx64.exe'
+
+# Download sharpweb (browser/chrome/firefox creds)
+wget -O sw.exe 'https://github.com/djhohnstein/SharpWeb/releases/download/v1.2/SharpWeb.exe'
+
+# Download nmap
+wget https://github.com/h4rithd/PrecompiledBinaries/raw/refs/heads/main/Nmap.exe/nmap.exe
+
+# Download mimikatz
+<download_mimikatz>
+$ download_mimikatz: echo 'wget -O /tmp/mk.zip https://github.com/gentilkiwi/mimikatz/releases/download/2.2.0-20220919/mimikatz_trunk.zip; unzip -p /tmp/mk.zip x64/mimikatz.exe > mimikatz.exe; rm /tmp/mk.zip'
+
+# Download sharphound
+<download_sh>
+$ download_sh: echo 'wget -O /tmp/sh.zip https://github.com/SpecterOps/SharpHound/releases/download/v2.7.0/SharpHound_v2.7.0+debug_windows_x86.zip; unzip -p /tmp/sh.zip SharpHound.exe > sh.exe; rm /tmp/sh.zip'
+
+# Download naabu
+wget -O /tmp/naabu.zip 'https://github.com/projectdiscovery/naabu/releases/download/v2.3.5/naabu_2.3.5_windows_amd64.zip'; unzip -p /tmp/naabu.zip naabu.exe > naabu.exe; rm /tmp/naabu.zip
+
+# Download ad peas
+<download_ad_peas>
+$ download_ad_peas: echo 'wget -O adpeas.ps1 https://github.com/61106960/adPEAS/raw/refs/heads/main/adPEAS.ps1'
+
+# Download runascs
+<download_runas_cs>
+$ download_runas_cs: echo 'wget -O /tmp/runas.zip https://github.com/antonioCoco/RunasCs/releases/download/v1.5/RunasCs.zip && unzip -p /tmp/runas.zip RunasCs.exe > runascs.exe'
+
+# Download Godpotato
+<download_godpotato>
+$ download_godpotato: echo 'wget -O godpotato.exe https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET4.exe'

@@ -1,0 +1,4 @@
+% downloads
+# download linpeas
+<download_linpeas>
+$ download_linpeas: echo 'curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh > linpeas.sh'

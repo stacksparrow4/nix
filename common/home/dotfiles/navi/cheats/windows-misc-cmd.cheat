@@ -1,0 +1,42 @@
+% misc, cmd
+
+# print file to stdout
+type <filepath>
+
+# list current directory
+dir
+
+# list contents of given directory
+dir <filepath>
+
+# print working directory
+echo %cd%
+
+# list environment variables
+set
+
+# retrieve specific environment variable
+echo %<variable_name>%
+
+# go to current user's home folder
+cd %USERPROFILE%
+
+# go to windows folder
+cd %windir%
+
+# reboot machine - requires SeShutdownPrivilege
+shutdown /r /t 0
+
+# stop a service - requires admin privs
+net stop <service_name>
+
+# open current directory in explorer
+explorer .
+
+% misc, active directory, cmd
+
+# add user to domain group
+net group "<group>" <user> /add /domain
+
+# delete user from domain group
+net group "<group>" <user> /del /domain

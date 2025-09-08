@@ -1,0 +1,11 @@
+% rpc
+@ windows-variables
+
+# rpcclient
+rpcclient '<domain>' -U '<user_with_password>%<password_for_user>'
+
+# rpcclient lookup username
+lookupnames <user>
+
+# rpcclient lookup sid
+lookupsids <sid>
