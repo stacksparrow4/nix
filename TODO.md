@@ -1,3 +1,5 @@
+- [ ] Environments should really be nixos modules. Add a switch that automatically enables/disables all environments
+    - Honestly should just get rid of the `dev-*` commands. They are more trouble than its worth (making the shell.nix is not difficult)
 - [ ] Add sudo to docker
 - [ ] Figure out how to fix the alacritty squiggles deterministically
 - [ ] image.nvim + ghostty + don't use CMP nvim
