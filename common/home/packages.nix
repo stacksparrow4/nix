@@ -67,6 +67,8 @@ let cfg = config.sprrw.packages; in {
       nix-search-cli
 
       sqlite
+
+      whois
     ] ++ (if cfg.installGuiPackages then [
       # Gui packages for linux
       discord
