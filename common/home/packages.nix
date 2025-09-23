@@ -85,7 +85,6 @@ let cfg = config.sprrw.packages; in {
       obsidian
       rofi
       flameshot
-      wireshark
       freerdp
       bruno
     ] else []) ++ (if cfg.installLinuxPackages then [
