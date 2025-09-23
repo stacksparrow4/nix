@@ -87,6 +87,7 @@ let cfg = config.sprrw.packages; in {
       flameshot
       freerdp
       bruno
+      wireshark
     ] else []) ++ (if cfg.installLinuxPackages then [
       # Linux only CLI tools
       ltrace
