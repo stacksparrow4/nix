@@ -189,8 +189,7 @@ in
       mkdir -p $out/bin
 
       echo '#!${stdenv.shell}' > $out/bin/pygpoabuse.py
-      cp -r . $out/src
-      echo "$pythonWithPkgs/bin/python3 $out/src/pygpoabuse.py \"\$@\"" >> $out/bin/pygpoabuse.py
+      echo "$pythonWithPkgs/bin/python3 $src/pygpoabuse.py \"\$@\"" >> $out/bin/pygpoabuse.py
 
       chmod +x $out/bin/pygpoabuse.py
     '';
@@ -302,4 +301,35 @@ in
       doCheck = false;
     }
   )
+
+  (pkgs.stdenv.mkDerivation {
+    name = "krbrelayx";
+
+    src = fetchFromGitHub {
+      owner = "dirkjanm";
+      repo = "krbrelayx";
+      rev = "aef69a7e4d2623b2db2094d9331b2b07817fc7a4";
+      hash = "sha256-rcDa6g0HNjrM/XdXOF22iURA9euJbSahGKlFr5R7I/U=";
+    };
+
+    pythonWithPkgs = python311.withPackages(ps: with ps; [
+      impacket
+      ldap3
+      dnspython
+    ]);
+
+    buildPhase = ''
+      mkdir -p $out/bin
+
+      for script in $src/*.py; do
+        outpath="$out/bin/$(basename -s .py "$script")"
+        echo "#!${stdenv.shell}" > "$outpath"
+        echo "$pythonWithPkgs/bin/python3 $script \"\$@\"" >> "$outpath"
+
+        chmod +x "$outpath"
+      done
+    '';
+
+    dontInstall = true;
+  })
 ])
