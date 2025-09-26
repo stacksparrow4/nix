@@ -6,6 +6,7 @@
     ./gcc.nix
     ./impacket.nix
     ./kerbrute.nix
+    ./krbrelayx.nix
     ./netexec.nix
     ./pygpoabuse.nix
     ./responder-docker.nix
@@ -24,6 +25,7 @@
       gcc.enable = true;
       impacket.enable = true;
       kerbrute.enable = true;
+      krbrelayx.enable = true;
       netexec.enable = true;
       pygpoabuse.enable = true;
       responder-docker.enable = true;
