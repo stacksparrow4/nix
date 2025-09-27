@@ -10,6 +10,15 @@
       signal-desktop-bin
     ];
 
+    sprrw = {
+      linux.enable = true;
+      nvim.enable = true;
+      programming.enable = true;
+      sec.enable = true;
+      term.enable = true;
+      gui.enable = true;
+    };
+
     username = "sprrw";
     homeDirectory = "/home/sprrw";
 
