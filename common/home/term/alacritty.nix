@@ -3,9 +3,22 @@
 {
   options = {
     sprrw.term.alacritty = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
+      enable = lib.mkEnableOption "alacritty";
+
+      font = {
+        family = lib.mkOption {
+          type = lib.types.str;
+          default = osConfig.sprrw.font.mainFontMonoName;
+        };
+
+        size = lib.mkOption {
+          type = lib.types.int;
+          default = 13;
+        };
+      };
+
+      bindings = lib.mkOption {
+        default = [];
       };
     };
   };
@@ -21,17 +34,11 @@
           option_as_alt = "Both";
         };
 
-        keyboard.bindings = lib.mkIf config.sprrw.macosMode [
-          { key = "Right"; mods = "Alt"; chars = "\\u001BF"; }
-          { key = "Left";  mods = "Alt"; chars = "\\u001BB"; }
-          { key = "Left";  mods = "Command"; chars = "\\u0001"; }
-          { key = "Right"; mods = "Command"; chars = "\\u0005"; }
-        ];
+        keyboard.bindings = cfg.bindings;
 
         font = {
-          # TODO: refactor all the macos mode out of this
-          normal = { family = if config.sprrw.macosMode then "IosevkaTerm Nerd Font Mono" else osConfig.sprrw.font.mainFontMonoName; };
-          size = if config.sprrw.macosMode then 14 else 13;
+          normal = { family = cfg.font.family; };
+          size = cfg.font.size;
         };
 
         env.TERM = "xterm-256color";

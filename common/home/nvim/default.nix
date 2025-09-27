@@ -47,10 +47,7 @@
         telescope-fzf-native-nvim
         telescope-nvim
         toggleterm-nvim
-        # typst-preview-nvim
-        (typst-preview-nvim.overrideAttrs {
-          src = ../../patches/typst-preview.nvim;
-        })
+        typst-preview-nvim
         yazi-nvim
         trouble-nvim
       ]) ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
@@ -103,7 +100,7 @@
 
     xdg.configFile."nvim/lua" = {
       recursive = true;
-      source = ./nvim/lua;
+      source = ./lua;
     };
 
     # TODO: is there some way of doing this so nvim doesnt have to throw errors/be restarted

@@ -1,9 +1,9 @@
 { pkgs, lib, config, ... }:
 
 {
-  options.sprrw.term.linux.enable = lib.mkEnableOption "linux";
+  options.sprrw.linux.term.enable = lib.mkEnableOption "term";
 
-  config = lib.mkIf config.sprrw.term.linux.enable {
+  config = lib.mkIf config.sprrw.linux.term.enable {
     home.packages = with pkgs; [
       ltrace
       linux-manual

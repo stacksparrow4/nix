@@ -2,10 +2,7 @@
 
 {
   options = {
-    sprrw.linux.rofi.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-    };
+    sprrw.linux.rofi.enable = lib.mkEnableOption "rofi";
   };
 
   config = lib.mkIf config.sprrw.linux.rofi.enable {

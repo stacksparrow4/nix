@@ -4,6 +4,7 @@
   imports = [
     ./i3.nix
     ./rofi.nix
+    ./term.nix
   ];
 
   options = {
@@ -11,9 +12,10 @@
   };
 
   config = lib.mkIf config.sprrw.linux.enable {
-    config.sprrw.linux = {
+    sprrw.linux = {
       rofi.enable = true;
       i3.enable = true;
+      term.enable = true;
     };
   };
 }

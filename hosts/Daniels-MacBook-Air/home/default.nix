@@ -10,17 +10,26 @@
     homeDirectory = "/Users/dan";
   };
 
-  sprrw.useAllEnvironments = false;
-  
-  sprrw.macosMode = true;
-  sprrw.rofi.enable = false;
+  sprrw = {
+    nvim.enable = true;
+    programming.enable = true;
+    term = {
+      enable = true;
+      alacritty = {
+        font = {
+          family = "IosevkaTerm Nerd Font Mono";
+          size = 14;
+        };
 
-  sprrw.packages = {
-    installGuiPackages = false;
-    installLinuxPackages = false;
+        bindings = [
+          { key = "Right"; mods = "Alt"; chars = "\\u001BF"; }
+          { key = "Left";  mods = "Alt"; chars = "\\u001BB"; }
+          { key = "Left";  mods = "Command"; chars = "\\u0001"; }
+          { key = "Right"; mods = "Command"; chars = "\\u0005"; }
+        ];
+      };
+    };
   };
-
-  sprrw.zshrc.enable = true;
 
   # Fix for apps not showing up in spotlight search
   home.activation = {
