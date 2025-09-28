@@ -1,4 +1,4 @@
-{ lib, config, ... }@inputs:
+{ pkgs, lib, config, ... }@inputs:
 
 {
   imports = [
@@ -34,7 +34,6 @@
 
     home.packages = with pkgs; [
       rlwrap
-      fixedImpacket
       evil-winrm
       samba # rpcclient
       certipy

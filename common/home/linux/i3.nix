@@ -6,7 +6,7 @@
   };
 
   config = lib.mkIf config.sprrw.linux.i3.enable {
-    home.file = lib.mkIf (!config.sprrw.macosMode) {
+    home.file = {
       ".config/i3/config".text = builtins.readFile ./i3/config;
       ".config/i3status/config".source = ./i3status/config;
       ".config/i3/alternating_layouts.py".source = let

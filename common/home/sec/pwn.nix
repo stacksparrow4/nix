@@ -6,7 +6,7 @@
   };
 
   config = lib.mkIf config.sprrw.sec.pwn.enable {
-    home.packages = [(
+    home.packages = 
       let
         pwndbgFlake = builtins.getFlake "github:pwndbg/pwndbg/bea36c8e08b428e3812470097e6e7c8e11f0be9d";
         pwndbg = pwndbgFlake.packages.x86_64-linux.pwndbg;
@@ -26,7 +26,6 @@
         })
         patchelf
         pwninit
-      ]
-    )];
+      ];
   };
 }
