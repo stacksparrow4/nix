@@ -14,7 +14,7 @@
           name = "responder-docker";
           tag = "latest";
           config = {
-            Cmd = [ "${pkgs.responder}/bin/responder" "-I" "eth0" ];
+            Cmd = [ "${pkgs.responder}/bin/responder" "-I" "eth0" "--analyze" ];
             Env = [
               "PYTHONUNBUFFERED=1"
             ];
