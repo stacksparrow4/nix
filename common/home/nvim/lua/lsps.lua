@@ -1,13 +1,14 @@
-local lspconfig = require("lspconfig")
-local util = require('lspconfig.util')
-local configs = require("lspconfig.configs")
-
-lspconfig.clangd.setup({})
-lspconfig.nixd.setup({})
-lspconfig.basedpyright.setup({})
-lspconfig.ruff.setup({})
-lspconfig.ts_ls.setup({})
-lspconfig.rust_analyzer.setup({
+vim.lsp.config.clangd = {}
+vim.lsp.enable("clangd")
+vim.lsp.config.nixd = {}
+vim.lsp.enable("nixd")
+vim.lsp.config.basedpyright = {}
+vim.lsp.enable("basedpyright")
+vim.lsp.config.ruff = {}
+vim.lsp.enable("ruff")
+vim.lsp.config.ts_ls = {}
+vim.lsp.enable("ts_ls")
+vim.lsp.config.rust_analyzer = {
   settings = {
     ['rust-analyzer'] = {
       cargo = {
@@ -18,14 +19,19 @@ lspconfig.rust_analyzer.setup({
       },
     },
   },
-})
-lspconfig.gopls.setup({})
-lspconfig.tinymist.setup({})
-lspconfig.lemminx.setup({})
-lspconfig.cmake.setup({})
+}
+vim.lsp.enable("rust_analyzer")
+vim.lsp.config.gopls = {}
+vim.lsp.enable("gopls")
+vim.lsp.config.tinymist = {}
+vim.lsp.enable("tinymist")
+vim.lsp.config.lemminx = {}
+vim.lsp.enable("lemminx")
+vim.lsp.config.cmake = {}
+vim.lsp.enable("cmake")
 
 -- Setup Lua LSP for neovim dev
-lspconfig.lua_ls.setup({
+vim.lsp.config.lua_ls = {
   on_init = function(client)
     if client.workspace_folders then
       local path = client.workspace_folders[1].name
@@ -49,7 +55,7 @@ lspconfig.lua_ls.setup({
           -- "${3rd}/luv/library"
           -- "${3rd}/busted/library",
         }
-        -- or pull in all of 'runtimepath'. NOTE: this is a lot slower and will cause issues when working on your own configuration (see https://github.com/neovim/nvim-lspconfig/issues/3189)
+        -- or pull in all of 'runtimepath'. NOTE: this is a lot slower and will cause issues when working on your own configuration (see https://github.com/neovim/nvim-vim.lsp.config/issues/3189)
         -- library = vim.api.nvim_get_runtime_file("", true)
       }
     })
@@ -57,4 +63,5 @@ lspconfig.lua_ls.setup({
   settings = {
     Lua = {}
   }
-})
+}
+vim.lsp.enable("lua_ls")
