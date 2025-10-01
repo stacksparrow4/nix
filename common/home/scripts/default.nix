@@ -3,6 +3,7 @@
 {
   imports = [
     ./mkpythonenv.nix
+    ./mkburpscript.nix
     ./mkwindowsenv.nix
   ];
 
