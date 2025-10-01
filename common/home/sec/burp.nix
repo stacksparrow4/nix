@@ -55,7 +55,7 @@
         };
         shellWrapper = pkgs.writeShellApplication {
           name = "burpsuite-wrapper";
-          runtimeInputs = with pkgs; [curl jq coreutils];
+          runtimeInputs = with pkgs; [curl jq coreutils notify-desktop];
           text = ''
             jsondata=$(
               curl -s 'https://portswigger.net/burp/releases/data' |
@@ -82,13 +82,17 @@
 
             oldversion=$(cat ~/.local/share/burpdownload/version.txt)
             if [[ "$oldversion" != "$version" ]]; then
-              echo "Updating version from $oldversion to $version"
+              echo "Updating Burp suite version from $oldversion to $version"
+              notify-desktop "Updating Burp suite version from $oldversion to $version"
               curl -o ~/.local/share/burpdownload/burp.jar "https://portswigger.net/burp/releases/download?product=$productName&version=$version&type=Jar"
               echo "$version" > ~/.local/share/burpdownload/version.txt
+              echo "Update complete"
+              notify-desktop "Update complete"
             fi
 
             if [[ "$(sha256sum ~/.local/share/burpdownload/burp.jar | cut -d' ' -f1)" != "$shasum" ]]; then
               echo "Error: sha256sum for burp install did not match"
+              notify-desktop "Error: sha256sum for burp install did not match"
               exit 1
             fi
 
