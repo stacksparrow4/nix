@@ -13,11 +13,9 @@
         alternatingLayoutsDeriv = pkgs.stdenv.mkDerivation {
           name = "alternating-layouts";
           propagatedBuildInputs = [
-            pkgs.pywithi3ipc
-            # TODO: I dont think the above is optimal
-            # (pkgs.python313.withPackages (ppkgs: [
-            #                               ppkgs.i3ipc
-            # ]))
+            (pkgs.python313.withPackages (ppkgs: [
+                                          ppkgs.i3ipc
+            ]))
           ];
           dontUnpack = true;
           installPhase = "install -Dm755 ${./i3/alternating_layouts.py} $out/bin/alternating-layouts";
