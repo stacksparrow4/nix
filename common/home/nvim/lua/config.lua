@@ -26,6 +26,16 @@ vim.api.nvim_create_autocmd('BufEnter', {
   command = 'setlocal wrap'
 })
 
+vim.opt.spelllang = "en_au"
+
+-- Enable spell checking for .typ and .md files with Australian English
+vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
+  pattern = {"*.typ", "*.md"},
+  callback = function()
+    vim.opt_local.spell = true
+  end,
+})
+
 -- Use system clipboard
 vim.opt.clipboard = "unnamedplus"
 
