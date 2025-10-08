@@ -46,7 +46,6 @@
         snacks-nvim
         telescope-fzf-native-nvim
         telescope-nvim
-        toggleterm-nvim
         typst-preview-nvim
         yazi-nvim
         trouble-nvim
