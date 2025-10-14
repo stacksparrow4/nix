@@ -11,5 +11,7 @@
 
       extraConfig = builtins.readFile ./tmux.conf;
     };
+
+    home.file.".terminfo/s/screen-256color".source = ./terminfo;
   };
 }
