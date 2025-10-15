@@ -8,7 +8,27 @@ return {
         options = {
           show_buffer_close_icons = false,
           show_close_icon = false
-        }
+        },
+        highlights = {
+          buffer_selected = {
+            italic = false,
+          },
+          diagnostic_selected = {
+            italic = false,
+          },
+          hint_selected = {
+            italic = false,
+          },
+          info_selected = {
+            italic = false,
+          },
+          warning_selected = {
+            italic = false,
+          },
+          error_selected = {
+            italic = false,
+          },
+        },
       })
     end
   }
