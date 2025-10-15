@@ -13,7 +13,10 @@
   in {
     programs.bash = {
       enable = true;
-      bashrcExtra = (builtins.readFile ./aliases.sh) + "eval \"$(navi widget bash)\"\nexport PS1='" + cfg.ps1 + "'";
+      bashrcExtra = (builtins.readFile ./aliases.sh) + ''
+        eval "$(navi widget bash)"
+        export PS1='${cfg.ps1}'
+      '';
     };
 
     home.file.".bash_profile".text = ''
