@@ -41,8 +41,6 @@
           size = cfg.font.size;
         };
 
-        env.TERM = "xterm-256color";
-
         terminal.shell.program = "${pkgs.tmux}/bin/tmux";
       };
     };
