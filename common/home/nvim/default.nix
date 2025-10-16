@@ -33,7 +33,6 @@
         lazy-nvim
         blink-cmp
         bufferline-nvim
-        flash-nvim
         friendly-snippets
         gitsigns-nvim
         img-clip-nvim
