@@ -20,12 +20,19 @@
       bindings = lib.mkOption {
         default = [];
       };
+
+      installTerminfo = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
     };
   };
 
   config = let
     cfg = config.sprrw.term.alacritty;
   in lib.mkIf cfg.enable {
+    home.file.".terminfo".source = lib.mkIf cfg.installTerminfo "${pkgs.alacritty.terminfo}/share/terminfo";
+
     programs.alacritty = {
       enable = true;
       settings = {
@@ -42,6 +49,8 @@
         };
 
         terminal.shell.program = "${pkgs.tmux}/bin/tmux";
+
+        env.TERMINFO_DIRS = lib.mkIf cfg.installTerminfo "\$HOME/.terminfo";
       };
     };
   };

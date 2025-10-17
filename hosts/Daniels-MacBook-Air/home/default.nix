@@ -27,6 +27,8 @@
           { key = "Left";  mods = "Command"; chars = "\\u0001"; }
           { key = "Right"; mods = "Command"; chars = "\\u0005"; }
         ];
+
+        installTerminfo = true;
       };
     };
   };
