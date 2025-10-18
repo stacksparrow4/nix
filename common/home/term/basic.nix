@@ -18,8 +18,6 @@
       p7zip
       xsel
       xclip
-      gnumake
-      gcc
       uv
       (python3.withPackages (pypkgs: with pypkgs; [ requests ]))
       openssl

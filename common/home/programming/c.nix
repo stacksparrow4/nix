@@ -12,6 +12,7 @@
       clang-tools
       cmake
       cmake-language-server
+      pkg-config
     ];
   };
 }
