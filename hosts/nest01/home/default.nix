@@ -5,10 +5,6 @@
     ../../../common/home
   ];
 
-  home = {
-    packages = with pkgs; [
-      signal-desktop-bin
-    ];
 
     sprrw = {
       linux.enable = true;
@@ -18,6 +14,12 @@
       term.enable = true;
       gui.enable = true;
     };
+
+  home = {
+    packages = with pkgs; [
+      signal-desktop-bin
+    ];
+
 
     username = "sprrw";
     homeDirectory = "/home/sprrw";

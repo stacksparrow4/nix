@@ -31,7 +31,9 @@
   config = let
     cfg = config.sprrw.term.alacritty;
   in lib.mkIf cfg.enable {
-    home.file.".terminfo".source = lib.mkIf cfg.installTerminfo "${pkgs.alacritty.terminfo}/share/terminfo";
+    home.file.".terminfo" = lib.mkIf cfg.installTerminfo {
+      source = "${pkgs.alacritty.terminfo}/share/terminfo";
+    };
 
     programs.alacritty = {
       enable = true;
