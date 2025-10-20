@@ -49,13 +49,5 @@
 
       extraSpecialArgs = { inputs = inputs; osConfig.sprrw.font.mainFontMonoName = "IosevkaTerm Nerd Font Mono"; };
     };
-
-    packages.x86_64-linux.docker = let
-      pkgs = nixpkgsOverlayed "x86_64-linux";
-    in
-      pkgs.callPackage ./hosts/docker/docker.nix {
-        home-manager = home-manager;
-        inputs = inputs;
-      };
   };
 }
