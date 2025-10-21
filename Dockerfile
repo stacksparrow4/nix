@@ -1,3 +1,3 @@
 FROM archlinux:latest
 
-ENV PATH="$PATH:/etc/profiles/per-user/root/bin"
+ENV PATH="$PATH:/root/.home-manager/home-path/bin"
