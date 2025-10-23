@@ -9,3 +9,5 @@
     - Maybe I just overlay all those things?
     - Need a way of keeping dev-shells working without forcing all overlays to be in one file
 - [ ] Figure out how to close yazi nvim using escape key
+- [ ] Vim macro ideas
+    - [ ] Create semgrep file

@@ -26,5 +26,5 @@ vim.keymap.set("n", "<leader>b", "<cmd>BufferLinePick<cr>")
 
 -- Misc
 vim.keymap.set("n", "<leader>c", function()
-  vim.fn.setreg("+", vim.fn.expand("%:p") .. ":" .. vim.fn.line(".") .. ":" .. vim.fn.col("."))
+  vim.fn.setreg("+", vim.fn.expand("%:~:.") .. ":" .. vim.fn.line(".") .. ":" .. vim.fn.col("."))
 end, { noremap = true, silent = true, desc = "Copy file path, line, and column" })

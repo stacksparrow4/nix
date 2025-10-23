@@ -7,4 +7,6 @@ final: prev:
   ltrace = pkgsStable.ltrace;
 
   libreoffice = pkgsStable.libreoffice;
+
+  sage = pkgsStable.sage;
 }
