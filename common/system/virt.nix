@@ -14,6 +14,7 @@
     (final: prev: {
       libvirt = qemu-nixpkgs.libvirt;
       qemu = qemu-nixpkgs.qemu;
+      virt-manager = qemu-nixpkgs.virt-manager;
     })
   ];
   programs.virt-manager.enable = true;
