@@ -20,9 +20,9 @@ else
     docker run --rm --platform linux/amd64 -v nix-store:/nix-original nixos/nix bash -c 'cp -a /nix/* /nix-original'
   fi
 
-  tfile=$(mktemp)
+  tdir=$(mktemp -d)
 
-  docker run -e HOME_DIR --rm --platform linux/amd64 -i -v "$tfile":/tfile -v nix-store:/nix -v $(pwd):/pwd:ro nixos/nix bash <<"EOF"
+  if ! docker run -e HOME_DIR --rm --platform linux/amd64 -i -v "$tdir":/tdir -v nix-store:/nix -v $(pwd):/pwd:ro nixos/nix bash <<"EOF"
 set -e
 mkdir -p ~/.config/nix
 cat <<SECONDEOF > ~/.config/nix/nix.conf
@@ -37,15 +37,20 @@ hmPath=$(nix build .#homeConfigurations.docker.activationPackage --no-link --pri
 
 echo "Build complete: $hmPath"
 
-homeMounts=$(echo -n "-v $hmPath:$HOME_DIR/.home-manager:ro"; find "$hmPath/home-files/" -type l | while read line; do
-  echo -n " -v $line:$HOME_DIR/$(realpath -s --relative-to="$hmPath/home-files/" "$line"):ro"
-done)
+ln -s "$hmPath" /tdir/.home-manager
 
-echo "$homeMounts" > /tfile
+cp -r $hmPath/home-files/.* /tdir/
 EOF
+  then
+    sudo rm -rf "$tdir"
+    exit 1
+  fi
 
-  homeMounts=$(cat "$tfile")
-  rm "$tfile"
+  homeMounts=$(find "$tdir" -type l | while read line; do
+    echo -n " -v $line:$HOME_DIR/$(realpath -s --relative-to="$tdir/" "$line"):ro"
+  done)
 
-  docker run --rm -it -v /nix:/nix:ro $homeMounts $(docker build -q .)
+  docker run --rm -it -v /nix:/nix:ro $homeMounts $(docker build -q .) || true
+
+  sudo rm -rf "$tdir"
 fi
