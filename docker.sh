@@ -8,7 +8,7 @@ export HOME_DIR=/root
 if [[ "$(uname -m)" == x86_64 ]] && [[ "$(uname -o)" == "GNU/Linux" ]] && command -v nix >/dev/null; then
   hmPath=$(nix build .#homeConfigurations.docker.activationPackage --no-link --print-out-paths --show-trace)
 
-  homeMounts=$(echo "-v $hmPath:$HOME_DIR/.home-manager:ro"; find "$hmPath/home-files/" -type l | while read line; do
+  homeMounts=$(echo -n "-v $hmPath:$HOME_DIR/.home-manager:ro"; find "$hmPath/home-files/" -type l | while read line; do
     echo -n " -v $line:$HOME_DIR/$(realpath -s --relative-to="$hmPath/home-files/" "$line"):ro"
   done)
 
@@ -37,12 +37,15 @@ hmPath=$(nix build .#homeConfigurations.docker.activationPackage --no-link --pri
 
 echo "Build complete: $hmPath"
 
-homeMounts=$(echo "-v $hmPath:$HOME_DIR/.home-manager:ro"; find "$hmPath/home-files/" -type l | while read line; do
+homeMounts=$(echo -n "-v $hmPath:$HOME_DIR/.home-manager:ro"; find "$hmPath/home-files/" -type l | while read line; do
   echo -n " -v $line:$HOME_DIR/$(realpath -s --relative-to="$hmPath/home-files/" "$line"):ro"
 done)
 
 echo "$homeMounts" > /tfile
 EOF
 
-  cat "$tfile"
+  homeMounts=$(cat "$tfile")
+  rm "$tfile"
+
+  docker run --rm -it -v /nix:/nix:ro $homeMounts $(docker build -q .)
 fi
