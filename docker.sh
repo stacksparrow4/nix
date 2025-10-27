@@ -50,7 +50,7 @@ EOF
     echo -n " -v $line:$HOME_DIR/$(realpath -s --relative-to="$tdir/" "$line"):ro"
   done)
 
-  docker run --rm -it -v /nix:/nix:ro $homeMounts $(docker build -q .) || true
+  docker run --platform linux/amd64 --rm -it -v /nix:/nix:ro $homeMounts $(docker build -q .) || true
 
   sudo rm -rf "$tdir"
 fi
