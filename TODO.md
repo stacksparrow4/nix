@@ -1,13 +1,6 @@
-- [ ] Environments should really be nixos modules. Add a switch that automatically enables/disables all environments
-    - Honestly should just get rid of the `dev-*` commands. They are more trouble than its worth (making the shell.nix is not difficult)
-- [ ] Add sudo to docker
-- [ ] Figure out how to fix the alacritty squiggles deterministically
-- [ ] image.nvim + ghostty + don't use CMP nvim
+- [ ] Ghostty?
 - [ ] Somehow evaluate every package that is used and diff that in diff-protected
     - Looks like this could potentially be done using `nix build --dry-build -vvv` and grepping for nixpkgs
 - [ ] Figure out method to update regularly without breaking things that break often.
-    - Maybe I just overlay all those things?
-    - Need a way of keeping dev-shells working without forcing all overlays to be in one file
+    - Sort things into "needs update" and "doesn't need update" baskets
 - [ ] Figure out how to close yazi nvim using escape key
-- [ ] Vim macro ideas
-    - [ ] Create semgrep file

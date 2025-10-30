@@ -8,7 +8,7 @@
   config = lib.mkIf config.sprrw.programming.databases.enable {
     home.packages = with pkgs; [
       postgresql
-      mysql-client
+      mariadb
     ];
   };
 }
