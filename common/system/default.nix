@@ -14,14 +14,8 @@
     useUserPackages = true;
   };
 
-  programs._1password = {
-    package = pkgs._1password-cli;
-    enable = true;
-  };
-  programs._1password-gui = {
-    package = pkgs._1password-gui;
-    enable = true;
-  };
+  programs._1password.enable = true;
+  programs._1password-gui.enable = true;
 
   programs.wireshark.enable = true;
 }
