@@ -22,12 +22,7 @@
   services.xserver.displayManager.lightdm.background = ../bg.png;
 
   # Home manager
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-
-    users.sprrw = ../home;
-  };
+  home-manager.users.sprrw = ../home;
 
   # Users
   users.users.sprrw = {

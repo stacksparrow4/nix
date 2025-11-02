@@ -2,15 +2,15 @@
   description = "ssparrow NixOS Flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    home-manager.url = "github:nix-community/home-manager";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-25.05";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    home-manager.url = "github:nix-community/home-manager?ref=release-25.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    nixpkgs-stable.url = "github:nixos/nixpkgs?ref=nixos-25.05";
   };
 
-  outputs = { nixpkgs, nixpkgs-stable, home-manager, ... }@inputs:
+  outputs = { nixpkgs, nixpkgs-unstable, home-manager, ... }@inputs:
   let
-    overlay = system: import ./overlays.nix nixpkgs-stable.legacyPackages."${system}";
+    overlay = system: import ./overlays.nix (import nixpkgs-unstable { inherit system; config.allowUnfree = true; });
     nixpkgsOverlayed = system: import nixpkgs {
       inherit system;
       overlays = [ (overlay system) ];
