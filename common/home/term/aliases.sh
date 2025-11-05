@@ -62,11 +62,11 @@ function ns() {
   nix-shell -p "$@"
 }
 
-function ns-stable() {
+function ns-unstable() {
   if [[ -n "$BASH_VERSINFO" ]]; then
     history -a
   fi
-  NIXPKGS_ALLOW_UNFREE=1 nix shell --impure $(for i in "$@"; do echo -n ' github:NixOS/nixpkgs/nixos-25.05#'"$i"; done)
+  NIXPKGS_ALLOW_UNFREE=1 nix shell --impure $(for i in "$@"; do echo -n ' github:NixOS/nixpkgs/nixos-unstable#'"$i"; done)
 }
 
 alias nss='nix-search -d -m 3'

@@ -7,3 +7,5 @@
 - [ ] Build home manager derivation for docker at main NixOS build time rather than at container run time
     - Need to make sure it still works on non nixos systems though
 - [ ] Make it so you can run the docker container easily (alias)
+- [ ] Sandbox browser (docker container + mounts + x11 forward)
+- [ ] Sandbox Burp Suite (...)
