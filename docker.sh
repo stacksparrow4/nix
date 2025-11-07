@@ -3,16 +3,16 @@
 set -e
 cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null
 
-export HOME_DIR=/root
+FORCE_DOCKER_BUILD=0
 
-if [[ "$(uname -m)" == x86_64 ]] && [[ "$(uname -o)" == "GNU/Linux" ]] && command -v nix >/dev/null; then
-  hmPath=$(nix build .#homeConfigurations.docker.activationPackage --no-link --print-out-paths --show-trace)
+DOCKER_IMAGE=archlinux:latest
 
-  homeMounts=$(echo -n "-v $hmPath:$HOME_DIR/.home-manager:ro"; find "$hmPath/home-files/" -type l | while read line; do
-    echo -n " -v $line:$HOME_DIR/$(realpath -s --relative-to="$hmPath/home-files/" "$line"):ro"
-  done)
+if [[ "$FORCE_DOCKER_BUILD" != 1 ]] && [[ "$(uname -m)" == x86_64 ]] && [[ "$(uname -o)" == "GNU/Linux" ]] && command -v nix >/dev/null; then
+  git add .
 
-  docker run --rm -it -v /nix:/nix:ro $homeMounts $(docker build -q .)
+  dockerinitpath=$(nix build .#dockerinit --no-link --print-out-paths --show-trace)
+
+  docker run --rm -it -v /nix:/nix:ro -v "$dockerinitpath:/.entrypoint.sh:ro" "$DOCKER_IMAGE" /.entrypoint.sh
 else
   if ! docker volume inspect nix-store &>/dev/null; then
     docker volume create nix-store || true
@@ -20,9 +20,7 @@ else
     docker run --rm --platform linux/amd64 -v nix-store:/nix-original nixos/nix bash -c 'cp -a /nix/* /nix-original'
   fi
 
-  tdir=$(mktemp -d)
-
-  if ! docker run -e HOME_DIR --rm --platform linux/amd64 -i -v "$tdir":/tdir -v nix-store:/nix -v $(pwd):/pwd:ro nixos/nix bash <<"EOF"
+  docker run --rm --platform linux/amd64 -i -v nix-store:/nix -v $(pwd):/pwd:ro nixos/nix bash <<"EOF"
 set -e
 mkdir -p ~/.config/nix
 cat <<SECONDEOF > ~/.config/nix/nix.conf
@@ -33,24 +31,13 @@ SECONDEOF
 mkdir ~/nixos
 cp -r /pwd/* ~/nixos
 cd ~/nixos
-hmPath=$(nix build .#homeConfigurations.docker.activationPackage --no-link --print-out-paths --show-trace)
+dockerinitpath=$(nix build .#dockerinit --no-link --print-out-paths --show-trace)
 
-echo "Build complete: $hmPath"
+echo "Build complete: $dockerinitpath"
 
-ln -s "$hmPath" /tdir/.home-manager
-
-cp -r $hmPath/home-files/.* /tdir/
+rm -f /nix/.entrypoint.sh
+ln -s "$dockerinitpath" /nix/.entrypoint.sh
 EOF
-  then
-    sudo rm -rf "$tdir"
-    exit 1
-  fi
 
-  homeMounts=$(find "$tdir" -type l | while read line; do
-    echo -n " -v $line:$HOME_DIR/$(realpath -s --relative-to="$tdir/" "$line"):ro"
-  done)
-
-  docker run --platform linux/amd64 --rm -it -v /nix:/nix:ro $homeMounts $(docker build -q .) || true
-
-  sudo rm -rf "$tdir"
+  docker run --platform linux/amd64 --rm -it -v nix-store:/nix:ro "$DOCKER_IMAGE" /nix/.entrypoint.sh
 fi
