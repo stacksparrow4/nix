@@ -23,7 +23,11 @@ vim.lsp.config.rust_analyzer = {
 vim.lsp.enable("rust_analyzer")
 vim.lsp.config.gopls = {}
 vim.lsp.enable("gopls")
-vim.lsp.config.tinymist = {}
+vim.lsp.config.tinymist = {
+  settings = {
+    formatterMode = "typstyle"
+  }
+}
 vim.lsp.enable("tinymist")
 vim.lsp.config.lemminx = {}
 vim.lsp.enable("lemminx")
