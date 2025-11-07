@@ -6,7 +6,7 @@
   };
 
   config = let
-    pkgs = import ./pinned-pkgs.nix { system = inputs.pkgs.system; };
+    pkgs = import ./pinned-pkgs.nix { system = inputs.pkgs.stdenv.hostPlatform.system; };
   in lib.mkIf config.sprrw.sec.windows.rusthound.enable {
     home.packages = [(
       pkgs.rustPlatform.buildRustPackage (finalAttrs: {
