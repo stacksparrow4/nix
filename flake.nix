@@ -55,6 +55,7 @@
     packages.x86_64-linux.dockerinit = import ./hosts/docker/dockerinit.nix {
       pkgs = overlayedNixpkgs "x86_64-linux";
       inherit inputs;
+      cmd = "bash";
     };
   };
 }

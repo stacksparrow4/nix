@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, cmd, ... }:
 
 # The output of this file is a script that will be run inside a docker container that has a mounted nix store. The script should end in spawning bash after setting up the home directory properly
 let
@@ -18,5 +18,5 @@ in pkgs.writeShellScript "dockerinit" ''
 
   export PATH="$PATH:${homeConfig}/home-path/bin"
   cd ~
-  exec ${homeConfig}/home-path/bin/bash
+  exec ${cmd}
 ''

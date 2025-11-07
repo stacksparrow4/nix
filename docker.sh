@@ -5,7 +5,7 @@ cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null
 
 FORCE_DOCKER_BUILD=0
 
-DOCKER_IMAGE=archlinux:latest
+DOCKER_IMAGE=ubuntu:latest
 
 if [[ "$FORCE_DOCKER_BUILD" != 1 ]] && [[ "$(uname -m)" == x86_64 ]] && [[ "$(uname -o)" == "GNU/Linux" ]] && command -v nix >/dev/null; then
   git add .

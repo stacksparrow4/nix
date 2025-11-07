@@ -7,6 +7,7 @@
     ./scripts
     ./term
     ./gui.nix
+    ./sandboxing.nix
   ];
 
   home.file.".config/nixpkgs/config.nix".text = ''
