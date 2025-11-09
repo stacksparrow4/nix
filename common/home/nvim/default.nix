@@ -19,6 +19,8 @@ in
         nvimDeriv = config.sprrw.sandboxing.runDocker {
           cmd = "nvim";
           shareCwd = true;
+          shareX11 = true;
+          netHost = true;
         };
       in {
         home.packages = [(pkgs.runCommand "nvim-sandbox-aliases" {} ''

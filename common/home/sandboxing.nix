@@ -14,7 +14,9 @@
 
     sprrw.sandboxing.runDocker = {
       cmd,
-      shareCwd ? false
+      shareCwd ? false,
+      shareX11 ? false,
+      netHost ? false,
     }:
     let
       dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
@@ -23,6 +25,8 @@
         RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw
       '';
       shareCwdArg = if shareCwd then "-v $(pwd):/pwd" else "";
+      shareX11Arg = if shareX11 then "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority" else "";
+      netHostArg = if netHost then "--network host" else "";
       dockerinit = import ../../hosts/docker/dockerinit.nix {
         inherit pkgs inputs cmd;
         cwd = "/pwd";
@@ -33,7 +37,14 @@
         docker build -t usermapped-img ${dockerFileDir}
       fi
 
-      docker run -u 1000:100 --rm -it -v /nix:/nix:ro ${shareCwdArg} usermapped-img ${dockerinit} "$@"
+      docker run \
+        -u 1000:100 \
+        --rm -it \
+        -v /nix:/nix:ro \
+        ${shareCwdArg} \
+        ${shareX11Arg} \
+        ${netHostArg} \
+        usermapped-img ${dockerinit} "$@"
     '';
   };
 }
