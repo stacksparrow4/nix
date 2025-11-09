@@ -34,7 +34,7 @@
         docker build -t usermapped-img ${dockerFileDir}
       fi
 
-      docker run -u 1000:100 --rm -it -v /nix:/nix:ro ${shareCwdArg} usermapped-img ${dockerinit}
+      docker run -u 1000:100 --rm -it -v /nix:/nix:ro ${shareCwdArg} usermapped-img ${dockerinit} "$@"
     '';
   };
 }

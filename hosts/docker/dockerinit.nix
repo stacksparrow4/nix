@@ -24,5 +24,5 @@ in pkgs.writeShellScript "dockerinit" ''
 
   export PATH="$PATH:${homeConfig}/home-path/bin"
   cd ${cwd}
-  exec ${cmd}
+  exec ${cmd} "$@"
 ''
