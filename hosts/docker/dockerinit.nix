@@ -22,6 +22,7 @@ in pkgs.writeShellScript "dockerinit" ''
   cp -r "${homeConfig}/home-files/".* ~/
   chmod -R u+w ~
 
+  export TERM=alacritty
   export PATH="$PATH:${homeConfig}/home-path/bin"
   cd ${cwd}
   exec ${cmd} "$@"
