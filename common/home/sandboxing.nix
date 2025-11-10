@@ -9,10 +9,9 @@
     };
   };
 
-  config = lib.mkIf config.sprrw.sandboxing.enable {
-    sprrw.nvim.sandboxed = true;
-
-    sprrw.sandboxing.runDocker = {
+  config = let
+    cfg = config.sprrw.sandboxing;
+    runDocker = {
       cmd,
       shareCwd ? false,
       shareX11 ? false,
@@ -29,7 +28,7 @@
       netHostArg = if netHost then "--network host" else "";
       dockerinit = import ../../hosts/docker/dockerinit.nix {
         inherit pkgs inputs cmd;
-        cwd = "/pwd";
+        cwd = if shareCwd then "/pwd" else "/home/sprrw";
       };
     in
     pkgs.writeShellScript "sandboxed-${cmd}" ''
@@ -46,5 +45,23 @@
         ${netHostArg} \
         usermapped-img ${dockerinit} "$@"
     '';
+  in lib.mkIf cfg.enable {
+    sprrw.nvim.sandboxed = true;
+
+    sprrw.sandboxing.runDocker = runDocker;
+
+    home.packages = [
+      (
+        # TODO: i think this causes the build to take a really long time cause it reevaluates everything 4 times.
+        # should be pretty easy to fix by refactoring to make dockerinit be able to take arguments so that it doesn't have to be rebuilt for each configuration
+        pkgs.runCommand "box" {} ''
+          mkdir -p $out/bin
+          ln -s ${runDocker { cmd = "bash"; }} $out/bin/box
+          ln -s ${runDocker { cmd = "bash"; shareCwd = true; }} $out/bin/box-cwd
+          ln -s ${runDocker { cmd = "bash"; shareX11 = true; netHost = true; }} $out/bin/box-gui
+          ln -s ${runDocker { cmd = "bash"; shareCwd = true; shareX11 = true; netHost = true; }} $out/bin/box-cwd-gui
+        ''
+      )
+    ];
   };
 }
