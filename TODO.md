@@ -1,4 +1,7 @@
+- [ ] Sandbox browser properly
 - [ ] Figure out why the build is really slow
+    - Probably because it builds multiple "systems". The sandboxed systems are also systems.
+    - Is there a way to get around this? (Maybe we can piggy back our host system home manager stuff?)
 - [ ] Ghostty?
 - [ ] Somehow evaluate every package that is used and diff that in diff-protected
     - Looks like this could potentially be done using `nix build --dry-build -vvv` and grepping for nixpkgs

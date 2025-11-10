@@ -7,7 +7,7 @@
     ./sec
     ./scripts
     ./term
-    ./gui.nix
+    ./gui
     ./sandboxing.nix
   ];
 

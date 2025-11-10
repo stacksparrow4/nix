@@ -1,15 +1,20 @@
 { pkgs, lib, config, ... }:
 
 {
+  imports = [
+    ./brave.nix
+  ];
+
   options.sprrw.gui.enable = lib.mkEnableOption "gui";
 
   config = lib.mkIf config.sprrw.gui.enable {
+    sprrw.gui.brave.enable = true;
+
     home.packages = with pkgs; [
       discord
       gimp
       inkscape
       spotify
-      brave
       krita
       libreoffice
       obs-studio
