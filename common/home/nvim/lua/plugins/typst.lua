@@ -1,16 +1,16 @@
 return {
   {
     'chomosuke/typst-preview.nvim',
-    lazy = false, -- or ft = 'typst'
+    lazy = false,
     version = '1.*',
     opts = {
       debug = false,
-      open_cmd = "nohup brave %s &>/dev/null",
+      open_cmd = "",
       port = 9009,
       dependencies_bin = {
         ['tinymist'] = 'tinymist',
         ['websocat'] = nil
       },
-    }, -- lazy.nvim will implicitly calls `setup {}`
+    },
   }
 }

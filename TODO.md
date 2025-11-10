@@ -1,3 +1,4 @@
+- [ ] Figure out why the build is really slow
 - [ ] Ghostty?
 - [ ] Somehow evaluate every package that is used and diff that in diff-protected
     - Looks like this could potentially be done using `nix build --dry-build -vvv` and grepping for nixpkgs

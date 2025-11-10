@@ -36,6 +36,7 @@
         -u 1000:100 \
         --rm -it \
         -v /nix:/nix:ro \
+        -v /etc/fonts:/etc/fonts:ro \
         ${if shareCwd then "-v $(pwd):/pwd" else ""} \
         ${if shareX11 then "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority" else ""} \
         ${if netHost then "--network host" else ""} \
