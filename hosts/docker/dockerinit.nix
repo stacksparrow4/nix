@@ -1,8 +1,6 @@
 {
   pkgs,
   inputs,
-  cmd,
-  cwd ? "~",
 }:
 
 # The output of this file is a script that will be run inside a docker container that has a mounted nix store. The script should end in spawning bash after setting up the home directory properly
@@ -24,6 +22,5 @@ in pkgs.writeShellScript "dockerinit" ''
 
   export TERM=alacritty
   export PATH="$PATH:${homeConfig}/home-path/bin"
-  cd ${cwd}
-  exec ${cmd} "$@"
+  exec "$@"
 ''
