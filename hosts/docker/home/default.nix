@@ -16,6 +16,7 @@
     programming.enable = true;
     sec.enable = true;
     sec.burp.enable = lib.mkForce false;
+    sec.caido.enable = lib.mkForce false;
     sec.pwn.enable = lib.mkForce false; # pwndbg takes a while to install
     term.enable = true;
     term.alacritty.enable = lib.mkForce false;

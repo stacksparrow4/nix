@@ -3,6 +3,7 @@
 {
   imports = [
     ./burp.nix
+    ./caido.nix
     ./cracking.nix
     ./forensics.nix
     ./metasploit.nix
@@ -20,6 +21,7 @@
   config = lib.mkIf config.sprrw.sec.enable {
     sprrw.sec = {
       burp.enable = true;
+      caido.enable = true;
       cracking.enable = true;
       forensics.enable = true;
       metasploit.enable = true;

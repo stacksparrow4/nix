@@ -1,4 +1,5 @@
 - [ ] Sandbox browser properly
+    - https://github.com/NixOS/nixpkgs/blob/b6a8526db03f735b89dd5ff348f53f752e7ddc8e/pkgs/applications/networking/browsers/chromium/common.nix#L671
 - [ ] Figure out why the build is really slow
     - Probably because it builds multiple "systems". The sandboxed systems are also systems.
     - Is there a way to get around this? (Maybe we can piggy back our host system home manager stuff?)

@@ -13,6 +13,12 @@
 
       evdev:name:AT Translated Set 2 keyboard:*
         KEYBOARD_KEY_3a=esc
+
+      evdev:name:*Razer*:*
+        KEYBOARD_KEY_3a=esc
+        KEYBOARD_KEY_58=esc
+        KEYBOARD_KEY_70039=esc
+
     '';
   };
 
