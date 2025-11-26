@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
@@ -18,6 +18,8 @@
   home = {
     packages = with pkgs; [
       signal-desktop-bin
+      lmms
+      audacity
     ];
 
 
