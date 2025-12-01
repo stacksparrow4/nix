@@ -10,6 +10,9 @@ builtins.listToAttrs (
     "brave"
     "_1password-gui"
     "_1password-cli"
+    "slack"
+    "discord"
+    "ropr" # Doesnt exist on stable
   ]
 ) // (
   # Qemu breaks VMs so pin it to an exact version
@@ -26,4 +29,9 @@ builtins.listToAttrs (
     qemu = qemu-nixpkgs.qemu;
     virt-manager = qemu-nixpkgs.virt-manager;
   }
-)
+) // {
+  # Security patch
+  vimPlugins = prev.vimPlugins // {
+    typst-preview-nvim = pkgsUnstable.vimPlugins.typst-preview-nvim;
+  };
+}

@@ -13,6 +13,7 @@
       in
       with pkgs; [
         pwndbg
+        gdb
         (pkgs.buildEnv {
           name = "pwntools-env";
           paths = [
@@ -26,6 +27,8 @@
         })
         patchelf
         pwninit
+        ropr
+        ropgadget
       ];
   };
 }
