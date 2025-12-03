@@ -16,6 +16,10 @@
       bashrcExtra = (builtins.readFile ./aliases.sh) + ''
         eval "$(navi widget bash)"
         export PS1='${cfg.ps1}'
+
+        if [[ "$(hostname)" = sandbox ]]; then
+          export PS1='\n\[\033[36m\] \W \$\[\033[0m\] '
+        fi
       '';
     };
 

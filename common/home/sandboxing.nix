@@ -38,6 +38,7 @@
       docker run \
         -u 1000:100 \
         --rm -it \
+        --hostname sandbox \
         -v /nix:/nix:ro \
         -v /etc/fonts:/etc/fonts:ro \
         -v /etc/hm-package:/etc/hm-package:ro \
