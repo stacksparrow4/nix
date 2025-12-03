@@ -9,7 +9,7 @@ GREEN=$(echo -e '\x1b[32m')
 RED=$(echo -e '\x1b[31m')
 RESET=$(echo -e '\x1b[0m')
 
-old=$(nix eval --raw --impure --expr '"${(builtins.getFlake "'"$(pwd)"'").inputs.nixpkgs}"')
+old=$(nix eval --raw --impure --expr '"${(builtins.getFlake "'"$(pwd)"'").inputs.nixpkgs-unstable}"')
 new=$(nix eval --raw --impure --expr 'fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz"')
 
 while read pp; do
