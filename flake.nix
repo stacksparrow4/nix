@@ -52,20 +52,14 @@
       extraSpecialArgs = { inputs = inputs; osConfig.sprrw.font.mainFontMonoName = "IosevkaTerm Nerd Font Mono"; };
     };
 
-    packages.x86_64-linux.dockerinit = import ./hosts/docker/dockerinit.nix rec {
+    packages.x86_64-linux.homeConfigurations."docker" = home-manager.lib.homeManagerConfiguration {
       pkgs = overlayedNixpkgs "x86_64-linux";
 
-      homeConfig = (home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
+      modules = [
+        ./hosts/docker/home/default.nix
+      ];
 
-        modules = [
-          ./home/default.nix
-        ];
-
-        extraSpecialArgs = { inputs = inputs; };
-      }).activationPackage;
-
-      cmd = "bash";
+      extraSpecialArgs = { inputs = inputs; };
     };
   };
 }

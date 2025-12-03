@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, ... }:
 
 {
   imports = [
@@ -18,4 +18,9 @@
   programs._1password-gui.enable = true;
 
   programs.wireshark.enable = true;
+
+  # Place home-files in a place that can easily be mounted by docker
+  environment.etc."hm-package" = {
+    source = config.home-manager.users.sprrw.home.activationPackage;
+  };
 }

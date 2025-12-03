@@ -3,14 +3,6 @@
 {
   options.sprrw.sandboxing = {
     enable = lib.mkEnableOption "sandboxing";
-
-    runDocker = lib.mkOption {
-      type = lib.types.anything;
-    };
-
-    homeConfig = lib.mkOption {
-      type = lib.types.anything;
-    };
   };
 
   config = let
@@ -27,11 +19,16 @@
 
         RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw
       '';
-      dockerinit = import ../../hosts/docker/dockerinit.nix {
-        inherit pkgs;
+      dockerInit = pkgs.writeShellScript "dockerinit" ''
+        set -e
 
-        homeConfig = cfg.homeConfig;
-      };
+        cp -r "/etc/hm-package/home-files/".* ~/
+        chmod -R u+w ~
+
+        export PATH="$PATH:/etc/hm-package/home-path/bin"
+
+        exec "$@"
+      '';
     in
     pkgs.writeShellScript "sandboxed-${cmd}" ''
       if ! docker inspect usermapped-img &>/dev/null; then
@@ -43,18 +40,15 @@
         --rm -it \
         -v /nix:/nix:ro \
         -v /etc/fonts:/etc/fonts:ro \
+        -v /etc/hm-package:/etc/hm-package:ro \
         ${if shareCwd then "-v $(pwd):/pwd" else ""} \
         ${if shareX11 then "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority" else ""} \
         ${if netHost then "--network host" else ""} \
         ${if shareCwd then "-w /pwd" else "-w /home/sprrw"} \
-        usermapped-img ${dockerinit} ${cmd} "$@"
+        -e TERM \
+        usermapped-img ${dockerInit} ${cmd} "$@"
     '';
   in lib.mkIf cfg.enable {
-    sprrw.nvim.sandboxed = true;
-    sprrw.gui.brave.sandboxed = false; # TODO: get around setuid sandbox issue
-
-    sprrw.sandboxing.runDocker = runDocker;
-
     home.packages = [
       (
         pkgs.runCommand "box" {} ''
