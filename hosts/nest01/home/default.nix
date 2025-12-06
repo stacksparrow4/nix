@@ -13,6 +13,7 @@
       sec.enable = true;
       term.enable = true;
       gui.enable = true;
+      sandboxing.enable = true;
     };
 
   home = {
