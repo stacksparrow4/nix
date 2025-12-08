@@ -14,6 +14,7 @@
     ./sage.nix
     ./typst.nix
     ./xml.nix
+    ./java.nix
   ];
 
   options = {
@@ -34,6 +35,7 @@
       sage.enable = true;
       typst.enable = true;
       xml.enable = true;
+      java.enable = true;
     };
   };
 }

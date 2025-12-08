@@ -33,6 +33,8 @@ vim.lsp.config.lemminx = {}
 vim.lsp.enable("lemminx")
 vim.lsp.config.cmake = {}
 vim.lsp.enable("cmake")
+vim.lsp.config.jdtls = {}
+vim.lsp.enable("jdtls")
 
 -- Setup Lua LSP for neovim dev
 vim.lsp.config.lua_ls = {
