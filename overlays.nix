@@ -16,8 +16,6 @@ builtins.listToAttrs (
   ]
 ) // (
   # Qemu breaks VMs so pin it to an exact version
-  # TODO: does this actually work :/
-  # Might need to set programs.virt-manager.package or something like that for each of them
   let
     qemu-nixpkgs = import (fetchTarball {
       url = "https://github.com/NixOS/nixpkgs/archive/c2ae88e026f9525daf89587f3cbee584b92b6134.tar.gz";
@@ -34,4 +32,10 @@ builtins.listToAttrs (
   vimPlugins = prev.vimPlugins // {
     typst-preview-nvim = pkgsUnstable.vimPlugins.typst-preview-nvim;
   };
+
+  # Flameshot is buggy in new versions
+  flameshot = (import (fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/aefcb0d50d1124314429a11ed6b7aaaedf2861c5.tar.gz";
+    sha256 = "sha256:0bsn2j5p8vf42fydf252mqhg5wfh7907wdjinzajz6pknkqdylnf";
+  }) { system = pkgsUnstable.stdenv.hostPlatform.system; }).flameshot;
 }
