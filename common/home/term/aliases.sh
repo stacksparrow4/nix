@@ -65,7 +65,7 @@ function ns-unstable() {
   NIXPKGS_ALLOW_UNFREE=1 nix shell --impure $(for i in "$@"; do echo -n ' github:NixOS/nixpkgs/nixos-unstable#'"$i"; done)
 }
 
-alias nss='nix-search --channel=25.05 -d -m 3'
+alias nss='nix-search --channel=25.11 -d -m 3'
 alias nss-unstable='nix-search --channel=unstable -d -m 3'
 
 export UV_LINK_MODE=symlink

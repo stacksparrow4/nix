@@ -8,9 +8,13 @@
   config = lib.mkIf config.sprrw.programming.git.enable {
     programs.git = {
       enable = true;
-      userEmail = "stacksparrow4@gmail.com";
-      userName = "Daniel Cooper";
-      extraConfig.safe.bareRepository = "explicit";
+      settings = {
+        user = {
+          email = "stacksparrow4@gmail.com";
+          name = "Daniel Cooper";
+        };
+        safe.bareRepository = "explicit";
+      };
     };
   };
 }
