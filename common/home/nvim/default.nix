@@ -6,6 +6,11 @@ in
 {
   options.sprrw.nvim = {
     enable = lib.mkEnableOption "nvim";
+
+    sandboxed = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
   };
 
   config = lib.mkIf cfg.enable {

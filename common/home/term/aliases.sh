@@ -38,10 +38,6 @@ function rl() {
   echo "$mypath"
 }
 
-function new-alacritty() {
-  nohup alacritty --command bash -c "$1" &>/dev/null &
-}
-
 # Necessary because of nix path order
 alias vi='nvim'
 alias vim='nvim'
@@ -69,15 +65,7 @@ function ns-unstable() {
   NIXPKGS_ALLOW_UNFREE=1 nix shell --impure $(for i in "$@"; do echo -n ' github:NixOS/nixpkgs/nixos-unstable#'"$i"; done)
 }
 
-alias nss='nix-search -d -m 3'
-alias pwnbox='docker run --rm -it -v $(pwd):/pwd stacksparrow4/dev'
-alias pwnboxgui='docker run --rm -it -v $(pwd):/pwd -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -v $HOME/.Xauthority:/home/sprrw/.Xauthority:ro --network host stacksparrow4/dev'
-function mkcd() {
-  if [[ $# -ne 2 ]]; then echo "usage: mkcd <dir>"; exit 1; fi
-  mkdir "$1"
-  cd "$1"
-}
+alias nss='nix-search --channel=25.05 -d -m 3'
+alias nss-unstable='nix-search --channel=unstable -d -m 3'
 
 export UV_LINK_MODE=symlink
-
-alias n='navi --print | xclip -selection clipboard -i && echo copied!'
