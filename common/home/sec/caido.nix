@@ -33,7 +33,7 @@
 
         nativeBuildInputs = [ makeWrapper ];
 
-        extraPkgs = pkgs: [ pkgs.libthai ];
+        extraPkgs = pkgs: with pkgs; [ libthai chromium ];
 
         extraInstallCommands = ''
           install -m 444 -D ${appimageContents}/caido.desktop -t $out/share/applications
