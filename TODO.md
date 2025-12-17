@@ -8,7 +8,6 @@
     - Looks like this could potentially be done using `nix build --dry-build -vvv` and grepping for nixpkgs
 - [ ] Figure out method to update regularly without breaking things that break often.
     - Sort things into "needs update" and "doesn't need update" baskets
-- [ ] Figure out how to close yazi nvim using escape key
 - [ ] Build home manager derivation for docker at main NixOS build time rather than at container run time
     - Need to make sure it still works on non nixos systems though
 - [ ] Make it so you can run the docker container easily (alias)

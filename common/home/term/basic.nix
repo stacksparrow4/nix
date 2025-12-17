@@ -12,7 +12,6 @@
       killall
       dig
       socat
-      yazi
       unzip
       zip
       p7zip
