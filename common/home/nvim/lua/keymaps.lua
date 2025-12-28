@@ -24,19 +24,6 @@ vim.keymap.set("n", "<S-TAB>", "<cmd>bprevious<cr>")
 vim.keymap.set("n", "<leader>d", "<cmd>bdelete<cr>")
 vim.keymap.set("n", "<leader>b", "<cmd>BufferLinePick<cr>")
 
--- Netrw
-vim.keymap.set("n", "<leader>o", "<cmd>Ex<cr>")
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = 'netrw',
-  callback = function()
-    local buf = vim.api.nvim_get_current_buf()
-    vim.keymap.set('n', 'l', '<CR>', { buffer = buf, remap = true })
-    vim.keymap.set('n', 'h', '-', { buffer = buf, remap = true })
-    vim.keymap.set('n', 'q', ':buffer #<CR>', { buffer = buf, silent = true, nowait = true })
-    vim.keymap.set('n', '<Esc>', ':buffer #<CR>', { buffer = buf, silent = true, nowait = true })
-  end,
-})
-
 -- Misc
 vim.keymap.set("n", "<leader>c", function()
   vim.fn.setreg("+", vim.fn.expand("%:~:.") .. ":" .. vim.fn.line(".") .. ":" .. vim.fn.col("."))

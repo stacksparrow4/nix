@@ -23,4 +23,6 @@
   environment.etc."hm-package" = {
     source = config.home-manager.users.sprrw.home.activationPackage;
   };
+
+  systemd.coredump.enable = false;
 }

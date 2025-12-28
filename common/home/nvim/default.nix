@@ -54,6 +54,7 @@ in
         telescope-fzf-native-nvim
         telescope-nvim
         typst-preview-nvim
+        yazi-nvim
         trouble-nvim
       ]) ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
         lua
