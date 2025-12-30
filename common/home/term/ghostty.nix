@@ -31,8 +31,6 @@
       source = "${pkgs.ghostty.terminfo}/share/terminfo";
     };
 
-    home.packages = with pkgs; [ viu ];
-
     programs.ghostty = lib.mkIf cfg.enable {
       enable = true;
 
@@ -42,6 +40,7 @@
         window-decoration = "none";
         theme = "Carbonfox";
         command = "${pkgs.tmux}/bin/tmux";
+        resize-overlay = "never";
       };
     };
   };

@@ -13,7 +13,6 @@ builtins.listToAttrs (
     "slack"
     "discord"
     "ropr" # Doesnt exist on stable
-    "viu" # Broken on stable
   ]
 ) // (
   # Qemu breaks VMs so pin it to an exact version
