@@ -21,6 +21,7 @@
       signal-desktop-bin
       lmms
       audacity
+      aseprite
     ];
 
 
