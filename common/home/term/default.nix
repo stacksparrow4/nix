@@ -2,7 +2,6 @@
 
 {
   imports = [
-    ./alacritty.nix
     ./ghostty.nix
     ./bash.nix
     ./basic.nix
@@ -17,7 +16,6 @@
   };
 
   config = lib.mkIf config.sprrw.term.enable {
-    sprrw.term.alacritty.enable = true; # TODO: only with GUI?
     sprrw.term.ghostty.enable = true; # TODO: only with GUI?
     sprrw.term.basic.enable = true;
     sprrw.term.large.enable = true;

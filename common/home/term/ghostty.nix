@@ -16,12 +16,21 @@
           default = 13;
         };
       };
+
+      installTerminfo = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+      };
     };
   };
 
   config = let
     cfg = config.sprrw.term.ghostty;
   in {
+    home.file.".terminfo" = lib.mkIf cfg.installTerminfo {
+      source = "${pkgs.ghostty.terminfo}/share/terminfo";
+    };
+
     home.packages = with pkgs; [ viu ];
 
     programs.ghostty = lib.mkIf cfg.enable {

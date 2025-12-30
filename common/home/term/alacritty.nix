@@ -1,3 +1,5 @@
+# This file is not loaded but kept for reference purposes
+
 { pkgs, lib, config, osConfig, ... }:
 
 {
