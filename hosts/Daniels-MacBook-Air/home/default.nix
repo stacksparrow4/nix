@@ -11,6 +11,10 @@
   };
 
   programs.ghostty.package = null;
+  home.file.".terminfo" = {
+    source = config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";
+  };
+  programs.ghostty.settings.env = "TERMINFO_DIRS=/Users/dan/.terminfo";
 
   sprrw = {
     nvim.enable = true;
