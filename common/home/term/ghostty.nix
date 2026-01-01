@@ -41,6 +41,7 @@
         theme = "Carbonfox";
         command = "${pkgs.tmux}/bin/tmux";
         resize-overlay = "never";
+        maximize = true;
       };
     };
   };
