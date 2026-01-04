@@ -83,4 +83,8 @@
   environment.variables = {
     GTK_THEME = "Adwaita-dark";
   };
+
+  environment.systemPackages = with pkgs; [
+    xbacklight
+  ];
 }

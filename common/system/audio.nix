@@ -4,6 +4,8 @@
   environment.systemPackages = with pkgs; [
     pavucontrol
     pasystray
+    pulseaudio
+    playerctl
   ];
 
   services.pipewire = {
