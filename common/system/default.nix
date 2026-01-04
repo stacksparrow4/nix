@@ -24,5 +24,9 @@
     source = config.home-manager.users.sprrw.home.activationPackage;
   };
 
-  systemd.coredump.enable = false;
+  systemd.coredump.enable = true;
+  systemd.coredump.extraConfig = ''
+    Storage=none
+    ProcessSizeMax=0
+  '';
 }

@@ -11,6 +11,8 @@
     ./pwn.nix
     ./scanning.nix
     ./snmp.nix
+    ./reversing.nix
+    ./mobile.nix
     ./windows
   ];
 
@@ -30,6 +32,8 @@
       scanning.enable = true;
       snmp.enable = true;
       windows.enable = true;
+      reversing.enable = true;
+      mobile.enable = true;
     };
   };
 }

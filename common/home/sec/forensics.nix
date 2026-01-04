@@ -10,6 +10,7 @@
       exiftool
       binwalk
       ent
+      wireshark
     ];
   };
 }

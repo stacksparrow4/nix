@@ -21,14 +21,11 @@
       libreoffice
       obs-studio
       blender
-      binaryninja-free
-      ghidra
       obsidian
       rofi
       flameshot
       freerdp
       bruno
-      wireshark
     ];
   };
 }
