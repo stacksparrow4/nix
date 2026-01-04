@@ -35,7 +35,7 @@
       # finds out, if available)
       bar {
             position top
-            status_command i3status
+            status_command i3blocks
       }
 
       # class                 border  backgr. text    indicator child_border
