@@ -75,7 +75,7 @@
   };
 
   environment.systemPackages = with pkgs; [
-    xbacklight
+    acpilight
     acpi
     alsa-utils
   ];
