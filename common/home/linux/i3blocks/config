@@ -37,5 +37,5 @@ interval=30
 
 # Date and time
 [time]
-command=echo "<span color='#6272a4'>DATE</span> $(date '+%Y-%m-%d %H:%M:%S')"
+command=echo "<span color='#6272a4'>DATE</span> $(date '+%Y-%m-%d %r')"
 interval=1
