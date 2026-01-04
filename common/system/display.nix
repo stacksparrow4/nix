@@ -5,20 +5,10 @@
   services.udev = {
     enable = true;
     extraHwdb = lib.mkBefore ''
-      evdev:name:*HyperX Alloy Origins:*
-        KEYBOARD_KEY_70039=esc
-
-      evdev:name:Keychron Keychron C3 Pro System Control:*
-        KEYBOARD_KEY_70039=esc
-
-      evdev:name:AT Translated Set 2 keyboard:*
-        KEYBOARD_KEY_3a=esc
-
-      evdev:name:*Razer*:*
+      evdev:input:b*v*p*
         KEYBOARD_KEY_3a=esc
         KEYBOARD_KEY_58=esc
         KEYBOARD_KEY_70039=esc
-
     '';
   };
 
