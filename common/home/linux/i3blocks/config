@@ -6,7 +6,7 @@ markup=pango
 
 # Disk usage
 [disk]
-command=echo "<span color='#ffb86c'>DISK</span> $(df -h / | awk 'NR==2 {print $3 "/" $2}')"
+command=echo "<span color='#ffb86c'>DISK</span> $(df -h / | awk 'NR==2 {print $4}')"
 interval=30
 
 # CPU usage
@@ -32,7 +32,7 @@ signal=10
 
 # Battery
 [battery]
-command=if [ -d /sys/class/power_supply/BAT* ] 2>/dev/null; then echo "<span color='#f1fa8c'>BAT</span> $(acpi -b | grep -o '[0-9]*%' | head -1)"; fi
+command=if [ -d /sys/class/power_supply/BAT* ] 2>/dev/null; then bat_line=$(acpi -b | grep Battery | head -1); echo "<span color='#f1fa8c'>BAT</span> $(echo "$bat_line" | grep -o '[0-9]*%') $(echo "$bat_line" | awk -F'[,:] ' '{print $2}')"; fi
 interval=30
 
 # Date and time
