@@ -18,6 +18,14 @@ alias gf='git fetch'
 alias grv='git remote -v'
 alias gbv='git branch -v'
 
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
+
 function rl() {
   local mypath
   if echo "$1" | grep -qE "^/"; then

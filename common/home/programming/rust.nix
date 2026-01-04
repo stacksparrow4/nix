@@ -6,11 +6,17 @@
   };
 
   config = lib.mkIf config.sprrw.programming.rust.enable {
-    home.packages = with pkgs; [
-      cargo
-      rustc
-      rust-analyzer
-      rustfmt
-    ];
+    home = {
+      sessionPath = [
+        "$HOME/.cargo/bin"
+      ];
+
+      packages = with pkgs; [
+        cargo
+        rustc
+        rust-analyzer
+        rustfmt
+      ];
+    };
   };
 }
