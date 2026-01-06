@@ -32,7 +32,7 @@ signal=10
 
 # Battery
 [battery]
-command=if [ -d /sys/class/power_supply/BAT* ] 2>/dev/null; then bat_line=$(acpi -b | grep Battery | head -1); echo "<span color='#f1fa8c'>BAT</span> $(echo "$bat_line" | grep -o '[0-9]*%') $(echo "$bat_line" | awk -F'[,:] ' '{print $2}')"; fi
+command=if [ -d /sys/class/power_supply/BAT* ] 2>/dev/null; then bat_line=$(acpi -b | grep Battery | grep -v ' 0%' | head -1); echo "<span color='#f1fa8c'>BAT</span> $(echo "$bat_line" | grep -o '[0-9]*%') $(echo "$bat_line" | awk -F'[,:] ' '{print $2}')"; fi
 interval=30
 
 # Date and time
