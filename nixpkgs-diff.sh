@@ -2,57 +2,47 @@
 
 set -e
 
-for inputname in nixpkgs nixpkgs-unstable; do
+nixpkgspathbefore=$(nix eval --raw --impure --expr '(builtins.getFlake "path://'"$(pwd)"'").inputs.nixpkgs.outPath')
+nixpkgsunstablepathbefore=$(nix eval --raw --impure --expr '(builtins.getFlake "path://'"$(pwd)"'").inputs.nixpkgs-unstable.outPath')
+filelistbefore=$(nix build --dry-run -v ".#nixosConfigurations.$(hostname).config.system.build.toplevel" 2>&1 | grep -E '^evaluating file' | cut -d"'" -f2 | grep -E '\.nix$')
+cp flake.lock flake.lock.bak
+nix flake update
+nixpkgspathafter=$(nix eval --raw --impure --expr '(builtins.getFlake "path://'"$(pwd)"'").inputs.nixpkgs.outPath')
+nixpkgsunstablepathafter=$(nix eval --raw --impure --expr '(builtins.getFlake "path://'"$(pwd)"'").inputs.nixpkgs-unstable.outPath')
+filelistafter=$(nix build --dry-run -v ".#nixosConfigurations.$(hostname).config.system.build.toplevel" 2>&1 | grep -E '^evaluating file' | cut -d"'" -f2 | grep -E '\.nix$')
+mv flake.lock.bak flake.lock
+
+checkchanges() {
   echo "=================================================="
   echo "=================================================="
-  echo "CHECKING FOR CHANGES FOR INPUT $inputname:"
+  echo "CHECKING FOR CHANGES FOR INPUT $1:"
 
-  nix build --dry-run -v ".#nixosConfigurations.$(hostname).config.system.build.toplevel" || { echo "Failed to build!"; exit 1; }
+  before=$(echo "$filelistbefore" | grep -F "$2" | sed -E 's/^\/nix\/store\/[^\/]+\///' | sort -u)
+  after=$(echo "$filelistafter" | grep -F "$3" | sed -E 's/^\/nix\/store\/[^\/]+\///' | sort -u)
 
-  before=$(mktemp)
-  after=$(mktemp)
-
-  getnixpkgspath() {
-    nix eval --raw --impure --expr '(builtins.getFlake "path://'"$(pwd)"'").inputs.'"$inputname"'.outPath'
-  }
-
-  getnixpkgsfiles() {
-    nix build --dry-run -v ".#nixosConfigurations.$(hostname).config.system.build.toplevel" 2>&1 | grep -E '^evaluating file' | cut -d"'" -f2 | grep -F "$(getnixpkgspath)" | grep -E '\.nix$' | sed -E 's/^\/nix\/store\/[^\/]+\///' | sort -u
-  }
-
-  oldpath="$(getnixpkgspath)"
-  getnixpkgsfiles > "$before"
-  cp flake.lock flake.lock.bak
-  nix flake update
-
-  newpath="$(getnixpkgspath)"
-  if ! getnixpkgsfiles > "$after"; then
-    mv flake.lock.bak flake.lock
-    exit 1
-  fi
-
-  mv flake.lock.bak flake.lock
-
-  if diff "$before" "$after" &>/dev/null; then
+  if diff <(echo "$before") <(echo "$after") &>/dev/null; then
     echo "=================================================="
     echo "No new files were added"
   else
     echo "=================================================="
     echo "File differences:"
-    diff -u "$before" "$after" | ydiff -p cat
+    diff -u <(echo "$before") <(echo "$after") | ydiff -p cat
 
     echo "=================================================="
     echo "New files:"
-    comm -2 "$before" "$after" | while read newfile; do
-      bat --paging=never "$newpath/$newfile"
+    comm -2 <(echo "$before") <(echo "$after") | while read newfile; do
+      bat --paging=never "$3/$newfile"
     done
   fi
 
   echo "=================================================="
   echo "Changed file contents:"
-  comm -12 "$before" "$after" | while read filetodiff; do
-    if ! diff "$oldpath/$filetodiff" "$newpath/$filetodiff" &>/dev/null; then
-      diff -u "$oldpath/$filetodiff" "$newpath/$filetodiff" | ydiff -p cat
+  comm -12 <(echo "$before") <(echo "$after") | while read filetodiff; do
+    if ! diff "$2/$filetodiff" "$3/$filetodiff" &>/dev/null; then
+      diff -u "$2/$filetodiff" "$3/$filetodiff" | ydiff -p cat
     fi
   done
-done
+}
+
+checkchanges nixpkgs "$nixpkgspathbefore" "$nixpkgspathafter"
+checkchanges nixpkgs-unstable "$nixpkgsunstablepathbefore" "$nixpkgsunstablepathafter"
