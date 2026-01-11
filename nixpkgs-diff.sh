@@ -30,7 +30,7 @@ checkchanges() {
 
     echo "=================================================="
     echo "New files:"
-    comm -2 <(echo "$before") <(echo "$after") | while read newfile; do
+    comm -13 <(echo "$before") <(echo "$after") | while read newfile; do
       bat --paging=never "$3/$newfile"
     done
   fi
