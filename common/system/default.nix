@@ -17,6 +17,9 @@
   programs._1password.enable = true;
   programs._1password-gui.enable = true;
 
+  services.gnome.gnome-keyring.enable = true;
+  security.pam.services.lightdm.enableGnomeKeyring = true;
+
   programs.wireshark.enable = true;
 
   # Place home-files in a place that can easily be mounted by docker

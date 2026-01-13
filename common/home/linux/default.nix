@@ -17,5 +17,11 @@
       i3.enable = true;
       term.enable = true;
     };
+
+    # 1password stuff
+    services.gnome-keyring = {
+      enable = true;
+      components = [ "secrets" ];
+    };
   };
 }
