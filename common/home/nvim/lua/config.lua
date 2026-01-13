@@ -71,3 +71,7 @@ vim.diagnostic.config({
 -- Searching
 -- vim.opt.hlsearch = false
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+
+-- Folding
+vim.opt.foldmethod = "indent"
+vim.opt.foldlevel = 99
