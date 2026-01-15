@@ -7,7 +7,10 @@
 
   config = lib.mkIf config.sprrw.sec.mobile.enable {
     home.packages = with pkgs; [
-      frida-tools
+      (import (fetchTarball {
+        url = "https://github.com/NixOS/nixpkgs/archive/80d50fc87924c2a0d346372d242c27973cf8cdbf.tar.gz";
+        sha256 = "sha256:0qx9qw89jmzhpiilil4r0zb0w0nkxv6rjzqfwizj7x0pn88spvny";
+      }) { system = pkgs.stdenv.hostPlatform.system; }).frida-tools
       apktool
       jadx
       android-tools

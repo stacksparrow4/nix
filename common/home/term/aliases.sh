@@ -68,3 +68,5 @@ alias nss='nix-search --channel=25.11 -d -m 3'
 alias nss-unstable='nix-search --channel=unstable -d -m 3'
 
 export UV_LINK_MODE=symlink
+
+alias box-enter='docker exec -it $(docker ps | grep usermapped-img | cut -d" " -f1) $(readlink $(which bash))'
