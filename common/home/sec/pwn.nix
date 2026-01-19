@@ -14,6 +14,7 @@
       with pkgs; [
         pwndbg
         gdb
+        lldb
         (pkgs.buildEnv {
           name = "pwntools-env";
           paths = [
