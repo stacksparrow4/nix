@@ -30,6 +30,26 @@
           vendorHash = "sha256-Nve5kOxeeV1rp3ghtPK3/E3tGdzmMDW7t0CCwPyTjiY=";
         })
       )
+      (
+        let
+          dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
+            FROM ubuntu:latest
+
+            RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y wget && \
+              wget -O /usr/bin/jtool2 https://github.com/excitedplus1s/jtool2/raw/refs/heads/main/jtool2.ELF64 && \
+              chmod +x /usr/bin/jtool2
+          '';
+        in
+        pkgs.writeShellScriptBin "jtool2" ''
+          set -e
+
+          if ! docker inspect jtool2 &>/dev/null; then
+            docker build -t jtool2 ${dockerFileDir}
+          fi
+
+          docker run --rm -it -u 1000:100 -v $(pwd):/pwd -w /pwd jtool2 jtool2 "$@"
+        ''
+      )
     ];
   };
 }
