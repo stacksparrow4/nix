@@ -1,0 +1,24 @@
+% android
+
+# List packages
+<get_pkgs>
+$ user_or_system: echo -e "user-installed\nsystem\nboth"
+$ list_packages_args: if [[ "<user_or_system>" == "user-installed" ]]; then echo "-3"; elif [[ "<user_or_system>" == "system" ]]; then echo "-s"; else echo ""; fi
+$ get_pkgs: echo 'adb shell pm list packages <list_packages_args> | sed "s/^package://"'
+$ pkg: <get_pkgs>
+
+# Debug debugable application
+adb shell run-as <pkg>
+
+# Install app
+adb install -r -g -t <apk>
+$ apk: ls --color=never | grep -E '\.apk$'
+
+# Get current screen activity
+adb shell dumpsys window windows | grep mActivityRecord | head -n 1
+
+# dump info about package
+adb shell dumpsys package <pkg>
+
+# get path of installed app
+adb shell pm path <pkg>

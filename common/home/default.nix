@@ -1,3 +1,5 @@
+{ lib, ... }:
+
 {
   imports = [
     ./docker.nix
@@ -11,11 +13,20 @@
     ./sandboxing.nix
   ];
 
-  home.file.".config/nixpkgs/config.nix".text = ''
-    { allowUnfree = true; }
-  '';
+  options = {
+    sprrw.nixosRepoPath = lib.mkOption {
+      type = lib.types.str;
+      default = "nixos";
+    };
+  };
 
-  home.stateVersion = "24.11"; # Please read the comment before changing.
+  config = {
+    home.file.".config/nixpkgs/config.nix".text = ''
+      { allowUnfree = true; }
+    '';
 
-  programs.home-manager.enable = true;
+    home.stateVersion = "24.11"; # Please read the comment before changing.
+
+    programs.home-manager.enable = true;
+  };
 }
