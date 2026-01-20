@@ -65,5 +65,9 @@
         ''
       )
     ];
+
+    home.file.".xprofile".text = ''
+      ${pkgs.xorg.xhost}/bin/xhost +local:docker/sandbox
+    '';
   };
 }
