@@ -50,7 +50,7 @@
         ${if netHost then "--network host" else ""} \
         ${if shareCwd then "-w /pwd" else "-w /home/sprrw"} \
         -e TERM \
-        ${if shouldExec then "$(docker ps | grep usermapped-img | cut -d' ' -f1)" else "usermapped-img"} ${dockerInit} ${cmd} "$@"
+        ${if shouldExec then "$(docker ps --format json | jq -r 'select(.Image == \"usermapped-img\") | .ID' | while read dockerid; do echo \"$dockerid - $(docker exec \"$dockerid\" ps | tail -n +2 | head -n -1 | awk '{print $4}' | awk -F/ '{print $NF}' | tr '\\n' ' ')\"; done | fzf | awk '{print $1}')" else "usermapped-img"} ${dockerInit} ${cmd} "$@"
     '';
   in lib.mkIf cfg.enable {
     home.packages = [
