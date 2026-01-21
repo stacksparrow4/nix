@@ -30,6 +30,7 @@
         set -e
 
         ${if shouldExec then "" else "cp -r /etc/hm-package/home-files/.* ~/"}
+        ${if shouldExec then "" else "chmod -R u+w ~/.* &>/dev/null || true"}
 
         export PATH="$PATH:/etc/hm-package/home-path/bin"
 
