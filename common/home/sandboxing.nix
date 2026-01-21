@@ -3,11 +3,15 @@
 {
   options.sprrw.sandboxing = {
     enable = lib.mkEnableOption "sandboxing";
+
+    runDocker = lib.mkOption {};
+    runDockerBin = lib.mkOption {};
   };
 
   config = let
     cfg = config.sprrw.sandboxing;
-    runDocker = {
+  in lib.mkIf cfg.enable {
+    sprrw.sandboxing.runDocker = {
       cmd,
       shareCwd ? false,
       shareX11 ? false,
@@ -52,18 +56,18 @@
         -e TERM \
         ${if shouldExec then "$(docker ps --format json | jq -r 'select(.Image == \"usermapped-img\") | .ID' | while read dockerid; do echo \"$dockerid - $(docker exec \"$dockerid\" ps | tail -n +2 | head -n -1 | awk '{print $4}' | awk -F/ '{print $NF}' | tr '\\n' ' ')\"; done | fzf | awk '{print $1}')" else "usermapped-img"} ${dockerInit} ${cmd} "$@"
     '';
-  in lib.mkIf cfg.enable {
+
+    sprrw.sandboxing.runDockerBin = { binName, ... }@args: pkgs.runCommand binName {} ''
+      mkdir -p $out/bin
+      ln -s ${cfg.runDocker (removeAttrs args [ "binName" ])} $out/bin/${binName}
+    '';
+
     home.packages = [
-      (
-        pkgs.runCommand "box" {} ''
-          mkdir -p $out/bin
-          ln -s ${runDocker { cmd = "bash"; }} $out/bin/box
-          ln -s ${runDocker { cmd = "bash"; shareCwd = true; }} $out/bin/box-cwd
-          ln -s ${runDocker { cmd = "bash"; shareX11 = true; netHost = true; }} $out/bin/box-gui
-          ln -s ${runDocker { cmd = "bash"; shareCwd = true; shareX11 = true; netHost = true; }} $out/bin/box-cwd-gui
-          ln -s ${runDocker { cmd = "bash"; shouldExec = true; }} $out/bin/box-enter
-        ''
-      )
+      (cfg.runDockerBin { binName = "box"; cmd = "bash"; })
+      (cfg.runDockerBin { binName = "box-cwd"; cmd = "bash"; shareCwd = true; })
+      (cfg.runDockerBin { binName = "box-gui"; cmd = "bash"; shareX11 = true; netHost = true; })
+      (cfg.runDockerBin { binName = "box-cwd-gui"; cmd = "bash"; shareCwd = true; shareX11 = true; netHost = true; })
+      (cfg.runDockerBin { binName = "box-enter"; cmd = "bash"; shouldExec = true; })
     ];
 
     home.file.".xprofile".text = ''

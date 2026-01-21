@@ -108,5 +108,13 @@ in
       recursive = true;
       source = ./lua;
     };
+
+    home.packages = lib.mkIf config.sprrw.sandboxing.enable [
+      # # Uncomment to go back to normal nvim
+      # (lib.hiPrio (pkgs.writeShellScriptBin "nvim" ''
+      #   ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+      # ''))
+      ( lib.hiPrio (config.sprrw.sandboxing.runDockerBin { binName = "nvim"; cmd = "${config.programs.neovim.finalPackage}/bin/nvim"; shareCwd = true; shareX11 = true; netHost = true; }) )
+    ];
   };
 }
