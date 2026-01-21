@@ -114,7 +114,13 @@ in
       # (lib.hiPrio (pkgs.writeShellScriptBin "nvim" ''
       #   ${config.programs.neovim.finalPackage}/bin/nvim "$@"
       # ''))
-      ( lib.hiPrio (config.sprrw.sandboxing.runDockerBin { binName = "nvim"; cmd = "${config.programs.neovim.finalPackage}/bin/nvim"; shareCwd = true; shareX11 = true; netHost = true; }) )
+      ( lib.hiPrio (pkgs.writeShellScriptBin "nvim" ''
+        if [[ -f /.dockerenv ]]; then
+          "${config.programs.neovim.finalPackage}/bin/nvim" "$@"
+        else
+          "${config.sprrw.sandboxing.runDocker { cmd = "${config.programs.neovim.finalPackage}/bin/nvim"; shareCwd = true; shareX11 = true; netHost = true; }}" "$@"
+        fi
+      '') )
     ];
   };
 }
