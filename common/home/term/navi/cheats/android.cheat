@@ -17,8 +17,29 @@ $ apk: ls --color=never | grep -E '\.apk$'
 # Get current screen activity
 adb shell dumpsys window windows | grep mActivityRecord | head -n 1
 
-# dump info about package
+# Dump info about package
 adb shell dumpsys package <pkg>
 
-# get path of installed app
+# Get path of installed app
 adb shell pm path <pkg>
+
+# Start activity
+adb shell am start -n <pkg>/.<activity>
+
+# Start activity with intent action
+adb shell am start -a android.intent.action.VIEW -d <url>
+
+# Start activity with intent category
+adb shell am start -a android.intent.action.VIEW -c android.intent.category.HOME
+
+# Start activity with extra data
+adb shell am start -n <pkg>/.<activity> --es "<key>" "<value>"
+
+# Start activity and wait for result
+adb shell am start -W -n <pkg>/.<activity>
+
+# Query content provider
+adb shell content query --uri content://<provider_url>
+
+# Read content provider
+adb shell content read --uri content://<provider_url>

@@ -1,0 +1,4 @@
+% ios
+
+# Parse entitlements
+jtool2 --ent <ipa>

@@ -1,0 +1,4 @@
+% frida
+
+# ps
+frida-ps -Uai
