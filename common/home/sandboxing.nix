@@ -4,6 +4,10 @@
   options.sprrw.sandboxing = {
     enable = lib.mkEnableOption "sandboxing";
 
+    additionalDockerArgs = lib.mkOption {
+      default = "";
+    };
+
     runDocker = lib.mkOption {};
     runDockerBin = lib.mkOption {};
   };
@@ -47,6 +51,7 @@
         ${if shouldExec then "" else "--rm"} -it \
         ${if shouldExec then "" else "--hostname sandbox"} \
         ${if shouldExec then "" else "-v /nix:/nix:ro -v /etc/fonts:/etc/fonts:ro -v /etc/hm-package:/etc/hm-package:ro -v ${config.home.homeDirectory}/nixos:/home/sprrw/nixos:ro"} \
+        ${if shouldExec then "" else cfg.additionalDockerArgs} \
         ${if shareCwd then "-v $(pwd):/pwd" else ""} \
         ${if shareX11 then "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority" else ""} \
         ${if netHost then "--network host" else ""} \
