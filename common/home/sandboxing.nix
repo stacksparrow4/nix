@@ -20,7 +20,9 @@
       shareCwd ? false,
       shareX11 ? false,
       netHost ? false,
-      shouldExec ? false
+      shouldExec ? false,
+      stdin ? true,
+      tty ? true,
     }:
     let
       dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
@@ -36,7 +38,7 @@
         ${if shouldExec then "" else "cp -r /etc/hm-package/home-files/.* ~/"}
         ${if shouldExec then "" else "chmod -R u+w ~/.* &>/dev/null || true"}
 
-        export PATH="$PATH:/etc/hm-package/home-path/bin"
+        export PATH="/etc/hm-package/home-path/bin:$PATH"
 
         exec "$@"
       '';
@@ -47,15 +49,18 @@
       fi
 
       docker ${if shouldExec then "exec" else "run"} \
-        -u 1000:100 \
-        ${if shouldExec then "" else "--rm"} -it \
-        ${if shouldExec then "" else "--hostname sandbox"} \
-        ${if shouldExec then "" else "-v /nix:/nix:ro -v /etc/fonts:/etc/fonts:ro -v /etc/hm-package:/etc/hm-package:ro -v ${config.home.homeDirectory}/nixos:/home/sprrw/nixos:ro"} \
-        ${if shouldExec then "" else cfg.additionalDockerArgs} \
+        ${if stdin then "-i" else ""} \
+        ${if tty then "-t" else ""} \
+        ${if shouldExec then "" else ''\
+        --rm \
+        --hostname sandbox \
+        -v /nix:/nix:ro -v /etc/fonts:/etc/fonts:ro -v /etc/hm-package:/etc/hm-package:ro -v ${config.home.homeDirectory}/nixos:/home/sprrw/nixos:ro \
+        ${cfg.additionalDockerArgs} \
         ${if shareCwd then "-v $(pwd):/pwd" else ""} \
         ${if shareX11 then "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority" else ""} \
         ${if netHost then "--network host" else ""} \
-        ${if shareCwd then "-w /pwd" else "-w /home/sprrw"} \
+        ${if shareCwd then "-w /pwd" else "-w /home/sprrw"}''} \
+        -u 1000:100 \
         -e TERM \
         ${if shouldExec then "$(docker ps --format json | jq -r 'select(.Image == \"usermapped-img\") | .ID' | while read dockerid; do echo \"$dockerid - $(docker exec \"$dockerid\" ps | tail -n +2 | head -n -1 | awk '{print $4}' | awk -F/ '{print $NF}' | tr '\\n' ' ')\"; done | fzf | awk '{print $1}')" else "usermapped-img"} ${dockerInit} ${cmd} "$@"
     '';
