@@ -4,10 +4,7 @@ iconv -t utf-16le | base64 -w 0 | (echo -n 'powershell -enc '; cat; echo)
 
 % samba server, smb server
 # Start a tmp samba server
-docker run --rm -it -p 139:139 -p 445:445 -v $(pwd):/mount dperson/samba -s 'tmp;/mount;no;no;yes;tmp;tmp' -u "tmp;tmp"
-
-# Start a configured SMB server
-docker run --rm -it -p 139:139 -p 445:445 -v $(pwd):/mount dperson/samba -s '<sharename>;/mount;no;no;yes;<share_username>;<share_username>' -u "<share_username>;<share_password>"
+docker run --rm -it -p 139:139 -p 445:445 -e USERID=$(id -u) -e GROUPID=$(id -g) -v $(pwd):/mount dperson/samba -s 'tmp;/mount;no;no;yes;tmp' -u "tmp;tmp"
 
 % net use
 # Net use a SMB share
