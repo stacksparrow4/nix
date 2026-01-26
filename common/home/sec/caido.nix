@@ -15,11 +15,11 @@
       }:
       let
         pname = "caido";
-        version = "0.54.1";
+        version = "0.55.1";
 
         desktop = fetchurl {
           url = "https://caido.download/releases/v${version}/caido-desktop-v${version}-linux-x86_64.AppImage";
-          hash = "sha256-XxBrC69N4ZUwKoNsaAlxB8bCIdhT08JqUDRQyiq+EBM=";
+          hash = "sha256-zfts2h8QWTxe/dISwgKRQiSx2nD6vtE1atPfREyGX/U=";
         };
 
         appimageContents = appimageTools.extractType2 {
