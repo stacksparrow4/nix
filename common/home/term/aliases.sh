@@ -71,3 +71,6 @@ export UV_LINK_MODE=symlink
 
 alias nixurl='nix store prefetch-file'
 alias ssh='TERM=xterm-256color ssh'
+
+alias qwen='aichat -m ollama:qwen3-coder:30b'
+alias rnj='aichat -m ollama:rnj-1:8b'

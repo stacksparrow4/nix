@@ -37,7 +37,6 @@
       nix-search-cli
       sqlite
       whois
-      yazi
       # TODO: put this in a "large" packages section
       ffmpeg
     ];

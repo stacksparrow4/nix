@@ -12,6 +12,7 @@ builtins.listToAttrs (
     "_1password-cli"
     "slack"
     "discord"
+    "ollama-cuda"
     "ropr" # Doesnt exist on stable
   ]
 ) // (

@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./ai.nix
     ./docker.nix
     ./linux
     ./nvim

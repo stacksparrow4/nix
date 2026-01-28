@@ -8,6 +8,7 @@
     ./large.nix
     ./navi
     ./tmux
+    ./yazi.nix
     ./zshrc.nix
   ];
 
@@ -21,6 +22,7 @@
     sprrw.term.large.enable = true;
     sprrw.term.navi.enable = true;
     sprrw.term.tmux.enable = true;
+    sprrw.term.yazi.enable = true;
     sprrw.term.zshrc.enable = true;
   };
 }
