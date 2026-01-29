@@ -32,7 +32,7 @@
       node.enable = true;
       php.enable = true;
       rust.enable = true;
-      sage.enable = true;
+      sage.enable = false;
       typst.enable = true;
       xml.enable = true;
       java.enable = true;

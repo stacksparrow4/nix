@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, lib, inputs, ... }:
 
 {
   imports = [
@@ -6,15 +6,16 @@
   ];
 
 
-    sprrw = {
-      linux.enable = true;
-      nvim.enable = true;
-      programming.enable = true;
-      sec.enable = true;
-      term.enable = true;
-      gui.enable = true;
-      sandboxing.enable = true;
-    };
+  sprrw = {
+    linux.enable = true;
+    nvim.enable = true;
+    programming.enable = true;
+    programming.sage.enable = lib.mkForce true;
+    sec.enable = true;
+    term.enable = true;
+    gui.enable = true;
+    sandboxing.enable = true;
+  };
 
   home = {
     packages = with pkgs; [
