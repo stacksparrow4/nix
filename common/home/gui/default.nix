@@ -26,6 +26,7 @@
       flameshot
       freerdp
       bruno
+      feh
     ];
   };
 }
