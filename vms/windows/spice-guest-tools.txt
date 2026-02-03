@@ -1,0 +1,5 @@
+This is the best link:
+
+https://www.spice-space.org/download/windows/spice-guest-tools/spice-guest-tools-latest.exe
+
+I should really update powershell to use this
