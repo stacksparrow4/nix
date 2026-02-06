@@ -23,6 +23,8 @@
       shouldExec ? false,
       stdin ? true,
       tty ? true,
+      disableWorkdir ? false,
+      additionalRuntimeArgs ? 0,
     }:
     let
       dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
@@ -55,13 +57,16 @@
         --rm \
         --hostname sandbox \
         -v /nix:/nix:ro -v /etc/fonts:/etc/fonts:ro -v /etc/hm-package:/etc/hm-package:ro -v ${config.home.homeDirectory}/nixos:/home/sprrw/nixos:ro \
-        ${cfg.additionalDockerArgs} \
-        ${if shareCwd then "-v $(pwd):/pwd" else ""} \
-        ${if shareX11 then "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority" else ""} \
-        ${if netHost then "--network host" else ""} \
-        ${if shareCwd then "-w /pwd" else "-w /home/sprrw"}''} \
         -u 1000:100 \
         -e TERM \
+        ${cfg.additionalDockerArgs} \
+        ${if additionalRuntimeArgs > 0 then "\"$_ADDITIONAL_DOCKER_ARG_1\"" else "" } \
+        ${if additionalRuntimeArgs > 1 then "\"$_ADDITIONAL_DOCKER_ARG_2\"" else "" } \
+        ${if additionalRuntimeArgs > 2 then "\"$_ADDITIONAL_DOCKER_ARG_3\"" else "" } \
+        ${if additionalRuntimeArgs > 3 then "\"$_ADDITIONAL_DOCKER_ARG_4\"" else "" } \
+        ${if shareX11 then "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority" else ""} \
+        ${if netHost then "--network host" else ""} \
+        ${if shareCwd then "-w /pwd -v $(pwd):/pwd" else (if disableWorkdir then "" else "-w /home/sprrw")}''} \
         ${if shouldExec then "$(docker ps --format json | jq -r 'select(.Image == \"usermapped-img\") | .ID' | while read dockerid; do echo \"$dockerid - $(docker exec \"$dockerid\" ps | tail -n +2 | head -n -1 | awk '{print $4}' | awk -F/ '{print $NF}' | tr '\\n' ' ')\"; done | fzf | awk '{print $1}')" else "usermapped-img"} ${dockerInit} ${cmd} "$@"
     '';
 

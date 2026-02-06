@@ -13,6 +13,9 @@
     nixpkgsConfig = {
       allowUnfree = true;
       pulseaudio = true;
+      permittedInsecurePackages = [
+        "python-2.7.18.12"
+      ];
     };
     overlay = system: import ./overlays.nix (import nixpkgs-unstable { inherit system; config = nixpkgsConfig; });
     overlayedNixpkgs = system: import nixpkgs {

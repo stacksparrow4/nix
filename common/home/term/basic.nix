@@ -19,6 +19,10 @@
       xclip
       uv
       (python3.withPackages (pypkgs: with pypkgs; [ requests ]))
+      (runCommand "python2" {} ''
+        mkdir -p $out/bin
+        ln -s ${python2}/bin/python $out/bin/python2
+      '')
       openssl
       jq
       jless

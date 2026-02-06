@@ -74,3 +74,4 @@ alias ssh='TERM=xterm-256color ssh'
 
 alias qwen='aichat -m ollama:qwen3-coder:30b'
 alias rnj='aichat -m ollama:rnj-1:8b'
+alias gpt='aichat -m ollama:gpt-oss:20b'

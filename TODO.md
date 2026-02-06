@@ -1,3 +1,4 @@
+- [ ] Vim sandbox script is a bit smarter, instead of sandboxing current dir, it sandboxes based on the path supplied
 - [ ] No lib.mkIf sandboxing, instead do it inside sandboxing.nix and enable passthrough on the docker wrapper scripts
 - [ ] Backup nvim if sandboxing is glitched
 - [ ] Sandbox Caido (at least server, preferably both)

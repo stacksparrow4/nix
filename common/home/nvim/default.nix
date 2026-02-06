@@ -118,7 +118,16 @@ in
         if [[ -f /.dockerenv ]]; then
           "${config.programs.neovim.finalPackage}/bin/nvim" "$@"
         else
-          "${config.sprrw.sandboxing.runDocker { cmd = "${config.programs.neovim.finalPackage}/bin/nvim"; shareCwd = true; shareX11 = true; netHost = true; }}" "$@"
+          if [[ $# -eq 1 ]] && [[ "$1" == /* ]]; then
+            share_dir=$(dirname "$1")
+            share_file=$(realpath --relative-to="$share_dir" "$1")
+            if [[ -z "$share_file" ]]; then
+              exit 1;
+            fi
+            _ADDITIONAL_DOCKER_ARG_1=-w _ADDITIONAL_DOCKER_ARG_2=/pwd _ADDITIONAL_DOCKER_ARG_3=-v _ADDITIONAL_DOCKER_ARG_4="$share_dir:/pwd" "${config.sprrw.sandboxing.runDocker { cmd = "${config.programs.neovim.finalPackage}/bin/nvim"; shareX11 = true; netHost = true; disableWorkdir = true; additionalRuntimeArgs = 4; }}" "$share_file"
+          else
+            "${config.sprrw.sandboxing.runDocker { cmd = "${config.programs.neovim.finalPackage}/bin/nvim"; shareCwd = true; shareX11 = true; netHost = true; }}" "$@"
+          fi
         fi
       '') )
     ];
