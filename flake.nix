@@ -10,13 +10,7 @@
 
   outputs = { nixpkgs, nixpkgs-unstable, home-manager, ... }@inputs:
   let
-    nixpkgsConfig = {
-      allowUnfree = true;
-      pulseaudio = true;
-      permittedInsecurePackages = [
-        "python-2.7.18.12"
-      ];
-    };
+    nixpkgsConfig = import ./nixpkgs-config.nix;
     overlay = system: import ./overlays.nix (import nixpkgs-unstable { inherit system; config = nixpkgsConfig; });
     overlayedNixpkgs = system: import nixpkgs {
       inherit system;

@@ -110,10 +110,6 @@ in
     };
 
     home.packages = lib.mkIf config.sprrw.sandboxing.enable [
-      # # Uncomment to go back to normal nvim
-      # (lib.hiPrio (pkgs.writeShellScriptBin "nvim" ''
-      #   ${config.programs.neovim.finalPackage}/bin/nvim "$@"
-      # ''))
       ( lib.hiPrio (pkgs.writeShellScriptBin "nvim" ''
         if [[ -f /.dockerenv ]]; then
           "${config.programs.neovim.finalPackage}/bin/nvim" "$@"
@@ -130,6 +126,10 @@ in
           fi
         fi
       '') )
+      (pkgs.runCommand "nvim-unsandboxed" {} ''
+        mkdir -p $out/bin
+        ln -s ${config.programs.neovim.finalPackage}/bin/nvim $out/bin/nvim-unsandboxed
+      '')
     ];
   };
 }

@@ -1,4 +1,5 @@
-- [ ] Vim sandbox script is a bit smarter, instead of sandboxing current dir, it sandboxes based on the path supplied
+- [ ] Make the sandbox script much less cursed.
+    - Probably make some thing that converts nix structure into the docker command more directly. Like { "-v" = "$ENVVAR:/pwd"; "--rm" = true; }
 - [ ] No lib.mkIf sandboxing, instead do it inside sandboxing.nix and enable passthrough on the docker wrapper scripts
 - [ ] Backup nvim if sandboxing is glitched
 - [ ] Sandbox Caido (at least server, preferably both)

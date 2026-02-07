@@ -22,14 +22,7 @@
   };
 
   config = {
-    home.file.".config/nixpkgs/config.nix".text = ''
-      {
-        allowUnfree = true;
-        permittedInsecurePackages = [
-          "python-2.7.18.12"
-        ];
-      }
-    '';
+    home.file.".config/nixpkgs/config.nix".source = ../../nixpkgs-config.nix;
 
     home.stateVersion = "24.11"; # Please read the comment before changing.
 
