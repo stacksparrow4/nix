@@ -7,6 +7,8 @@
 
     runDocker = lib.mkOption {};
     runDockerBin = lib.mkOption {};
+
+    recipes = lib.mkOption {};
   };
 
   config = let
@@ -73,21 +75,26 @@
       ln -s "${cfg.runDocker (removeAttrs args [ "binName" ])}" "$out/bin/${binName}"
     '');
 
+    sprrw.sandboxing.recipes = let
+      dir_as_pwd_starter = dir: "-it -w /pwd -v \"${dir}\":/pwd";
+    in {
+      home_dir_starter = "-it -w /home/sprrw";
+      inherit dir_as_pwd_starter;
+      pwd_starter = dir_as_pwd_starter "$(pwd)";
+      x11_forward = "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority --network host";
+    };
+
     home.packages = [
-      (cfg.runDockerBin { binName = "box"; beforeTargetArgs = "-it -w /home/sprrw"; afterTargetArgs = "bash"; })
-      (cfg.runDockerBin { binName = "box-cwd"; beforeTargetArgs = "-it -w /pwd -v $(pwd):/pwd"; afterTargetArgs = "bash"; })
+      (cfg.runDockerBin { binName = "box"; beforeTargetArgs = cfg.recipes.home_dir_starter; afterTargetArgs = "bash"; })
+      (cfg.runDockerBin { binName = "box-cwd"; beforeTargetArgs = cfg.recipes.pwd_starter; afterTargetArgs = "bash"; })
       (cfg.runDockerBin {
         binName = "box-gui";
-        beforeTargetArgs = "-it -w /home/sprrw -e DISPLAY "
-          + "-v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority "
-          + "--network host";
+        beforeTargetArgs = cfg.recipes.home_dir_starter + " " + cfg.recipes.x11_forward;
         afterTargetArgs = "bash";
       })
       (cfg.runDockerBin {
         binName = "box-cwd-gui";
-        beforeTargetArgs = "-it -w /pwd -v $(pwd):/pwd -e DISPLAY "
-          + "-v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority "
-          + "--network host";
+        beforeTargetArgs = cfg.recipes.pwd_starter + " " + cfg.recipes.x11_forward;
         afterTargetArgs = "bash";
       })
       (cfg.runDockerBin { binName = "box-enter"; shouldExec = true; beforeTargetArgs = "-it"; afterTargetArgs = "bash"; })

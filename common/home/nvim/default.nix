@@ -119,16 +119,14 @@ in
               exit 1;
             fi
             SHARE_DIR="$share_dir" "${config.sprrw.sandboxing.runDocker {
-              beforeTargetArgs = "-it -w /pwd -v \"$SHARE_DIR\":/pwd -e DISPLAY "
-                + "-v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority "
-                + "--network host" + cfg.sandboxAdditionalDockerArgs;
+              beforeTargetArgs = (config.sprrw.sandboxing.recipes.dir_as_pwd_starter "$SHARE_DIR") + " "
+                + config.sprrw.sandboxing.recipes.x11_forward + " "
+                + cfg.sandboxAdditionalDockerArgs;
               afterTargetArgs = "${config.programs.neovim.finalPackage}/bin/nvim";
             }}" "$share_file"
           else
             "${config.sprrw.sandboxing.runDocker {
-              beforeTargetArgs = "-it -w /pwd -v $(pwd):/pwd -e DISPLAY "
-                + "-v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority "
-                + "--network host " + cfg.sandboxAdditionalDockerArgs;
+              beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter + " " + config.sprrw.sandboxing.recipes.x11_forward + " " + cfg.sandboxAdditionalDockerArgs;
               afterTargetArgs = "${config.programs.neovim.finalPackage}/bin/nvim";
             }}" "$@"
           fi

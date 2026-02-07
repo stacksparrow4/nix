@@ -1,4 +1,3 @@
-- [ ] Common sandboxing docker options database
 - [ ] If sandboxed vim opens a dir, it opens the dir as the sandbox mount
 - [ ] No lib.mkIf sandboxing, instead do it inside sandboxing.nix and enable passthrough on the docker wrapper scripts
 - [ ] Backup nvim if sandboxing is glitched
