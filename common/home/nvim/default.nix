@@ -7,15 +7,13 @@ in
   options.sprrw.nvim = {
     enable = lib.mkEnableOption "nvim";
 
-    sandboxed = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
+    sandboxAdditionalDockerArgs = lib.mkOption {
+      type = lib.types.str;
+      default = "";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    # https://dev.to/anurag_pramanik/how-to-enable-undercurl-in-neovim-terminal-and-tmux-setup-guide-2ld7
-    
     programs.neovim = {
       enable = true;
       viAlias = true;
@@ -120,9 +118,19 @@ in
             if [[ -z "$share_file" ]]; then
               exit 1;
             fi
-            _ADDITIONAL_DOCKER_ARG_1=-w _ADDITIONAL_DOCKER_ARG_2=/pwd _ADDITIONAL_DOCKER_ARG_3=-v _ADDITIONAL_DOCKER_ARG_4="$share_dir:/pwd" "${config.sprrw.sandboxing.runDocker { cmd = "${config.programs.neovim.finalPackage}/bin/nvim"; shareX11 = true; netHost = true; disableWorkdir = true; additionalRuntimeArgs = 4; }}" "$share_file"
+            SHARE_DIR="$share_dir" "${config.sprrw.sandboxing.runDocker {
+              beforeTargetArgs = "-it -w /pwd -v \"$SHARE_DIR\":/pwd -e DISPLAY "
+                + "-v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority "
+                + "--network host" + cfg.sandboxAdditionalDockerArgs;
+              afterTargetArgs = "${config.programs.neovim.finalPackage}/bin/nvim";
+            }}" "$share_file"
           else
-            "${config.sprrw.sandboxing.runDocker { cmd = "${config.programs.neovim.finalPackage}/bin/nvim"; shareCwd = true; shareX11 = true; netHost = true; }}" "$@"
+            "${config.sprrw.sandboxing.runDocker {
+              beforeTargetArgs = "-it -w /pwd -v $(pwd):/pwd -e DISPLAY "
+                + "-v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority "
+                + "--network host " + cfg.sandboxAdditionalDockerArgs;
+              afterTargetArgs = "${config.programs.neovim.finalPackage}/bin/nvim";
+            }}" "$@"
           fi
         fi
       '') )

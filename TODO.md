@@ -1,5 +1,5 @@
-- [ ] Make the sandbox script much less cursed.
-    - Probably make some thing that converts nix structure into the docker command more directly. Like { "-v" = "$ENVVAR:/pwd"; "--rm" = true; }
+- [ ] Common sandboxing docker options database
+- [ ] If sandboxed vim opens a dir, it opens the dir as the sandbox mount
 - [ ] No lib.mkIf sandboxing, instead do it inside sandboxing.nix and enable passthrough on the docker wrapper scripts
 - [ ] Backup nvim if sandboxing is glitched
 - [ ] Sandbox Caido (at least server, preferably both)

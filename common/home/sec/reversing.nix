@@ -52,7 +52,7 @@
             };
           });
         in
-          config.sprrw.sandboxing.runDockerBin { binName = "webcrack"; cmd = "${webcrack}/bin/webcrack"; shareCwd = true; tty = false; }
+          config.sprrw.sandboxing.runDockerBin { binName = "webcrack"; beforeTargetArgs = "-i -w /pwd -v $(pwd):/pwd"; afterTargetArgs = "${webcrack}/bin/webcrack"; }
       )
     ];
   };

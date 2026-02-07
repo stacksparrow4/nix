@@ -2,11 +2,8 @@
 
 {
   options.sprrw.sandboxing = {
+    # Sandboxing code is always loaded but apps can use this switch to follow an "unsandboxed path" vs a "sandboxed path"
     enable = lib.mkEnableOption "sandboxing";
-
-    additionalDockerArgs = lib.mkOption {
-      default = "";
-    };
 
     runDocker = lib.mkOption {};
     runDockerBin = lib.mkOption {};
@@ -14,17 +11,11 @@
 
   config = let
     cfg = config.sprrw.sandboxing;
-  in lib.mkIf cfg.enable {
+  in {
     sprrw.sandboxing.runDocker = {
-      cmd,
-      shareCwd ? false,
-      shareX11 ? false,
-      netHost ? false,
       shouldExec ? false,
-      stdin ? true,
-      tty ? true,
-      disableWorkdir ? false,
-      additionalRuntimeArgs ? 0,
+      beforeTargetArgs ? "",
+      afterTargetArgs,
     }:
     let
       dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
@@ -37,53 +28,72 @@
       dockerInit = pkgs.writeShellScript "dockerinit" ''
         set -e
 
-        ${if shouldExec then "" else "cp -r /etc/hm-package/home-files/.* ~/"}
-        ${if shouldExec then "" else "chmod -R u+w ~/.* &>/dev/null || true"}
+        ${if shouldExec then "" else ''
+        cp -r /etc/hm-package/home-files/.* ~/
+        chmod -R u+w ~/.* &>/dev/null || true
+        ''}
 
         export PATH="/etc/hm-package/home-path/bin:$PATH"
 
         exec "$@"
       '';
     in
-    pkgs.writeShellScript "sandboxed-${cmd}" ''
+    pkgs.writeShellScript "sandbox-wrapper" (''
       if ! docker inspect usermapped-img &>/dev/null; then
         docker build -t usermapped-img ${dockerFileDir}
       fi
+    '' + (if shouldExec then ''
+      targets=$(docker ps --format json | jq -r 'select(.Image == "usermapped-img") | .ID')
 
-      docker ${if shouldExec then "exec" else "run"} \
-        ${if stdin then "-i" else ""} \
-        ${if tty then "-t" else ""} \
-        ${if shouldExec then "" else ''\
-        --rm \
-        --hostname sandbox \
-        -v /nix:/nix:ro -v /etc/fonts:/etc/fonts:ro -v /etc/hm-package:/etc/hm-package:ro -v ${config.home.homeDirectory}/nixos:/home/sprrw/nixos:ro \
-        -u 1000:100 \
-        -e TERM \
-        ${cfg.additionalDockerArgs} \
-        ${if additionalRuntimeArgs > 0 then "\"$_ADDITIONAL_DOCKER_ARG_1\"" else "" } \
-        ${if additionalRuntimeArgs > 1 then "\"$_ADDITIONAL_DOCKER_ARG_2\"" else "" } \
-        ${if additionalRuntimeArgs > 2 then "\"$_ADDITIONAL_DOCKER_ARG_3\"" else "" } \
-        ${if additionalRuntimeArgs > 3 then "\"$_ADDITIONAL_DOCKER_ARG_4\"" else "" } \
-        ${if shareX11 then "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority" else ""} \
-        ${if netHost then "--network host" else ""} \
-        ${if shareCwd then "-w /pwd -v $(pwd):/pwd" else (if disableWorkdir then "" else "-w /home/sprrw")}''} \
-        ${if shouldExec then "$(docker ps --format json | jq -r 'select(.Image == \"usermapped-img\") | .ID' | while read dockerid; do echo \"$dockerid - $(docker exec \"$dockerid\" ps | tail -n +2 | head -n -1 | awk '{print $4}' | awk -F/ '{print $NF}' | tr '\\n' ' ')\"; done | fzf | awk '{print $1}')" else "usermapped-img"} ${dockerInit} ${cmd} "$@"
-    '';
+      if [[ -z "$targets" ]]; then
+        echo "No valid sandboxes found"
+        exit 1
+      fi
 
-    sprrw.sandboxing.runDockerBin = { binName, ... }@args: pkgs.runCommand binName {} ''
+      target=$(echo "$targets" | while read dockerid; do
+        echo "$dockerid - $(docker exec "$dockerid" ps | tail -n +2 | head -n -1 | awk '{print $4}' | awk -F/ '{print $NF}' | tr '\n' ' ')";
+      done | fzf | awk '{print $1}')
+
+      if [[ -z "$target" ]]; then
+        echo "Cancelled."
+        exit 1
+      fi
+
+      docker exec ${beforeTargetArgs} "$target" "${dockerInit}" ${afterTargetArgs} "$@"
+    '' else ''
+      docker run --rm --hostname sandbox \
+        -v /nix:/nix:ro -v /etc/fonts:/etc/fonts:ro -v /etc/hm-package:/etc/hm-package:ro \
+        -v ${config.home.homeDirectory}/nixos:/home/sprrw/nixos:ro \
+        -u 1000:100 -e TERM \
+        ${beforeTargetArgs} usermapped-img "${dockerInit}" ${afterTargetArgs} "$@"
+    ''));
+
+    sprrw.sandboxing.runDockerBin = { binName, ... }@args: (pkgs.runCommand binName {} ''
       mkdir -p $out/bin
-      ln -s ${cfg.runDocker (removeAttrs args [ "binName" ])} $out/bin/${binName}
-    '';
+      ln -s "${cfg.runDocker (removeAttrs args [ "binName" ])}" "$out/bin/${binName}"
+    '');
 
     home.packages = [
-      (cfg.runDockerBin { binName = "box"; cmd = "bash"; })
-      (cfg.runDockerBin { binName = "box-cwd"; cmd = "bash"; shareCwd = true; })
-      (cfg.runDockerBin { binName = "box-gui"; cmd = "bash"; shareX11 = true; netHost = true; })
-      (cfg.runDockerBin { binName = "box-cwd-gui"; cmd = "bash"; shareCwd = true; shareX11 = true; netHost = true; })
-      (cfg.runDockerBin { binName = "box-enter"; cmd = "bash"; shouldExec = true; })
+      (cfg.runDockerBin { binName = "box"; beforeTargetArgs = "-it -w /home/sprrw"; afterTargetArgs = "bash"; })
+      (cfg.runDockerBin { binName = "box-cwd"; beforeTargetArgs = "-it -w /pwd -v $(pwd):/pwd"; afterTargetArgs = "bash"; })
+      (cfg.runDockerBin {
+        binName = "box-gui";
+        beforeTargetArgs = "-it -w /home/sprrw -e DISPLAY "
+          + "-v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority "
+          + "--network host";
+        afterTargetArgs = "bash";
+      })
+      (cfg.runDockerBin {
+        binName = "box-cwd-gui";
+        beforeTargetArgs = "-it -w /pwd -v $(pwd):/pwd -e DISPLAY "
+          + "-v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority "
+          + "--network host";
+        afterTargetArgs = "bash";
+      })
+      (cfg.runDockerBin { binName = "box-enter"; shouldExec = true; beforeTargetArgs = "-it"; afterTargetArgs = "bash"; })
     ];
 
-    home.file.".xprofile".text = ''
+    home.file.".xprofile".text = lib.mkIf cfg.enable ''
       ${pkgs.xorg.xhost}/bin/xhost +local:docker/sandbox
     '';
   };
