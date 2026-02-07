@@ -26,7 +26,7 @@ interval=10
 
 # Volume
 [volume]
-command=echo "<span color='#bd93f9'>VOL</span> $(amixer get Master | tail -1 | awk '{print $5}' | tr -d '[]')"
+command=echo "<span color='#bd93f9'>VOL</span> $(amixer get Master | tail -1 | grep -oE '[^ ]*%[^ ]*' | tr -d '[]')"
 interval=5
 signal=10
 
