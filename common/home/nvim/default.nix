@@ -113,8 +113,13 @@ in
           "${config.programs.neovim.finalPackage}/bin/nvim" "$@"
         else
           if [[ $# -eq 1 ]] && [[ "$1" == /* ]]; then
-            share_dir=$(dirname "$1")
-            share_file=$(realpath --relative-to="$share_dir" "$1")
+            if [[ -d "$1" ]]; then
+              share_dir=$1
+              share_file=.
+            else
+              share_dir=$(dirname "$1")
+              share_file=$(realpath --relative-to="$share_dir" "$1")
+            fi
             if [[ -z "$share_file" ]]; then
               exit 1;
             fi

@@ -1,6 +1,2 @@
-- [ ] If sandboxed vim opens a dir, it opens the dir as the sandbox mount
-- [ ] No lib.mkIf sandboxing, instead do it inside sandboxing.nix and enable passthrough on the docker wrapper scripts
-- [ ] Backup nvim if sandboxing is glitched
-- [ ] Sandbox Caido (at least server, preferably both)
 - [ ] Sandbox browser properly
     - https://github.com/NixOS/nixpkgs/blob/b6a8526db03f735b89dd5ff348f53f752e7ddc8e/pkgs/applications/networking/browsers/chromium/common.nix#L671
