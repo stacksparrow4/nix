@@ -14,6 +14,7 @@
     ./reversing.nix
     ./mobile.nix
     ./windows
+    ./jwttool.nix
   ];
 
   options = {
@@ -34,6 +35,7 @@
       windows.enable = true;
       reversing.enable = true;
       mobile.enable = true;
+      jwttool.enable = true;
     };
   };
 }

@@ -1,3 +1,4 @@
 - [ ] Stop moving .git to tmp
+- [ ] With docker mounts, if the dir doesn't exist docker will create it. But this means its created as root with bad dir ownership. Eg. jwt_tool config
 - [ ] Sandbox browser properly
     - https://github.com/NixOS/nixpkgs/blob/b6a8526db03f735b89dd5ff348f53f752e7ddc8e/pkgs/applications/networking/browsers/chromium/common.nix#L671
