@@ -16,6 +16,15 @@ builtins.listToAttrs (
     "ropr" # Doesnt exist on stable
   ]
 ) // (
+  let
+    manPatch = import (fetchTarball {
+      url = "https://github.com/NixOS/nixpkgs/archive/fa83fd837f3098e3e678e6cf017b2b36102c7211.tar.gz";
+      sha256 = "sha256:1jig9kwjd52brwfm6n4pipqn1qfjlpasjhfsb8di70cb87z4xdbv";
+    }) { system = pkgsUnstable.stdenv.hostPlatform.system; };
+  in {
+    linux-manual = manPatch.linux-manual;
+  }
+) // (
   # Qemu breaks VMs so pin it to an exact version
   let
     qemu-nixpkgs = import (fetchTarball {
