@@ -13,10 +13,10 @@
     ];
 
   # Swap
-  swapDevices = [{
-    device = "/swapfile";
-    size = 32 * 1024;
-  }];
+  # swapDevices = [{
+    # device = "/swapfile";
+    # size = 32 * 1024;
+  # }];
 
   # Set bg image
   services.xserver.displayManager.lightdm.background = ../bg.png;

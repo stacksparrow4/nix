@@ -47,19 +47,6 @@
           docker run --rm -it -u 1000:100 -v $(pwd):/pwd -w /pwd jtool2 jtool2 "$@"
         ''
       )
-      (
-        let
-          disarmSrc = fetchTarball {
-            url = "https://newosxbook.com/tools/disarm.tgz";
-            sha256 = "sha256:0685db56yqr9mdqdxkv1ai7g8yvqz8s58cz71ql2xfdc96pnxbbf";
-          };
-        in
-        pkgs.writeShellScriptBin "disarm" ''
-          set -e
-
-          docker run --rm -it -u 1000:100 -v $(pwd):/pwd -v ${disarmSrc}:${disarmSrc}:ro -w /pwd ubuntu:latest ${disarmSrc}/binaries/disarm.linux.x86_64 "$@"
-        ''
-      )
     ];
   };
 }
