@@ -100,8 +100,10 @@
       (cfg.runDockerBin { binName = "box-enter"; shouldExec = true; beforeTargetArgs = "-it"; afterTargetArgs = "bash"; })
     ];
 
-    home.file.".xprofile".text = lib.mkIf cfg.enable ''
-      ${pkgs.xorg.xhost}/bin/xhost +local:docker/sandbox
-    '';
+    home.file = lib.mkIf cfg.enable {
+      ".xprofile".text =  ''
+        ${pkgs.xorg.xhost}/bin/xhost +local:docker/sandbox
+      '';
+    };
   };
 }

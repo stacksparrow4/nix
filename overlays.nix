@@ -23,6 +23,7 @@ builtins.listToAttrs (
     }) { system = pkgsUnstable.stdenv.hostPlatform.system; };
   in {
     linux-manual = manPatch.linux-manual;
+    inetutils = manPatch.inetutils;
   }
 ) // (
   # Qemu breaks VMs so pin it to an exact version

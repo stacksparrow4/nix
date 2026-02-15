@@ -17,6 +17,7 @@
   programs.ghostty.settings.env = "TERMINFO_DIRS=/Users/dan/.terminfo";
 
   sprrw = {
+    programming.sage.enable = lib.mkForce false;
     nvim.enable = true;
     programming.enable = true;
     term = {
