@@ -1,8 +1,17 @@
+{ config, lib, ... }:
+
 {
-  # Need to find a way to stop this conflicting with stuff
-  home.file.".docker/config.json".text = ''
-    {
+  options.sprrw.docker-config = {
+    enable = lib.mkEnableOption "docker-config";
+  };
+
+  config = let
+    cfg = config.sprrw.docker-config;
+  in lib.mkIf cfg.enable {
+    home.file.".docker/config.json".text = ''
+      {
         "detachKeys": "ctrl-z,z"
-    }
-  '';
+      }
+    '';
+  };
 }

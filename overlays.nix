@@ -12,7 +12,6 @@ builtins.listToAttrs (
     "_1password-cli"
     "slack"
     "discord"
-    "ollama-cuda"
     "ropr" # Doesnt exist on stable
   ]
 ) // (
@@ -24,6 +23,16 @@ builtins.listToAttrs (
   in {
     linux-manual = manPatch.linux-manual;
     inetutils = manPatch.inetutils;
+  }
+) // (
+  # Ollama updates way too often and takes too long to build
+  let
+    ollamaPkgs = import (fetchTarball {
+      url = "https://github.com/NixOS/nixpkgs/archive/a82ccc39b39b621151d6732718e3e250109076fa.tar.gz";
+      sha256 = "sha256:1664s8ffaa3hcvz4d4hwca2l6xl25j8dvzxwmd2ckcskcncq1zc1";
+    }) { system = pkgsUnstable.stdenv.hostPlatform.system; config = import ./nixpkgs-config.nix; };
+  in {
+    ollama-cuda = ollamaPkgs.ollama-cuda;
   }
 ) // (
   # Qemu breaks VMs so pin it to an exact version

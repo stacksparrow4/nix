@@ -15,6 +15,7 @@
     term.enable = true;
     gui.enable = true;
     sandboxing.enable = true;
+    docker-config.enable = true;
   };
 
   home = {
