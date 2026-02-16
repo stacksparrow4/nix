@@ -29,7 +29,8 @@ if ((Get-Command "choco.exe" -ErrorAction SilentlyContinue) -eq $null) {
   echo "Installed choco"
 }
 
-choco install -y Firefox dnspy processhacker procexp x64dbg.portable visualstudio2022community
+choco feature enable -n allowGlobalConfirmation
+choco install -y Firefox dnspyex processhacker procexp x64dbg.portable visualstudio2022community
 
 $confirmation = Read-Host "Do you wish to set MTU? (y/n)"
 if ($confirmation -eq 'y' -or $confirmation -eq 'Y') {

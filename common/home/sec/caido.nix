@@ -22,6 +22,18 @@
         docker run --rm -d -p 8080:8080 --name caido -v "$HOME/.local/share/caido-docker:/home/caido/.local/share/caido" caido/caido caido-cli --allow-guests --no-renderer-sandbox --listen 0.0.0.0:8080
         '';
       })
+      (pkgs.writeShellApplication {
+        name = "caido-stop";
+        text = ''
+        docker stop caido
+        '';
+      })
+      (pkgs.writeShellApplication {
+        name = "caido-update";
+        text = ''
+        docker pull caido/caido
+        '';
+      })
     ];
   };
 }
