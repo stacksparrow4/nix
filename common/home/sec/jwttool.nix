@@ -48,7 +48,11 @@
           runHook postInstall
         '';
       };
-      jwttool_boxed = config.sprrw.sandboxing.runDockerBin { binName = "jwt_tool"; beforeTargetArgs = "-v $HOME/.jwt_tool:/home/sprrw/.jwt_tool"; afterTargetArgs = "${jwttool}/bin/jwt_tool"; };
-    in [(jwttool_boxed)];
+      jwttool_boxed = config.sprrw.sandboxing.runDockerBin {
+        binName = "jwt_tool";
+        beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter + " -v $HOME/.jwt_tool:/home/sprrw/.jwt_tool";
+        afterTargetArgs = "${jwttool}/bin/jwt_tool";
+      };
+    in [jwttool_boxed];
   };
 }

@@ -5,6 +5,7 @@
     ./i3.nix
     ./rofi.nix
     ./term.nix
+    ./yubikey.nix
   ];
 
   options = {
@@ -16,6 +17,7 @@
       rofi.enable = true;
       i3.enable = true;
       term.enable = true;
+      yubikey.enable = true;
     };
 
     # 1password stuff

@@ -4,6 +4,7 @@
   imports = [
     ./c.nix
     ./databases.nix
+    ./dotnet.nix
     ./git.nix
     ./go.nix
     ./kubernetes.nix
@@ -25,6 +26,7 @@
     sprrw.programming = {
       c.enable = true;
       databases.enable = true;
+      dotnet.enable = true;
       git.enable = true;
       go.enable = true;
       kubernetes.enable = true;

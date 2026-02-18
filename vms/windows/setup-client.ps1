@@ -32,6 +32,15 @@ if ((Get-Command "choco.exe" -ErrorAction SilentlyContinue) -eq $null) {
 choco feature enable -n allowGlobalConfirmation
 choco install -y Firefox dnspyex processhacker procexp x64dbg.portable visualstudio2022community
 
+$confirmation = Read-Host "Do you wish to install OpenSSH Server? (y/n)"
+if ($confirmation -eq 'y' -or $confirmation -eq 'Y') {
+  echo "Installing OpenSSH Server..."
+  Add-WindowsCapability -Online -Name OpenSSH.Server
+  echo "Done"
+} else {
+  echo "Not installing OpenSSH Server"
+}
+
 $confirmation = Read-Host "Do you wish to set MTU? (y/n)"
 if ($confirmation -eq 'y' -or $confirmation -eq 'Y') {
   netsh interface ipv4 set interface "Ethernet" mtu=1280
