@@ -12,57 +12,27 @@
     '';
   };
 
-  services = {
-    xserver = {
-      enable = true;
-      # Keyboard
-      xkb = {
-        layout = "au";
-        variant = "";
-      };
-      # i3
-      windowManager.i3 = {
-        enable = true;
-        extraPackages = with pkgs; [
-          i3blocks
-        ];
-      };
-      # Desktop
-      desktopManager = {
-        xterm.enable = false;
-        xfce = {
-          enable = true;
-          noDesktop = true;
-          enableXfwm = false;
-        };
-        wallpaper = {
-          combineScreens = true;
-          mode = "fill";
-        };
-      };
-      # Display Manager
-      displayManager = {
-        lightdm = {
-          enable = true;
-          # Greeter (AKA login screen)
-          greeters = {
-            gtk = {
-              enable = true;
-              extraConfig = ''
-                font-name = ${config.sprrw.font.mainFontName}
-              '';
-              theme = {
-                name = "Arc-Dark";
-                package = pkgs.arc-theme;
-              };
-            };
-          };
-        };
-      };
-    };
-    displayManager.defaultSession = "xfce+i3";
-    # GVFS is apparently to do with trash can
-    gvfs.enable = true;
+  environment.systemPackages = with pkgs; [
+    wl-clipboard
+    mako # desktop notifications
+    acpilight
+    acpi
+    alsa-utils
+    i3blocks
+    wdisplays # todo persist this with kanshi or something
+    gnome-themes-extra
+  ];
+
+  programs.sway = {
+    enable = true;
+    wrapperFeatures.gtk = true;
+    # extraOptions = [ "--unsupported-gpu" ];
+  };
+
+  xdg.portal = {
+    enable = true;
+    wlr.enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
   };
 
   programs = {
@@ -70,13 +40,17 @@
     dconf.enable = true;
   };
 
-  environment.variables = {
-    GTK_THEME = "Adwaita-dark";
+  services.displayManager.sddm = {
+    enable = true;
+    wayland.enable = true;
   };
 
-  environment.systemPackages = with pkgs; [
-    acpilight
-    acpi
-    alsa-utils
-  ];
+  environment.variables = {
+    GTK_THEME = "Adwaita:dark";
+    NIXOS_OZONE_WL = "1";       # Hint Electron apps to use Wayland
+    MOZ_ENABLE_WAYLAND = "1";   # Firefox Wayland
+    QT_QPA_PLATFORM = "wayland";
+    SDL_VIDEODRIVER = "wayland";
+    _JAVA_AWT_WM_NONREPARENTING = "1";
+  };
 }

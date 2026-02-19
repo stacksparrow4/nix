@@ -10,6 +10,7 @@
     ./tmux
     ./yazi.nix
     ./zshrc.nix
+    ./foot.nix
   ];
 
   options = {
