@@ -13,6 +13,7 @@
       cmake
       cmake-language-server
       pkg-config
+      nasm
     ];
   };
 }

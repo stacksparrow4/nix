@@ -30,7 +30,7 @@ if ((Get-Command "choco.exe" -ErrorAction SilentlyContinue) -eq $null) {
 }
 
 choco feature enable -n allowGlobalConfirmation
-choco install -y Firefox dnspyex processhacker procexp x64dbg.portable visualstudio2022community
+choco install -y Firefox dnspyex processhacker procexp x64dbg.portable visualstudio2022community nmap
 
 $confirmation = Read-Host "Do you wish to install OpenSSH Server? (y/n)"
 if ($confirmation -eq 'y' -or $confirmation -eq 'Y') {
