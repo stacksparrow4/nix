@@ -13,7 +13,7 @@
 
         size = lib.mkOption {
           type = lib.types.int;
-          default = 13;
+          default = 12;
         };
       };
 
