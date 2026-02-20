@@ -221,3 +221,5 @@ exec --no-startup-id ~/.config/i3/alternating_layouts.py
 
 exec --no-startup-id 1password --silent
 
+exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP GTK_THEME 
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway GTK_THEME
