@@ -2,13 +2,13 @@
 
 {
   options = {
-    sprrw.linux.i3.enable = lib.mkEnableOption "i3";
+    sprrw.linux.sway.enable = lib.mkEnableOption "sway";
   };
 
-  config = lib.mkIf config.sprrw.linux.i3.enable {
+  config = lib.mkIf config.sprrw.linux.sway.enable {
     home.file = {
-      ".config/i3/config".text = builtins.readFile ./i3/config;
-      ".config/i3/alternating_layouts.py".source = let
+      ".config/sway/config".text = builtins.readFile ./sway/config;
+      ".config/sway/alternating_layouts.py".source = let
         alternatingLayoutsDeriv = pkgs.stdenv.mkDerivation {
           name = "alternating-layouts";
           propagatedBuildInputs = [
@@ -17,7 +17,7 @@
             ]))
           ];
           dontUnpack = true;
-          installPhase = "install -Dm755 ${./i3/alternating_layouts.py} $out/bin/alternating-layouts";
+          installPhase = "install -Dm755 ${./sway/alternating_layouts.py} $out/bin/alternating-layouts";
         }; in
       "${alternatingLayoutsDeriv}/bin/alternating-layouts";
     };

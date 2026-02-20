@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./i3.nix
+    ./sway.nix
     ./rofi.nix
     ./term.nix
     ./yubikey.nix
@@ -15,7 +15,7 @@
   config = lib.mkIf config.sprrw.linux.enable {
     sprrw.linux = {
       rofi.enable = true;
-      i3.enable = true;
+      sway.enable = true;
       term.enable = true;
       yubikey.enable = true;
     };
