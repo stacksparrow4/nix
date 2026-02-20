@@ -27,6 +27,8 @@
     # extraOptions = [ "--unsupported-gpu" ];
   };
 
+  security.polkit.enable = true;
+
   xdg.portal = {
     enable = true;
     wlr.enable = true;
@@ -39,9 +41,14 @@
     dconf.enable = true;
   };
 
-  services.displayManager.sddm = {
+  services.greetd = {
     enable = true;
-    wayland.enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd sway";
+        user = "greeter";
+      };
+    };
   };
 
   environment.variables = {
