@@ -33,13 +33,6 @@
     file.".background-image".source = ../bg.png;
 
     file.".config/i3/config".text = ''
-      # Start i3bar to display a workspace bar (plus the system information i3status
-      # finds out, if available)
-      bar {
-            position top
-            status_command i3blocks
-      }
-
       # class                 border  backgr. text    indicator child_border
       client.focused          #4c7899 #285577 #ffffff #285577   #285577
       client.focused_inactive #333333 #5f676a #ffffff #5f676a   #5f676a

@@ -18,7 +18,6 @@
     acpilight
     acpi
     alsa-utils
-    i3blocks
     wdisplays # todo persist this with kanshi or something
     gnome-themes-extra
   ];
@@ -33,6 +32,7 @@
     enable = true;
     wlr.enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    config.common.default = "*";
   };
 
   programs = {

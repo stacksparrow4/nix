@@ -22,5 +22,35 @@
         }; in
       "${alternatingLayoutsDeriv}/bin/alternating-layouts";
     };
+
+    programs.waybar = {
+      enable = true;
+      settings.main = {
+        modules-left = ["sway/workspaces"];
+        modules-center = [
+          "clock" 
+          "network" 
+          "pulseaudio"
+        ];
+        modules-right = [
+          "tray"
+          "battery"
+        ];
+        clock = {
+        format = "{:%H:%M %d-%m-%y}";
+          tooltip = false;
+        };
+        tray = {
+          spacing = 10;
+        };
+        network = {
+          format = "{ifname}";
+          format-alt = "{ipaddr}";
+          format-wifi = "{essid} ({signalStrength}%)";
+          tooltip = false;
+          max-length = 50;
+        };
+      };
+    };
   };
 }
