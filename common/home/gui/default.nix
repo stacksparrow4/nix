@@ -3,14 +3,18 @@
 {
   imports = [
     ./brave.nix
+    ./flameshot.nix
     ./firefox.nix
   ];
 
   options.sprrw.gui.enable = lib.mkEnableOption "gui";
 
   config = lib.mkIf config.sprrw.gui.enable {
-    sprrw.gui.brave.enable = true;
-    sprrw.gui.firefox.enable = true;
+    sprrw.gui = {
+      brave.enable = true;
+      firefox.enable = true;
+      flameshot.enable = true;
+    };
 
     home.packages = with pkgs; [
       discord
@@ -23,7 +27,6 @@
       blender
       obsidian
       rofi
-      flameshot
       freerdp
       bruno
       feh
