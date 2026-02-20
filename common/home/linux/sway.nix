@@ -26,5 +26,12 @@
       enable = true;
     };
     home.file.".config/waybar/config.jsonc".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar.jsonc";
+
+    services.mako = {
+      enable = true;
+      settings = {
+        default-timeout = 10000;
+      };
+    };
   };
 }
