@@ -25,7 +25,8 @@
     programs.waybar = {
       enable = true;
     };
-    home.file.".config/waybar/config".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar.jsonc";
+    home.file.".config/waybar/config".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar/waybar.jsonc";
+    home.file.".config/waybar/style.css".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar/style.css";
 
     services.mako = {
       enable = true;
