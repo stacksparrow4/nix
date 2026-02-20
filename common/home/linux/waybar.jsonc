@@ -1,0 +1,43 @@
+{
+  "modules-left": ["sway/workspaces"],
+  "modules-center": [],
+  "modules-right": [
+    "tray",
+    "disk",
+    "network",
+    "pulseaudio",
+    "battery",
+    "clock"
+  ],
+
+  "battery": {
+    "format": "{icon}   {capacity}%",
+    "format-charging": "  {capacity}%",
+    "format-icons": ["", "", "", "", ""]
+  },
+
+  "pulseaudio": {
+    "format": "{icon}  {volume}%",
+    "format-muted": "󰝟  muted",
+    "format-icons": {
+      "default": ["󰕿", "󰖀", "󰕾"]
+    }
+  },
+
+  "clock": {
+    "format": "{:%H:%M %d-%m-%y}"
+  },
+
+  "tray": {
+    "spacing": 10
+  },
+
+  "network": {
+    "format": "{ipaddr}"
+  },
+
+  "disk": {
+    "format": "{specific_free:0.0f}GB",
+    "unit": "GB"
+  }
+}

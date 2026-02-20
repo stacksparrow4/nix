@@ -8,7 +8,6 @@
   config = lib.mkIf config.sprrw.linux.i3.enable {
     home.file = {
       ".config/i3/config".text = builtins.readFile ./i3/config;
-      ".config/i3blocks/config".source = ./i3blocks/config;
       ".config/i3/alternating_layouts.py".source = let
         alternatingLayoutsDeriv = pkgs.stdenv.mkDerivation {
           name = "alternating-layouts";
@@ -25,32 +24,7 @@
 
     programs.waybar = {
       enable = true;
-      settings.main = {
-        modules-left = ["sway/workspaces"];
-        modules-center = [
-          "clock" 
-          "network" 
-          "pulseaudio"
-        ];
-        modules-right = [
-          "tray"
-          "battery"
-        ];
-        clock = {
-        format = "{:%H:%M %d-%m-%y}";
-          tooltip = false;
-        };
-        tray = {
-          spacing = 10;
-        };
-        network = {
-          format = "{ifname}";
-          format-alt = "{ipaddr}";
-          format-wifi = "{essid} ({signalStrength}%)";
-          tooltip = false;
-          max-length = 50;
-        };
-      };
     };
+    home.file.".config/waybar/config.jsonc".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar.jsonc";
   };
 }
