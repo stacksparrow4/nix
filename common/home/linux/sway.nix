@@ -32,5 +32,9 @@
         default-timeout = 10000;
       };
     };
+
+    services.kanshi = {
+      enable = true;
+    };
   };
 }

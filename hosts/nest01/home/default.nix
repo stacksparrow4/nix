@@ -1,4 +1,4 @@
-{ pkgs, lib, inputs, ... }:
+{ pkgs, lib, config, ... }:
 
 {
   imports = [
@@ -26,21 +26,12 @@
       aseprite
     ];
 
-
     username = "sprrw";
     homeDirectory = "/home/sprrw";
 
     file.".background-image".source = ../bg.png;
 
-    file.".config/i3/config".text = ''
-      # class                 border  backgr. text    indicator child_border
-      client.focused          #4c7899 #285577 #ffffff #285577   #285577
-      client.focused_inactive #333333 #5f676a #ffffff #5f676a   #5f676a
-      client.unfocused        #333333 #222222 #888888 #222222   #222222
-      client.urgent           #2f343a #900000 #ffffff #900000   #900000
-      client.placeholder      #000000 #0c0c0c #ffffff #0c0c0c   #0c0c0c
-
-      client.background       #ffffff
-    '';
+    file.".config/sway/conf.d/nest01".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/sway.config";
+    file.".config/kanshi/config".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/kanshi.config";
   };
 }
