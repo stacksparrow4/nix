@@ -17,7 +17,7 @@
     acpilight
     acpi
     alsa-utils
-    wdisplays # todo persist this with kanshi or something
+    wdisplays
     gnome-themes-extra
   ];
 
