@@ -11,6 +11,7 @@
       man-pages-posix
       netcat-openbsd
       lsof
+      neofetch
 
       (pkgs.writeShellScriptBin "proxychains" ''
         ${pkgs.proxychains}/bin/proxychains4 -q "$@"
