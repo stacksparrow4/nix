@@ -24,7 +24,7 @@
   programs.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
-    # extraOptions = [ "--unsupported-gpu" ];
+    extraOptions = [ "--unsupported-gpu" ];
   };
 
   security.polkit.enable = true;
