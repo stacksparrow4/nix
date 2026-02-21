@@ -1,12 +1,11 @@
 {
-  "modules-left": ["sway/workspaces"],
+  "modules-left": ["sway/workspaces", "sway/mode"],
   "modules-center": [],
   "modules-right": [
     "tray",
     "disk",
     "cpu",
     "memory",
-    "network",
     "pulseaudio",
     "battery",
     "clock"
