@@ -18,6 +18,12 @@
     size = 32 * 1024;
   }];
 
+  # Disk trim
+  services.fstrim = {
+    enable = true;
+    interval = "weekly";
+  };
+
   # Home manager
   home-manager.users.sprrw = ../home;
 
