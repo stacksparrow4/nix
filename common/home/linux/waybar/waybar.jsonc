@@ -4,6 +4,8 @@
   "modules-right": [
     "tray",
     "disk",
+    "cpu",
+    "memory",
     "network",
     "pulseaudio",
     "battery",
@@ -39,5 +41,9 @@
   "disk": {
     "format": "{specific_free:0.0f}GB",
     "unit": "GB"
+  },
+
+  "memory": {
+    "format": "{used:0.1f}/{total:0.1f}GB"
   }
 }

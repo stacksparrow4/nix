@@ -110,7 +110,7 @@ button:hover {
 
 #clock {
     /* background-color: #64727D; */
-    background-color: #850000;
+    background-color: #353494;
 }
 
 #battery {
@@ -165,16 +165,16 @@ label:focus {
 }
 
 #cpu {
-    background-color: #2ecc71;
-    color: #000000;
+    background-color: #0a0a40;
+    /*color: #000000;*/
 }
 
 #memory {
-    background-color: #9b59b6;
+    background-color: #0f0e4f;
 }
 
 #disk {
-    background-color: #200000;
+    background-color: #0a0a20;
 }
 
 #backlight {
@@ -182,7 +182,7 @@ label:focus {
 }
 
 #network {
-    background-color: #350000;
+    background-color: #18175e;
 }
 
 #network.disconnected {
@@ -190,13 +190,12 @@ label:focus {
 }
 
 #pulseaudio {
-    background-color: #500000;
+    background-color: #27267a;
     /* color: #000000; */
 }
 
 #pulseaudio.muted {
-    background-color: #90b1b1;
-    color: #2a5c45;
+    background-color: #27267a;
 }
 
 #wireplumber {

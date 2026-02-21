@@ -4,7 +4,7 @@
   options.sprrw.term.bash = {
     ps1 = lib.mkOption {
       type = lib.types.str;
-      default = ''\n\[\033[1;32m\] \W \$\[\033[0m\] '';
+      default = ''\n\[\033[1;36m\] \W \$\[\033[0m\] '';
     };
   };
 
@@ -18,7 +18,7 @@
         export PS1='${cfg.ps1}'
 
         if [[ "$(hostname)" = sandbox ]]; then
-          export PS1='\n\[\033[36m\] \W \$\[\033[0m\] '
+          export PS1='\n\[\033[35m\] \W \$\[\033[0m\] '
         fi
       '';
     };

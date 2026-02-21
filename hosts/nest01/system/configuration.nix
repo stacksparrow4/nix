@@ -18,9 +18,6 @@
     size = 32 * 1024;
   }];
 
-  # Set bg image
-  services.xserver.displayManager.lightdm.background = ../bg.png;
-
   # Home manager
   home-manager.users.sprrw = ../home;
 
@@ -35,7 +32,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  boot.loader.systemd-boot.memtest86.enable = true;
+  # boot.loader.systemd-boot.memtest86.enable = true;
 
   networking.hostName = "nest01"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -73,16 +70,16 @@
     enable = true;
   };
 
-  hardware.nvidia = {
-    modesetting.enable = true;
-    powerManagement.enable = false;
-    powerManagement.finegrained = false;
-    open = false;
-    nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
-  };
+  # hardware.nvidia = {
+  #   modesetting.enable = true;
+  #   powerManagement.enable = false;
+  #   powerManagement.finegrained = false;
+  #   open = false;
+  #   nvidiaSettings = true;
+  #   package = config.boot.kernelPackages.nvidiaPackages.stable;
+  # };
 
-  services.xserver.videoDrivers = [ "nvidia" ];
+  # services.xserver.videoDrivers = [ "nvidia" ];
 
   # Open Tablet Driver
   hardware.opentabletdriver.enable = true;
