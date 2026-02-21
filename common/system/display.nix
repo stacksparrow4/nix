@@ -49,6 +49,7 @@
         user = "greeter";
       };
     };
+    useTextGreeter = true;
   };
 
   environment.variables = {
