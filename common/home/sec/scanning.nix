@@ -38,6 +38,7 @@
   in lib.mkIf config.sprrw.sec.scanning.enable {
     home.packages = with pkgs; [
       nmap
+      masscan
       rustscan
       nuclei
       sqlmap

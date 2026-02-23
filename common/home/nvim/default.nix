@@ -107,11 +107,14 @@ in
       source = ./lua;
     };
 
-    home.packages = lib.mkIf config.sprrw.sandboxing.enable [
-      ( lib.hiPrio (pkgs.writeShellScriptBin "nvim" ''
-        if [[ -f /.dockerenv ]]; then
-          "${config.programs.neovim.finalPackage}/bin/nvim" "$@"
-        else
+    home.packages = let
+      unsandboxed = pname: pkgs.runCommand pname {} ''
+        mkdir -p $out/bin
+        ln -s ${config.programs.neovim.finalPackage}/bin/nvim $out/bin/${pname}
+      '';
+      sandboxed = pname: pkgs.writeShellApplication {
+        name = pname;
+        text = ''
           if [[ $# -eq 1 ]] && [[ "$1" == /* ]]; then
             if [[ -d "$1" ]]; then
               share_dir=$1
@@ -125,22 +128,23 @@ in
             fi
             SHARE_DIR="$share_dir" "${config.sprrw.sandboxing.runDocker {
               beforeTargetArgs = (config.sprrw.sandboxing.recipes.dir_as_pwd_starter "$SHARE_DIR") + " "
-                + config.sprrw.sandboxing.recipes.x11_forward + " "
                 + cfg.sandboxAdditionalDockerArgs;
               afterTargetArgs = "${config.programs.neovim.finalPackage}/bin/nvim";
             }}" "$share_file"
           else
             "${config.sprrw.sandboxing.runDocker {
-              beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter + " " + config.sprrw.sandboxing.recipes.x11_forward + " " + cfg.sandboxAdditionalDockerArgs;
+              beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter + " "
+                + cfg.sandboxAdditionalDockerArgs;
               afterTargetArgs = "${config.programs.neovim.finalPackage}/bin/nvim";
             }}" "$@"
           fi
-        fi
-      '') )
-      (pkgs.runCommand "nvim-unsandboxed" {} ''
-        mkdir -p $out/bin
-        ln -s ${config.programs.neovim.finalPackage}/bin/nvim $out/bin/nvim-unsandboxed
-      '')
+        '';
+      };
+    in [
+      (unsandboxed "nvim-unsandboxed")
+      (unsandboxed "vim-unsandboxed")
+      (unsandboxed "vi-unsandboxed")
+      (sandboxed "bvim")
     ];
   };
 }

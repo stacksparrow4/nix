@@ -2,9 +2,6 @@
 
 {
   options.sprrw.sandboxing = {
-    # Sandboxing code is always loaded but apps can use this switch to follow an "unsandboxed path" vs a "sandboxed path"
-    enable = lib.mkEnableOption "sandboxing";
-
     runDocker = lib.mkOption {};
     runDockerBin = lib.mkOption {};
 
@@ -81,29 +78,12 @@
       home_dir_starter = "-it -w /home/sprrw";
       inherit dir_as_pwd_starter;
       pwd_starter = dir_as_pwd_starter "$(pwd)";
-      x11_forward = "-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/sprrw/.Xauthority --network host";
     };
 
     home.packages = [
       (cfg.runDockerBin { binName = "box"; beforeTargetArgs = cfg.recipes.home_dir_starter; afterTargetArgs = "bash"; })
       (cfg.runDockerBin { binName = "box-cwd"; beforeTargetArgs = cfg.recipes.pwd_starter; afterTargetArgs = "bash"; })
-      (cfg.runDockerBin {
-        binName = "box-gui";
-        beforeTargetArgs = cfg.recipes.home_dir_starter + " " + cfg.recipes.x11_forward;
-        afterTargetArgs = "bash";
-      })
-      (cfg.runDockerBin {
-        binName = "box-cwd-gui";
-        beforeTargetArgs = cfg.recipes.pwd_starter + " " + cfg.recipes.x11_forward;
-        afterTargetArgs = "bash";
-      })
       (cfg.runDockerBin { binName = "box-enter"; shouldExec = true; beforeTargetArgs = "-it"; afterTargetArgs = "bash"; })
     ];
-
-    home.file = lib.mkIf cfg.enable {
-      ".xprofile".text =  ''
-        ${pkgs.xorg.xhost}/bin/xhost +local:docker/sandbox
-      '';
-    };
   };
 }
