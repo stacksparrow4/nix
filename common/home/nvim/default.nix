@@ -72,6 +72,11 @@ in
         typescript
         markdown
         typst
+        java
+        javadoc
+        c_sharp
+        caddy
+        nginx
       ]);
 
       extraLuaConfig = ''
