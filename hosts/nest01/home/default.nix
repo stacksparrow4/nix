@@ -7,6 +7,7 @@
 
 
   sprrw = {
+    ai.enable = true;
     linux.enable = true;
     nvim.enable = true;
     programming.enable = true;
@@ -40,6 +41,7 @@
       lmms
       audacity
       aseprite
+      vesktop
     ];
 
     username = "sprrw";

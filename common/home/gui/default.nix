@@ -17,7 +17,6 @@
     };
 
     home.packages = with pkgs; [
-      discord
       gimp
       inkscape
       spotify
