@@ -7,6 +7,7 @@
 
   config = lib.mkIf config.sprrw.programming.java.enable {
     home.packages = with pkgs; [
+      openjdk
       jdt-language-server
     ];
   };

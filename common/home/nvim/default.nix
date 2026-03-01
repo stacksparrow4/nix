@@ -77,6 +77,7 @@ in
         c_sharp
         caddy
         nginx
+        ruby
       ]);
 
       extraLuaConfig = ''

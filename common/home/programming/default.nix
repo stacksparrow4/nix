@@ -12,6 +12,7 @@
     ./node.nix
     ./php.nix
     ./rust.nix
+    ./ruby.nix
     ./sage.nix
     ./typst.nix
     ./xml.nix
@@ -34,6 +35,7 @@
       node.enable = true;
       php.enable = true;
       rust.enable = true;
+      ruby.enable = true;
       sage.enable = false;
       typst.enable = true;
       xml.enable = true;
