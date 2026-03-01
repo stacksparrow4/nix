@@ -44,7 +44,7 @@
       sqlmap
       feroxbuster
       ffuf
-      vulnx
+      (config.sprrw.sandboxing.runDockerBin { binName = "vulnx"; beforeTargetArgs = ""; afterTargetArgs = "${vulnx}/bin/vulnx"; })
     ];
   };
 }

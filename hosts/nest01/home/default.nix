@@ -42,6 +42,7 @@
       audacity
       aseprite
       vesktop
+      (lib.hiPrio (brave.override { commandLineArgs = "--use-gl=egl"; }))
     ];
 
     username = "sprrw";

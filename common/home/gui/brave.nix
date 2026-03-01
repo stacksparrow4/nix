@@ -9,7 +9,6 @@
     cfg = config.sprrw.gui.brave;
   in lib.mkIf cfg.enable {
     home.packages = with pkgs; [
-      # (brave.override { commandLineArgs = "--use-gl=egl"; })
       brave
     ];
   };
