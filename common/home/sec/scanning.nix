@@ -78,6 +78,7 @@
       ffuf
       (config.sprrw.sandboxing.runDockerBin { binName = "vulnx"; beforeTargetArgs = ""; afterTargetArgs = "${vulnx}/bin/vulnx"; })
       smuggler
+      (config.sprrw.sandboxing.runDockerBin { binName = "shortscan"; beforeTargetArgs = ""; afterTargetArgs = "${shortscan}/bin/shortscan"; })
     ];
   };
 }
