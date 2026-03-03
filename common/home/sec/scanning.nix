@@ -35,6 +35,18 @@
         ];
       }
     ) {};
+    smugglerSrc = pkgs.fetchFromGitHub {
+      owner = "defparam";
+      repo = "smuggler";
+      rev = "2be871e6151ce85167a277fab21c74c851d8b20b";
+      hash = "sha256-ctRx81DL5orVioB+d22qSsEe9m5+CLU7VqmRmLBN4xs=";
+    };
+    smugglerWrapped = pkgs.writeShellApplication {
+      name = "smuggler";
+      text = ''
+        ${pkgs.python313}/bin/python3 ${smugglerSrc}/smuggler.py "$@"
+      '';
+    };
   in lib.mkIf config.sprrw.sec.scanning.enable {
     home.packages = with pkgs; [
       nmap
@@ -45,6 +57,7 @@
       feroxbuster
       ffuf
       (config.sprrw.sandboxing.runDockerBin { binName = "vulnx"; beforeTargetArgs = ""; afterTargetArgs = "${vulnx}/bin/vulnx"; })
+      (config.sprrw.sandboxing.runDockerBin { binName = "smuggler"; beforeTargetArgs = ""; afterTargetArgs = "${smugglerWrapped}/bin/smuggler"; })
     ];
   };
 }
