@@ -76,9 +76,11 @@
       sqlmap
       feroxbuster
       ffuf
+    ] ++ [ # pkgs that aren't from nixpkgs
       (config.sprrw.sandboxing.runDockerBin { binName = "vulnx"; beforeTargetArgs = ""; afterTargetArgs = "${vulnx}/bin/vulnx"; })
+      (config.sprrw.sandboxing.runDockerBin { binName = "shortscan"; beforeTargetArgs = ""; afterTargetArgs = "${pkgs.shortscan}/bin/shortscan"; })
+      (config.sprrw.sandboxing.runDockerBin { binName = "gau"; beforeTargetArgs = ""; afterTargetArgs = "${pkgs.gau}/bin/gau"; })
       smuggler
-      (config.sprrw.sandboxing.runDockerBin { binName = "shortscan"; beforeTargetArgs = ""; afterTargetArgs = "${shortscan}/bin/shortscan"; })
     ];
   };
 }

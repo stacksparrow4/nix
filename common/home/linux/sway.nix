@@ -36,5 +36,11 @@
     services.kanshi = {
       enable = true;
     };
+
+    home.pointerCursor = {
+      gtk.enable = true;
+      name = "Adwaita";
+      package = pkgs.adwaita-icon-theme;
+    };
   };
 }
