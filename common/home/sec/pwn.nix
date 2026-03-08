@@ -27,9 +27,9 @@
           ignoreCollisions = true;
         })
         patchelf
-        pwninit
-        ropr
-        ropgadget
+        (config.sprrw.sandboxing.runDockerBin { binName = "pwninit"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${pwninit}/bin/pwninit"; })
+        (config.sprrw.sandboxing.runDockerBin { binName = "ropr"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${ropr}/bin/ropr"; })
+        (config.sprrw.sandboxing.runDockerBin { binName = "ROPgadget"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${ropgadget}/bin/ROPgadget"; })
       ];
   };
 }

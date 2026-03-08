@@ -72,10 +72,10 @@
       nmap
       masscan
       rustscan
-      nuclei
-      sqlmap
-      feroxbuster
-      ffuf
+      (config.sprrw.sandboxing.runDockerBin { binName = "nuclei"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${nuclei}/bin/nuclei"; })
+      (config.sprrw.sandboxing.runDockerBin { binName = "sqlmap"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${sqlmap}/bin/sqlmap"; })
+      (config.sprrw.sandboxing.runDockerBin { binName = "feroxbuster"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${feroxbuster}/bin/feroxbuster"; })
+      (config.sprrw.sandboxing.runDockerBin { binName = "ffuf"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${ffuf}/bin/ffuf"; })
     ] ++ [ # pkgs that aren't from nixpkgs
       (config.sprrw.sandboxing.runDockerBin { binName = "vulnx"; beforeTargetArgs = ""; afterTargetArgs = "${vulnx}/bin/vulnx"; })
       (config.sprrw.sandboxing.runDockerBin { binName = "shortscan"; beforeTargetArgs = ""; afterTargetArgs = "${pkgs.shortscan}/bin/shortscan"; })
