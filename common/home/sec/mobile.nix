@@ -8,8 +8,8 @@
   config = lib.mkIf config.sprrw.sec.mobile.enable {
     home.packages = with pkgs; [
       frida-tools
-      apktool
-      jadx
+      (config.sprrw.sandboxing.runDockerBin { binName = "apktool"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${apktool}/bin/apktool"; })
+      (config.sprrw.sandboxing.runDockerBin { binName = "jadx"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${jadx}/bin/jadx"; })
       android-tools
       (
         buildGoModule (finalAttrs: {
