@@ -11,6 +11,7 @@
       binwalk
       ent
       wireshark
+      tcpdump
     ];
   };
 }
