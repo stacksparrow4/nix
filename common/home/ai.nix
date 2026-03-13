@@ -8,6 +8,11 @@
       type = lib.types.str;
       default = "http://host.docker.internal:11434";
     };
+
+    model = lib.mkOption {
+      type = lib.types.str;
+      default = "qwen3.5:9b";
+    };
   };
 
   config = let
@@ -26,7 +31,7 @@
               export ANTHROPIC_BASE_URL=${config.sprrw.ai.ollama-server-url}
 
               # disallowed-tools WebSearch is because we are using brave search instead
-              "${pkgs.claude-code}/bin/claude" --model qwen3-coder:30b --dangerously-skip-permissions --disallowed-tools WebSearch "$@"
+              "${pkgs.claude-code}/bin/claude" --model ${cfg.model} --dangerously-skip-permissions --disallowed-tools WebSearch "$@"
             '';
           };
           claudeBoxed = config.sprrw.sandboxing.runDockerBin {
@@ -54,7 +59,7 @@
       package = pkgs.ollama-cuda;
       environmentVariables = {
         OLLAMA_KEEP_ALIVE = "5m";
-        OLLAMA_CONTEXT_LENGTH = "32000";
+        OLLAMA_CONTEXT_LENGTH = "64000";
       };
       host = "0.0.0.0"; # for docker. protected by firewall anyway
     };
