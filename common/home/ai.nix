@@ -6,7 +6,7 @@
 
     ollama-server-url = lib.mkOption {
       type = lib.types.str;
-      default = "http://localhost:11434";
+      default = "http://host.docker.internal:11434";
     };
   };
 
@@ -31,12 +31,18 @@
           };
           claudeBoxed = config.sprrw.sandboxing.runDockerBin {
             binName = "claude";
-            beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter + " -v ~/.claude:/home/sprrw/.claude -v ~/.claude.json:/home/sprrw/.claude.json";
+            beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter +
+              " -v ~/.claude:/home/sprrw/.claude -v ~/.claude.json:/home/sprrw/.claude.json" +
+              " --network ollama-network --add-host host.docker.internal=\"$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')\"";
             afterTargetArgs = "${claudeConfigured}/bin/claude";
           };
         in ''
           mkdir -p ~/.claude
           touch ~/.claude.json
+
+          if ! docker network inspect ollama-network &>/dev/null; then
+            docker network create --driver bridge --opt com.docker.network.bridge.name=br-ollama ollama-network
+          fi
 
           ${claudeBoxed}/bin/claude "$@"
         '';
@@ -46,7 +52,11 @@
     services.ollama = {
       enable = true;
       package = pkgs.ollama-cuda;
-      environmentVariables.OLLAMA_KEEP_ALIVE = "5m";
+      environmentVariables = {
+        OLLAMA_KEEP_ALIVE = "5m";
+        OLLAMA_CONTEXT_LENGTH = "64000";
+      };
+      host = "0.0.0.0"; # for docker. protected by firewall anyway
     };
   };
 }
