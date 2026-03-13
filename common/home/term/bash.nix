@@ -14,7 +14,6 @@
     programs.bash = {
       enable = true;
       bashrcExtra = (builtins.readFile ./aliases.sh) + ''
-        eval "$(navi widget bash)"
         export PS1='${cfg.ps1}'
 
         if [[ "$(hostname)" = sandbox ]]; then
