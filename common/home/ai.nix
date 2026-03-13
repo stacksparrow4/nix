@@ -54,7 +54,7 @@
       package = pkgs.ollama-cuda;
       environmentVariables = {
         OLLAMA_KEEP_ALIVE = "5m";
-        OLLAMA_CONTEXT_LENGTH = "64000";
+        OLLAMA_CONTEXT_LENGTH = "32000";
       };
       host = "0.0.0.0"; # for docker. protected by firewall anyway
     };
