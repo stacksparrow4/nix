@@ -56,9 +56,8 @@
       '';
     };
     smugglerDocker = config.sprrw.sandboxing.runDockerBin {
-      binName = "smuggler";
-      beforeTargetArgs = "-it -v $(pwd)/payloads:/payloads";
-      afterTargetArgs = "${smugglerWrapped}/bin/smuggler";
+      name = "smuggler";
+      args = "-it -v \"$(pwd)/payloads:/payloads\" DOCKERIMG ${smugglerWrapped}/bin/smuggler";
     };
     smuggler = pkgs.writeShellApplication {
       name = "smuggler";
@@ -72,14 +71,14 @@
       nmap
       masscan
       rustscan
-      (config.sprrw.sandboxing.runDockerBin { binName = "nuclei"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${nuclei}/bin/nuclei"; })
-      (config.sprrw.sandboxing.runDockerBin { binName = "sqlmap"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${sqlmap}/bin/sqlmap"; })
-      (config.sprrw.sandboxing.runDockerBin { binName = "feroxbuster"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${feroxbuster}/bin/feroxbuster"; })
-      (config.sprrw.sandboxing.runDockerBin { binName = "ffuf"; beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter; afterTargetArgs = "${ffuf}/bin/ffuf"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "nuclei"; args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${nuclei}/bin/nuclei"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "sqlmap"; args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${sqlmap}/bin/sqlmap"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "feroxbuster"; args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${feroxbuster}/bin/feroxbuster"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "ffuf"; args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${ffuf}/bin/ffuf"; })
     ] ++ [ # pkgs that aren't from nixpkgs
-      (config.sprrw.sandboxing.runDockerBin { binName = "vulnx"; beforeTargetArgs = ""; afterTargetArgs = "${vulnx}/bin/vulnx"; })
-      (config.sprrw.sandboxing.runDockerBin { binName = "shortscan"; beforeTargetArgs = ""; afterTargetArgs = "${pkgs.shortscan}/bin/shortscan"; })
-      (config.sprrw.sandboxing.runDockerBin { binName = "gau"; beforeTargetArgs = ""; afterTargetArgs = "${pkgs.gau}/bin/gau"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "vulnx"; args = "DOCKERIMG ${vulnx}/bin/vulnx"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "shortscan"; args = "DOCKERIMG ${pkgs.shortscan}/bin/shortscan"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "gau"; args = "DOCKERIMG ${pkgs.gau}/bin/gau"; })
       smuggler
     ];
   };

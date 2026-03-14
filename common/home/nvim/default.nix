@@ -132,17 +132,15 @@ in
             if [[ -z "$share_file" ]]; then
               exit 1;
             fi
-            SHARE_DIR="$share_dir" "${config.sprrw.sandboxing.runDocker {
-              beforeTargetArgs = (config.sprrw.sandboxing.recipes.dir_as_pwd_starter "$SHARE_DIR") + " "
-                + cfg.sandboxAdditionalDockerArgs;
-              afterTargetArgs = "${config.programs.neovim.finalPackage}/bin/nvim";
-            }}" "$share_file"
+            ${config.sprrw.sandboxing.runDocker} \
+              ${config.sprrw.sandboxing.recipes.dir_as_pwd_starter "$share_dir"} ${cfg.sandboxAdditionalDockerArgs} \
+              DOCKERIMG \
+              ${config.programs.neovim.finalPackage}/bin/nvim "$share_file"
           else
-            "${config.sprrw.sandboxing.runDocker {
-              beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter + " "
-                + cfg.sandboxAdditionalDockerArgs;
-              afterTargetArgs = "${config.programs.neovim.finalPackage}/bin/nvim";
-            }}" "$@"
+            ${config.sprrw.sandboxing.runDocker} \
+              ${config.sprrw.sandboxing.recipes.pwd_starter} ${cfg.sandboxAdditionalDockerArgs} \
+              DOCKERIMG \
+              ${config.programs.neovim.finalPackage}/bin/nvim "$@"
           fi
         '';
       };

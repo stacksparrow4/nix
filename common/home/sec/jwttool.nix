@@ -48,10 +48,10 @@
           runHook postInstall
         '';
       };
+      # TODO: should we be creating ~/.jwt_tool?
       jwttool_boxed = config.sprrw.sandboxing.runDockerBin {
-        binName = "jwt_tool";
-        beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter + " -v $HOME/.jwt_tool:/home/sprrw/.jwt_tool";
-        afterTargetArgs = "${jwttool}/bin/jwt_tool";
+        name = "jwt_tool";
+        args = "${config.sprrw.sandboxing.recipes.pwd_starter} -v ~/.jwt_tool:/home/sprrw/.jwt_tool DOCKERIMG ${jwttool}/bin/jwt_tool";
       };
     in [jwttool_boxed];
   };

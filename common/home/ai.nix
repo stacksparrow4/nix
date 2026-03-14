@@ -35,11 +35,13 @@
             '';
           };
           claudeBoxed = config.sprrw.sandboxing.runDockerBin {
-            binName = "claude";
-            beforeTargetArgs = config.sprrw.sandboxing.recipes.pwd_starter +
+            name = "claude";
+            args = config.sprrw.sandboxing.recipes.pwd_starter +
               " -v ~/.claude:/home/sprrw/.claude -v ~/.claude.json:/home/sprrw/.claude.json" +
-              " --network ollama-network --add-host host.docker.internal=\"$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')\"";
-            afterTargetArgs = "${claudeConfigured}/bin/claude";
+              " --network ollama-network" + 
+              " --add-host host.docker.internal=\"$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')\"" +
+              " DOCKERIMG" + 
+              " ${claudeConfigured}/bin/claude";
           };
         in ''
           mkdir -p ~/.claude

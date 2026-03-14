@@ -11,7 +11,7 @@
     ./scripts
     ./term
     ./gui
-    ./sandboxing.nix
+    ./sandboxing
   ];
 
   options = {
