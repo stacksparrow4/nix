@@ -36,4 +36,4 @@ args = [
 
 # print(args)
 
-_ = subprocess.call(args)
+exit(subprocess.call(args))

@@ -121,27 +121,7 @@ in
       sandboxed = pname: pkgs.writeShellApplication {
         name = pname;
         text = ''
-          if [[ $# -eq 1 ]] && [[ "$1" == /* ]]; then
-            if [[ -d "$1" ]]; then
-              share_dir=$1
-              share_file=.
-            else
-              share_dir=$(dirname "$1")
-              share_file=$(realpath --relative-to="$share_dir" "$1")
-            fi
-            if [[ -z "$share_file" ]]; then
-              exit 1;
-            fi
-            ${config.sprrw.sandboxing.runDocker} \
-              ${config.sprrw.sandboxing.recipes.dir_as_pwd_starter "$share_dir"} ${cfg.sandboxAdditionalDockerArgs} \
-              DOCKERIMG \
-              ${config.programs.neovim.finalPackage}/bin/nvim "$share_file"
-          else
-            ${config.sprrw.sandboxing.runDocker} \
-              ${config.sprrw.sandboxing.recipes.pwd_starter} ${cfg.sandboxAdditionalDockerArgs} \
-              DOCKERIMG \
-              ${config.programs.neovim.finalPackage}/bin/nvim "$@"
-          fi
+          ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${config.sprrw.sandboxing.runDocker} ${cfg.sandboxAdditionalDockerArgs} ENDDOCKERARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
         '';
       };
     in [
