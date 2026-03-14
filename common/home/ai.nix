@@ -11,7 +11,7 @@
 
     model = lib.mkOption {
       type = lib.types.str;
-      default = "qwen3.5:9b";
+      default = "qwen3-coder:30b";
     };
   };
 
