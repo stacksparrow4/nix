@@ -51,11 +51,17 @@
       home_dir_starter = "-it -w /home/sprrw";
       inherit dir_as_pwd_starter;
       pwd_starter = dir_as_pwd_starter "$(pwd)";
+      gui = "-e WAYLAND_DISPLAY=\"$WAYLAND_DISPLAY\" -v \"$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY\" -e XDG_RUNTIME_DIR=/tmp -e DISPLAY=\"$DISPLAY\" -v /tmp/.X11-unix:/tmp/.X11-unix";
+      gpu = "--gpus all";
     };
 
     home.packages = [
       (cfg.runDockerBin { name = "box"; args = "${cfg.recipes.home_dir_starter} DOCKERIMG bash"; })
       (cfg.runDockerBin { name = "box-cwd"; args = "${cfg.recipes.pwd_starter} DOCKERIMG bash"; })
+      (cfg.runDockerBin { name = "box-gui"; args = "${cfg.recipes.home_dir_starter} ${cfg.recipes.gui} DOCKERIMG bash"; })
+      (cfg.runDockerBin { name = "box-gui-cwd"; args = "${cfg.recipes.pwd_starter} ${cfg.recipes.gui} DOCKERIMG bash"; })
+      (cfg.runDockerBin { name = "box-gui-gpu"; args = "${cfg.recipes.home_dir_starter} ${cfg.recipes.gui} ${cfg.recipes.gpu} DOCKERIMG bash"; })
+      (cfg.runDockerBin { name = "box-gui-gpu-cwd"; args = "${cfg.recipes.pwd_starter} ${cfg.recipes.gui} ${cfg.recipes.gpu} DOCKERIMG bash"; })
 
       (pkgs.writeShellApplication {
         name = "box-enter";
