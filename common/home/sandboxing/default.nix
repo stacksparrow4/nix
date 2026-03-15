@@ -52,7 +52,7 @@
       inherit dir_as_pwd_starter;
       pwd_starter = dir_as_pwd_starter "$(pwd)";
       gui = "-e WAYLAND_DISPLAY=\"$WAYLAND_DISPLAY\" -v \"$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY\" -e XDG_RUNTIME_DIR=/tmp -e DISPLAY=\"$DISPLAY\" -v /tmp/.X11-unix:/tmp/.X11-unix";
-      gpu = "--gpus all";
+      gpu = "--device=nvidia.com/gpu=all";
     };
 
     home.packages = [
