@@ -14,6 +14,7 @@
       cmake-language-server
       pkg-config
       nasm
+      ninja
     ];
   };
 }

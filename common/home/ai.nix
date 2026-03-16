@@ -21,7 +21,7 @@
     home.packages = with pkgs; [
       aichat
       (pkgs.writeShellApplication {
-        name = "claude";
+        name = "claude-code";
         # claude mcp add brave-search -e BRAVE_API_KEY=BSA_your_key_here -- npx -y @brave/brave-search-mcp-server
         text = let
           claudeConfigured = pkgs.writeShellApplication {
