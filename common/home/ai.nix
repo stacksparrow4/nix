@@ -34,15 +34,6 @@
               "${pkgs.claude-code}/bin/claude" --model ${cfg.model} --dangerously-skip-permissions --disallowed-tools WebSearch "$@"
             '';
           };
-          claudeBoxed = config.sprrw.sandboxing.runDockerBin {
-            name = "claude";
-            args = config.sprrw.sandboxing.recipes.pwd_starter +
-              " -v ~/.claude:/home/sprrw/.claude -v ~/.claude.json:/home/sprrw/.claude.json" +
-              " --network ollama-network" + 
-              " --add-host host.docker.internal=\"$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')\"" +
-              " DOCKERIMG" + 
-              " ${claudeConfigured}/bin/claude";
-          };
         in ''
           mkdir -p ~/.claude
           touch ~/.claude.json
@@ -51,7 +42,13 @@
             docker network create --driver bridge --opt com.docker.network.bridge.name=br-ollama ollama-network
           fi
 
-          ${claudeBoxed}/bin/claude "$@"
+          ${config.sprrw.sandboxing.runDocker} \
+            ${config.sprrw.sandboxing.recipes.pwd_starter} \
+            -v ~/.claude:/home/sprrw/.claude -v ~/.claude.json:/home/sprrw/.claude.json \
+            --network ollama-network \
+            --add-host host.docker.internal="$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')" \
+            DOCKERIMG \
+            ${claudeConfigured}/bin/claude "$@"
         '';
       })
       (pkgs.writeShellApplication {
