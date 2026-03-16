@@ -14,6 +14,7 @@ builtins.listToAttrs (
     "discord"
     "vesktop"
     "ropr" # Doesnt exist on stable
+    "gemini-cli"
   ]
 ) // (
   let

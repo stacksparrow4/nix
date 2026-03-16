@@ -54,6 +54,14 @@
           ${claudeBoxed}/bin/claude "$@"
         '';
       })
+      (pkgs.writeShellApplication {
+        name = "gemini";
+        text = ''
+          mkdir -p ~/.gemini
+
+          ${config.sprrw.sandboxing.runDocker} ${config.sprrw.sandboxing.recipes.pwd_starter} -v ~/.gemini:/home/sprrw/.gemini DOCKERIMG ${pkgs.gemini-cli}/bin/gemini "$@"
+        '';
+      })
     ];
 
     services.ollama = {
