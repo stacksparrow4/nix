@@ -73,7 +73,42 @@
             ${pkgs.qwen-code}/bin/qwen --yolo "$@"
         '';
       })
+      (pkgs.writeShellApplication {
+        name = "opencode";
+        text = ''
+          mkdir -p ~/.local/share/opencode ~/.cache/opencode
+
+          ${config.sprrw.sandboxing.runDocker} \
+            ${config.sprrw.sandboxing.recipes.pwd_starter} \
+            -v ~/.local/share/opencode:/home/sprrw/.local/share/opencode -v ~/.cache/opencode:/home/sprrw/.cache/opencode -v ~/.config/opencode:/home/sprrw/.config/opencode \
+            --network ollama-network \
+            --add-host host.docker.internal="$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')" \
+            DOCKERIMG \
+            ${pkgs.opencode}/bin/opencode "$@"
+        '';
+      })
     ];
+
+    home.file.".config/opencode/opencode.json".text = ''
+      {
+        "$schema": "https://opencode.ai/config.json",
+        "theme": "opencode",
+        "provider": {
+          "ollama": {
+            "npm": "@ai-sdk/openai-compatible",
+            "name": "Ollama",
+            "options": {
+              "baseURL": "${cfg.ollama-server-url}/v1"
+            },
+            "models": {
+              "${cfg.model}": {
+                "name": "${cfg.model}"
+              }
+            }
+          }
+        }
+      }
+    '';
 
     services.ollama = {
       enable = true;

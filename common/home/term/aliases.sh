@@ -18,6 +18,14 @@ alias gf='git fetch'
 alias grv='git remote -v'
 alias gbv='git branch -v'
 
+function take() {
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: take path/to/dir"
+  fi
+  mkdir -p "$1"
+  cd "$1"
+}
+
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
 	command yazi "$@" --cwd-file="$tmp"

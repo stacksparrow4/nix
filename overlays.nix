@@ -15,6 +15,7 @@ builtins.listToAttrs (
     "vesktop"
     "ropr" # Doesnt exist on stable
     "gemini-cli"
+    "opencode"
   ]
 ) // (
   let

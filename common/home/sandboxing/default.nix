@@ -15,7 +15,8 @@
 
       RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw && \
         apk add sudo && \
-        echo 'sprrw ALL=(ALL:ALL) NOPASSWD:SETENV: ALL' > /etc/sudoers
+        echo 'sprrw ALL=(ALL:ALL) NOPASSWD:SETENV: ALL' > /etc/sudoers && \
+        mkdir -p /home/sprrw/.config /home/sprrw/.local/share /home/sprrw/.cache && chown -R sprrw: /home/sprrw
     '';
     dockerInit = execMode: pkgs.writeShellScript "dockerinit" ''
       set -e
