@@ -30,8 +30,12 @@
 
       exec "$@"
     '';
+    isMac = lib.strings.hasSuffix "-darwin" pkgs.stdenv.hostPlatform.system;
   in {
-    sprrw.sandboxing.runDocker = pkgs.writeShellScript "run-docker" ''
+    sprrw.sandboxing.runDocker = if isMac then pkgs.writeShellScript "run-docker" ''
+      echo "Sandbox not supported on Mac"
+      exit 1
+    '' else pkgs.writeShellScript "run-docker" ''
       if ! docker inspect usermapped-img &>/dev/null; then
         docker build -t usermapped-img ${dockerFileDir}
       fi
@@ -41,7 +45,11 @@
 
     sprrw.sandboxing.runDockerBin = { name, args }: (pkgs.writeShellApplication {
       inherit name;
-      text = ''
+      # Duplicated isMac code so that we can hopefully avoid building some packages
+      text = if isMac then ''
+        echo "Sandbox not supported on Mac"
+        exit 1
+      '' else ''
         ${cfg.runDocker} ${args} "$@"
       '';
     });

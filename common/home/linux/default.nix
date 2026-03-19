@@ -13,6 +13,10 @@
   };
 
   config = lib.mkIf config.sprrw.linux.enable {
+    home.packages = with pkgs; [
+      traceroute
+    ];
+
     sprrw.linux = {
       rofi.enable = true;
       sway.enable = true;
