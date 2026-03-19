@@ -17,6 +17,8 @@
       (config.sprrw.sandboxing.runDockerBin { name = "shortscan"; args = "DOCKERIMG ${shortscan}/bin/shortscan"; })
       (config.sprrw.sandboxing.runDockerBin { name = "gau"; args = "DOCKERIMG ${gau}/bin/gau"; })
       (config.sprrw.sandboxing.runDockerBin { name = "naabu"; args = "-it DOCKERIMG ${naabu}/bin/naabu"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "clairvoyance"; args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${clairvoyance}/bin/clairvoyance"; })
+      (config.sprrw.sandboxing.runDockerBin { name = "sourcemapper"; args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${sourcemapper}/bin/sourcemapper"; })
     ] ++ [ # pkgs that aren't from nixpkgs
       (let
         vulnx = pkgs.callPackage (
