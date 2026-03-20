@@ -39,6 +39,7 @@
       whois
       curl # technically already exists in system package, but putting it here allows it to show inside docker which only uses home manager
       gnupg
+      shtris
       # TODO: put this in a "large" packages section
       ffmpeg
     ];
