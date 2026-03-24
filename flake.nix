@@ -29,6 +29,17 @@
       specialArgs = { inherit inputs; };
     };
 
+    nixosConfigurations.sandbox = nixpkgs.lib.nixosSystem rec {
+      system = "x86_64-linux";
+      pkgs = overlayedNixpkgs system;
+      modules = [
+        ./hosts/sandbox/system/configuration.nix
+        home-manager.nixosModules.home-manager
+        { home-manager.extraSpecialArgs = { inherit inputs; }; }
+      ];
+      specialArgs = { inherit inputs; };
+    };
+
     packages.aarch64-darwin.homeConfigurations."dan" = home-manager.lib.homeManagerConfiguration {
       pkgs = overlayedNixpkgs "aarch64-darwin";
 

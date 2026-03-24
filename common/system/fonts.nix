@@ -15,7 +15,7 @@ let cfg = config.sprrw.font; in {
     };
   };
 
-  config = {
+  config = lib.mkIf (!config.sprrw.headless) {
     sprrw.font = {
       mainFont = pkgs.nerd-fonts.iosevka-term;
       mainFontName = "Iosevka Term Nerd Font";

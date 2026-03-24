@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, config, lib, ... }:
 
 {
   imports = [
@@ -9,32 +9,42 @@
     ./virt.nix
   ];
 
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
+  # For now just putting all options in default.nix
+  options.sprrw = {
+    headless = lib.mkEnableOption "headless";
   };
 
-  programs._1password.enable = true;
-  programs._1password-gui.enable = true;
+  config = lib.mkMerge [
+    {
+      home-manager = {
+        useGlobalPkgs = true;
+        useUserPackages = true;
+      };
 
-  services.gnome.gnome-keyring.enable = true;
-  security.pam.services = {
-    greetd.enableGnomeKeyring = true;
-    swaylock.enableGnomeKeyring = true;
-  };
+      # Place home-files in a place that can easily be mounted by docker
+      environment.etc."hm-package" = {
+        source = config.home-manager.users.sprrw.home.activationPackage;
+      };
 
-  programs.wireshark.enable = true;
+      systemd.coredump.enable = true;
+      systemd.coredump.extraConfig = ''
+        Storage=none
+        ProcessSizeMax=0
+      '';
 
-  # Place home-files in a place that can easily be mounted by docker
-  environment.etc."hm-package" = {
-    source = config.home-manager.users.sprrw.home.activationPackage;
-  };
+      networking.firewall.interfaces."br-ollama".allowedTCPPorts = [ 11434 ];
+    }
+    (lib.mkIf (!config.sprrw.headless) {
+      programs._1password.enable = true;
+      programs._1password-gui.enable = true;
 
-  systemd.coredump.enable = true;
-  systemd.coredump.extraConfig = ''
-    Storage=none
-    ProcessSizeMax=0
-  '';
+      services.gnome.gnome-keyring.enable = true;
+      security.pam.services = {
+        greetd.enableGnomeKeyring = true;
+        swaylock.enableGnomeKeyring = true;
+      };
 
-  networking.firewall.interfaces."br-ollama".allowedTCPPorts = [ 11434 ];
+      programs.wireshark.enable = true;
+    })
+  ];
 }
