@@ -15,6 +15,7 @@
   config = lib.mkIf config.sprrw.linux.enable {
     home.packages = with pkgs; [
       traceroute
+      bubblewrap
     ];
 
     sprrw.linux = {
