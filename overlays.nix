@@ -7,14 +7,10 @@ builtins.listToAttrs (
     value = pkgsUnstable."${name}";
   }) [
     # List of unstable packages
-    "brave"
     "_1password-gui"
     "_1password-cli"
     "slack"
-    "discord"
     "ropr" # Doesnt exist on stable
-    "gemini-cli"
-    "opencode"
   ]
 ) // (
   let

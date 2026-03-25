@@ -9,7 +9,9 @@
       script = ''
         flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
         flatpak install -y flathub dev.vencord.Vesktop
-        flatpak override --user --nosocket=x11 dev.vencord.Vesktop
+        flatpak override --user --nosocket=x11 --nofilesystem=~/.steam dev.vencord.Vesktop
+        flatpak install -y flathub com.brave.Browser
+        flatpak override --user --nosocket=x11 com.brave.Browser
       '';
     };
   };
