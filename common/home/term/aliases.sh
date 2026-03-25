@@ -1,4 +1,4 @@
-alias ls='ls --color=always'
+alias ls='ls --color=auto'
 
 alias ggpush='git push -u origin $(git branch --show-current)'
 alias ggpull='git pull'
