@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./gui.nix
     ./burp.nix
     ./caido.nix
     ./cracking.nix
@@ -23,6 +24,7 @@
 
   config = lib.mkIf config.sprrw.sec.enable {
     sprrw.sec = {
+      gui.enable = true;
       burp.enable = true;
       caido.enable = true;
       cracking.enable = true;

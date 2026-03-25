@@ -41,8 +41,6 @@
       gnupg
       shtris
       gh
-      # TODO: put this in a "large" packages section
-      ffmpeg
     ];
   };
 }
