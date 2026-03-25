@@ -7,6 +7,7 @@
 
 
   sprrw = {
+    sandboxing.enable = true;
     ai.enable = true;
     linux.enable = true;
     nvim.enable = true;

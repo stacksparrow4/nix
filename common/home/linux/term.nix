@@ -12,6 +12,8 @@
       netcat-openbsd
       lsof
       neofetch
+      traceroute
+      bubblewrap
 
       (pkgs.writeShellScriptBin "proxychains" ''
         ${pkgs.proxychains}/bin/proxychains4 -q "$@"

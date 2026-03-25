@@ -2,6 +2,8 @@
 
 {
   options.sprrw.sandboxing = {
+    enable = lib.mkEnableOption "sandboxing";
+
     runDocker = lib.mkOption {};
     runDockerBin = lib.mkOption {};
 
@@ -32,7 +34,7 @@
     '';
     isMac = lib.strings.hasSuffix "-darwin" pkgs.stdenv.hostPlatform.system;
   in {
-    sprrw.sandboxing.runDocker = if isMac then pkgs.writeShellScript "run-docker" ''
+    sprrw.sandboxing.runDocker = if cfg.enable then (if isMac then pkgs.writeShellScript "run-docker" ''
       echo "Sandbox not supported on Mac"
       exit 1
     '' else pkgs.writeShellScript "run-docker" ''
@@ -41,7 +43,25 @@
       fi
 
       ${pkgs.python3}/bin/python ${./start-sandbox.py} ${dockerInit false} "$@"
-    '';
+    '') else (pkgs.writeShellScript "run-docker-stub" ''
+      found=false
+      cmd=()
+
+      for arg in "$@"; do
+        if $found; then
+          cmd+=("$arg")
+        elif [[ "$arg" == "DOCKERIMG" ]]; then
+          found=true
+        fi
+      done
+
+      if $found && [[ ''${#cmd[@]} -gt 0 ]]; then
+        "''${cmd[@]}"
+      else
+        echo "Invalid run-docker command without sandbox" >&2
+        exit 1
+      fi
+    '');
 
     sprrw.sandboxing.runDockerBin = { name, args }: (pkgs.writeShellApplication {
       inherit name;
