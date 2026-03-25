@@ -12,7 +12,6 @@ builtins.listToAttrs (
     "_1password-cli"
     "slack"
     "discord"
-    "vesktop"
     "ropr" # Doesnt exist on stable
     "gemini-cli"
     "opencode"

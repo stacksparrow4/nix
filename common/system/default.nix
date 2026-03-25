@@ -7,6 +7,7 @@
     ./fonts.nix
     ./nix-config.nix
     ./virt.nix
+    ./flatpak.nix
   ];
 
   # For now just putting all options in default.nix
