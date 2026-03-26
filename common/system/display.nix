@@ -48,7 +48,6 @@
       };
 
       programs = {
-        thunar.enable = true;
         dconf.enable = true;
       };
 

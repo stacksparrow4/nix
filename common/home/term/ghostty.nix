@@ -35,9 +35,9 @@
       cfg = config.sprrw.term.ghostty;
     in
     {
-      home.file.".terminfo" = lib.mkIf cfg.installTerminfo {
-        source = "${pkgs.ghostty.terminfo}/share/terminfo";
-      };
+      # home.file.".terminfo" = lib.mkIf cfg.installTerminfo {
+      #   source = "${pkgs.ghostty.terminfo}/share/terminfo";
+      # };
 
       programs.ghostty = lib.mkIf cfg.enable {
         enable = true;

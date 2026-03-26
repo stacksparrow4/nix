@@ -28,7 +28,6 @@
       krita
       kdePackages.kdenlive
       vlc
-      libreoffice
       blender
       obsidian
       rofi

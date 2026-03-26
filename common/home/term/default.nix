@@ -10,6 +10,7 @@
     ./tmux
     ./yazi.nix
     ./zshrc.nix
+    ./foot.nix
   ];
 
   options = {
@@ -17,7 +18,8 @@
   };
 
   config = lib.mkIf config.sprrw.term.enable {
-    sprrw.term.ghostty.enable = true; # TODO: only with GUI?
+    sprrw.term.ghostty.enable = false; # TODO: only with GUI?
+    sprrw.term.foot.enable = true;
     sprrw.term.basic.enable = true;
     sprrw.term.large.enable = true;
     sprrw.term.navi.enable = true;

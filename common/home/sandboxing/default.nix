@@ -127,7 +127,7 @@
           open_port=$(comm -23 <(seq 49152 65535) <(ss -tan | awk '{print $4}' | cut -d':' -f2 | grep "[0-9]\{1,5\}" | sort | uniq) | shuf | head -n 1) || true
           echo "Forwarding SSH to port $open_port"
           pidfile=$(mktemp)
-          qemu-system-x86_64 -enable-kvm -m 4096 -cdrom ~/.local/vm.iso -boot d -nic user,hostfwd=tcp:127.0.0.1:"$open_port"-:22 -display none -daemonize -pidfile "$pidfile" ${qemu_args}
+          qemu-system-x86_64 -enable-kvm -m 16384 -smp 4 -cdrom ~/.local/vm.iso -boot d -nic user,hostfwd=tcp:127.0.0.1:"$open_port"-:22 -display none -daemonize -pidfile "$pidfile" ${qemu_args}
           qemupid=$(cat "$pidfile")
           rm "$pidfile"
           echo "Process id $qemupid"
