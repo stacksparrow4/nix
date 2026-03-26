@@ -5,18 +5,20 @@
 { config, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ../../../common/system
-      ./gaming.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ../../../common/system
+    ./gaming.nix
+  ];
 
   # Swap
-  swapDevices = [{
-    device = "/swapfile";
-    size = 32 * 1024;
-  }];
+  swapDevices = [
+    {
+      device = "/swapfile";
+      size = 32 * 1024;
+    }
+  ];
 
   # Disk trim
   services.fstrim = {
@@ -31,7 +33,11 @@
   users.users.sprrw = {
     isNormalUser = true;
     description = "sprrw";
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "docker"
+    ];
   };
 
   # Bootloader.

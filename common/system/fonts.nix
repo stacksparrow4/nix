@@ -1,6 +1,14 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
-let cfg = config.sprrw.font; in {
+let
+  cfg = config.sprrw.font;
+in
+{
   options.sprrw.font = {
     mainFont = lib.mkOption {
       type = lib.types.package;
@@ -9,7 +17,7 @@ let cfg = config.sprrw.font; in {
     mainFontName = lib.mkOption {
       type = lib.types.str;
     };
-    
+
     mainFontMonoName = lib.mkOption {
       type = lib.types.str;
     };

@@ -1,15 +1,22 @@
-{ pkgs, lib, config, ... }@inputs:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}@inputs:
 
 {
   options = {
     sprrw.sec.windows.krbrelayx.enable = lib.mkEnableOption "krbrelayx";
   };
 
-  config = let
-    pkgs = import ./pinned-pkgs.nix { system = inputs.pkgs.stdenv.hostPlatform.system; };
-  in lib.mkIf config.sprrw.sec.windows.krbrelayx.enable {
-    home.packages = [(
-      pkgs.stdenv.mkDerivation {
+  config =
+    let
+      pkgs = import ./pinned-pkgs.nix { system = inputs.pkgs.stdenv.hostPlatform.system; };
+    in
+    lib.mkIf config.sprrw.sec.windows.krbrelayx.enable {
+      home.packages = [
+        (pkgs.stdenv.mkDerivation {
           name = "krbrelayx";
 
           src = pkgs.fetchFromGitHub {
@@ -19,11 +26,13 @@
             hash = "sha256-rcDa6g0HNjrM/XdXOF22iURA9euJbSahGKlFr5R7I/U=";
           };
 
-          pythonWithPkgs = pkgs.python311.withPackages(ps: with ps; [
-            impacket
-            ldap3
-            dnspython
-          ]);
+          pythonWithPkgs = pkgs.python311.withPackages (
+            ps: with ps; [
+              impacket
+              ldap3
+              dnspython
+            ]
+          );
 
           buildPhase = ''
             mkdir -p $out/bin
@@ -38,7 +47,7 @@
           '';
 
           dontInstall = true;
-        }
-    )];
-  };
+        })
+      ];
+    };
 }

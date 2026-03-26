@@ -1,10 +1,14 @@
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 
 {
   imports = [
     ../../../common/home
   ];
-
 
   sprrw = {
     sandboxing.enable = true;
@@ -21,24 +25,22 @@
 
   home = {
     packages = with pkgs; [
-      (
-        runCommand "signal" {} ''
-          mkdir -p $out/share/applications
-          cat <<EOF > $out/share/applications/signal.desktop
-          [Desktop Entry]
-          Name=Signal
-          Exec=env QT_QPA_PLATFORM=xcb ${signal-desktop-bin}/bin/signal-desktop --disable-gpu %U
-          Terminal=false
-          Type=Application
-          Icon=signal-desktop
-          StartupWMClass=signal
-          Comment=Private messaging from your desktop
-          MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
-          Categories=Network;InstantMessaging;Chat;
-          EOF
-          ln -s ${signal-desktop-bin}/share/icons $out/share/icons
-        ''
-      )
+      (runCommand "signal" { } ''
+        mkdir -p $out/share/applications
+        cat <<EOF > $out/share/applications/signal.desktop
+        [Desktop Entry]
+        Name=Signal
+        Exec=env QT_QPA_PLATFORM=xcb ${signal-desktop-bin}/bin/signal-desktop --disable-gpu %U
+        Terminal=false
+        Type=Application
+        Icon=signal-desktop
+        StartupWMClass=signal
+        Comment=Private messaging from your desktop
+        MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
+        Categories=Network;InstantMessaging;Chat;
+        EOF
+        ln -s ${signal-desktop-bin}/share/icons $out/share/icons
+      '')
       lmms
       audacity
       aseprite
@@ -50,7 +52,9 @@
 
     file.".background-image".source = ../bg.png;
 
-    file.".config/sway/conf.d/nest01".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/sway.config";
-    file.".config/kanshi/config".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/kanshi.config";
+    file.".config/sway/conf.d/nest01".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/sway.config";
+    file.".config/kanshi/config".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/kanshi.config";
   };
 }

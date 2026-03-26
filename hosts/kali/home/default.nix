@@ -2,7 +2,7 @@
 
 {
   imports = [
-     ../../../common/home
+    ../../../common/home
   ];
 
   home = {
@@ -12,7 +12,7 @@
 
   # Uncomment for faster build
   # sprrw.useAllEnvironments = false;
-  
+
   sprrw.rofi.enable = false;
   sprrw.alacritty.enable = false;
 

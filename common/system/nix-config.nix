@@ -2,7 +2,10 @@
 
 {
   # Necessary for using flakes on this system.
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   # Pin registry to flake versions
   nix.registry.nixpkgs.flake = inputs.nixpkgs;

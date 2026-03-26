@@ -1,4 +1,10 @@
-{ pkgs, lib, config, osConfig, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  osConfig,
+  ...
+}:
 
 {
   options = {
@@ -24,26 +30,28 @@
     };
   };
 
-  config = let
-    cfg = config.sprrw.term.ghostty;
-  in {
-    home.file.".terminfo" = lib.mkIf cfg.installTerminfo {
-      source = "${pkgs.ghostty.terminfo}/share/terminfo";
-    };
+  config =
+    let
+      cfg = config.sprrw.term.ghostty;
+    in
+    {
+      home.file.".terminfo" = lib.mkIf cfg.installTerminfo {
+        source = "${pkgs.ghostty.terminfo}/share/terminfo";
+      };
 
-    programs.ghostty = lib.mkIf cfg.enable {
-      enable = true;
+      programs.ghostty = lib.mkIf cfg.enable {
+        enable = true;
 
-      settings = {
-        font-family = "${cfg.font.family}";
-        font-size = cfg.font.size;
-        window-decoration = "none";
-        theme = "Carbonfox";
-        command = "${pkgs.tmux}/bin/tmux";
-        resize-overlay = "never";
-        maximize = true;
-        macos-option-as-alt = true;
+        settings = {
+          font-family = "${cfg.font.family}";
+          font-size = cfg.font.size;
+          window-decoration = "none";
+          theme = "Carbonfox";
+          command = "${pkgs.tmux}/bin/tmux";
+          resize-overlay = "never";
+          maximize = true;
+          macos-option-as-alt = true;
+        };
       };
     };
-  };
 }

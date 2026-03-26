@@ -1,8 +1,8 @@
 { pkgs, ... }:
 
 {
-  home.packages = [(
-    pkgs.writeShellApplication {
+  home.packages = [
+    (pkgs.writeShellApplication {
       name = "mkburpscript";
       text = ''
         if [[ -f main.py ]]; then
@@ -24,6 +24,6 @@
         s.proxies = {"http": "http://localhost:8080", "https": "http://localhost:8080"}
         EOF
       '';
-    }
-  )];
+    })
+  ];
 }

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   options = {
@@ -9,7 +14,10 @@
     home.packages = with pkgs; [
       hashcat
       john
-      (config.sprrw.sandboxing.runDockerBin { name = "hydra"; args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${thc-hydra}/bin/hydra"; })
+      (config.sprrw.sandboxing.runDockerBin {
+        name = "hydra";
+        args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${thc-hydra}/bin/hydra";
+      })
     ];
   };
 }

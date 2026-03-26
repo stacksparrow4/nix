@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   options = {
@@ -50,7 +55,10 @@
             };
           });
         in
-          config.sprrw.sandboxing.runDockerBin { name = "webcrack"; args = "-i -w /pwd -v \"$(pwd):/pwd\" DOCKERIMG ${webcrack}/bin/webcrack"; }
+        config.sprrw.sandboxing.runDockerBin {
+          name = "webcrack";
+          args = "-i -w /pwd -v \"$(pwd):/pwd\" DOCKERIMG ${webcrack}/bin/webcrack";
+        }
       )
     ];
   };

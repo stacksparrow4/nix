@@ -1,8 +1,8 @@
 { pkgs, inputs, ... }:
 
 {
-  home.packages = [(
-    import ./shellnixcreator.nix {
+  home.packages = [
+    (import ./shellnixcreator.nix {
       inherit pkgs;
       inherit inputs;
       scriptName = "mkwindowsenv";
@@ -15,6 +15,6 @@
           ];
         }
       '';
-    }
-  )];
+    })
+  ];
 }

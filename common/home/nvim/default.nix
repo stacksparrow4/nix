@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 let
   cfg = config.sprrw.nvim;
@@ -36,51 +41,53 @@ in
         "${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]}"
       ];
 
-      plugins = (with pkgs.vimPlugins; [
-        lazy-nvim
-        blink-cmp
-        bufferline-nvim
-        friendly-snippets
-        gitsigns-nvim
-        img-clip-nvim
-        kanagawa-nvim
-        nvim-lspconfig
-        nvim-treesitter
-        nvim-treesitter-textobjects
-        nvim-web-devicons
-        plenary-nvim
-        snacks-nvim
-        telescope-fzf-native-nvim
-        telescope-nvim
-        typst-preview-nvim
-        yazi-nvim
-        trouble-nvim
-        conform-nvim
-      ]) ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
-        lua
-        nix
-        c
-        cpp
-        cmake
-        vim
-        vimdoc
-        python
-        rust
-        go
-        yaml
-        json
-        toml
-        javascript
-        typescript
-        markdown
-        typst
-        java
-        javadoc
-        c_sharp
-        caddy
-        nginx
-        ruby
-      ]);
+      plugins =
+        (with pkgs.vimPlugins; [
+          lazy-nvim
+          blink-cmp
+          bufferline-nvim
+          friendly-snippets
+          gitsigns-nvim
+          img-clip-nvim
+          kanagawa-nvim
+          nvim-lspconfig
+          nvim-treesitter
+          nvim-treesitter-textobjects
+          nvim-web-devicons
+          plenary-nvim
+          snacks-nvim
+          telescope-fzf-native-nvim
+          telescope-nvim
+          typst-preview-nvim
+          yazi-nvim
+          trouble-nvim
+          conform-nvim
+        ])
+        ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
+          lua
+          nix
+          c
+          cpp
+          cmake
+          vim
+          vimdoc
+          python
+          rust
+          go
+          yaml
+          json
+          toml
+          javascript
+          typescript
+          markdown
+          typst
+          java
+          javadoc
+          c_sharp
+          caddy
+          nginx
+          ruby
+        ]);
 
       extraLuaConfig = ''
         require("config")
@@ -115,22 +122,28 @@ in
       source = ./lua;
     };
 
-    home.packages = let
-      unsandboxed = pname: pkgs.runCommand pname {} ''
-        mkdir -p $out/bin
-        ln -s ${config.programs.neovim.finalPackage}/bin/nvim $out/bin/${pname}
-      '';
-      sandboxed = pname: pkgs.writeShellApplication {
-        name = pname;
-        text = ''
-          ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${config.sprrw.sandboxing.runDocker} ${cfg.sandboxAdditionalDockerArgs} ENDDOCKERARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
-        '';
-      };
-    in [
-      (unsandboxed "nvim-unsandboxed")
-      (unsandboxed "vim-unsandboxed")
-      (unsandboxed "vi-unsandboxed")
-      (sandboxed "bvim")
-    ];
+    home.packages =
+      let
+        unsandboxed =
+          pname:
+          pkgs.runCommand pname { } ''
+            mkdir -p $out/bin
+            ln -s ${config.programs.neovim.finalPackage}/bin/nvim $out/bin/${pname}
+          '';
+        sandboxed =
+          pname:
+          pkgs.writeShellApplication {
+            name = pname;
+            text = ''
+              ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${config.sprrw.sandboxing.runDocker} ${cfg.sandboxAdditionalDockerArgs} ENDDOCKERARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+            '';
+          };
+      in
+      [
+        (unsandboxed "nvim-unsandboxed")
+        (unsandboxed "vim-unsandboxed")
+        (unsandboxed "vi-unsandboxed")
+        (sandboxed "bvim")
+      ];
   };
 }

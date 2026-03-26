@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   options = {
@@ -8,13 +13,11 @@
   config = lib.mkIf config.sprrw.sec.metasploit.enable {
     home.packages = with pkgs; [
       metasploit
-      (
-        runCommand "msfscripts" {} ''
-          mkdir -p $out/bin
-          cp ${metasploit}/bin/msf-pattern_create $out/bin/metasm_shell
-          sed -i 's/pattern_create\.rb/metasm_shell.rb/' $out/bin/metasm_shell
-        ''
-      )
+      (runCommand "msfscripts" { } ''
+        mkdir -p $out/bin
+        cp ${metasploit}/bin/msf-pattern_create $out/bin/metasm_shell
+        sed -i 's/pattern_create\.rb/metasm_shell.rb/' $out/bin/metasm_shell
+      '')
     ];
   };
 }

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   options = {
@@ -7,7 +12,7 @@
 
   config = lib.mkIf config.sprrw.programming.sage.enable {
     home.packages = with pkgs; [
-      (sage.override {requireSageTests = false;})
+      (sage.override { requireSageTests = false; })
     ];
   };
 }

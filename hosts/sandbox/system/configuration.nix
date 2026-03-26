@@ -28,7 +28,11 @@
   users.users.sprrw = {
     isNormalUser = true;
     description = "sprrw";
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "docker"
+    ];
     initialPassword = "password";
   };
 

@@ -1,4 +1,9 @@
-{ pkgs, inputs, scriptName, mkShellCmd }:
+{
+  pkgs,
+  inputs,
+  scriptName,
+  mkShellCmd,
+}:
 
 pkgs.writeShellScriptBin scriptName ''
   #!${pkgs.stdenv.shell}

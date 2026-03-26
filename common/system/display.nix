@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 {
   config = lib.mkMerge [
@@ -35,7 +40,10 @@
       xdg.portal = {
         enable = true;
         wlr.enable = true;
-        extraPortals = with pkgs; [ xdg-desktop-portal-gtk xdg-desktop-portal-wlr ];
+        extraPortals = with pkgs; [
+          xdg-desktop-portal-gtk
+          xdg-desktop-portal-wlr
+        ];
         config.common.default = "*";
       };
 
@@ -57,8 +65,8 @@
 
       environment.variables = {
         GTK_THEME = "Adwaita:dark";
-        NIXOS_OZONE_WL = "1";       # Hint Electron apps to use Wayland
-        MOZ_ENABLE_WAYLAND = "1";   # Firefox Wayland
+        NIXOS_OZONE_WL = "1"; # Hint Electron apps to use Wayland
+        MOZ_ENABLE_WAYLAND = "1"; # Firefox Wayland
         QT_QPA_PLATFORM = "wayland";
         SDL_VIDEODRIVER = "wayland";
         _JAVA_AWT_WM_NONREPARENTING = "1";

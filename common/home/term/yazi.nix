@@ -1,4 +1,9 @@
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 
 {
   options.sprrw.term.yazi.enable = lib.mkEnableOption "yazi";
@@ -8,8 +13,14 @@
       enable = true;
       keymap = {
         mgr.prepend_keymap = [
-          { run = "quit"; on = [ "<Esc>" ]; }
-          { run = "remove --permanently"; on = [ "d" ]; }
+          {
+            run = "quit";
+            on = [ "<Esc>" ];
+          }
+          {
+            run = "remove --permanently";
+            on = [ "d" ];
+          }
         ];
       };
     };
