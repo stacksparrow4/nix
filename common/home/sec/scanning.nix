@@ -53,6 +53,10 @@
           name = "sourcemapper";
           args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${sourcemapper}/bin/sourcemapper";
         })
+        (config.sprrw.sandboxing.runDockerBin {
+          name = "subfinder";
+          args = "-it DOCKERIMG ${subfinder}/bin/subfinder";
+        })
       ]
       ++ [
         # pkgs that aren't from nixpkgs
