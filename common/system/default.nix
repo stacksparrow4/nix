@@ -1,7 +1,8 @@
-{ pkgs, config, lib, ... }:
+{ config, lib, ... }:
 
 {
   imports = [
+    ./apps.nix
     ./audio.nix
     ./display.nix
     ./fonts.nix
