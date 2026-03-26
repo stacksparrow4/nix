@@ -24,6 +24,7 @@ in
         basedpyright
         ruff
         nixd
+        nixfmt
         gcc
       ];
 
@@ -54,6 +55,7 @@ in
         typst-preview-nvim
         yazi-nvim
         trouble-nvim
+        conform-nvim
       ]) ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
         lua
         nix

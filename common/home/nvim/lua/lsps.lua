@@ -71,3 +71,10 @@ vim.lsp.config.lua_ls = {
   }
 }
 vim.lsp.enable("lua_ls")
+
+-- Nix formatter
+require("conform").setup({
+  formatters_by_ft = {
+    nix = {"nixfmt"}
+  }
+})
