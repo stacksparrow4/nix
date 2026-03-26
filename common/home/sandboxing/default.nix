@@ -222,7 +222,6 @@
         })
         (cfg.runVMBin {
           name = "vm";
-
         })
       ];
     };
