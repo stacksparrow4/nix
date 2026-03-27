@@ -18,12 +18,25 @@
       home.packages = with pkgs; [
         aichat
         (pkgs.writeShellApplication {
+          name = "claude";
+          text = ''
+            mkdir -p ~/.claude
+            touch ~/.claude.json
+
+            TERM=xterm-256color ${config.sprrw.sandboxing.runDocker} \
+              -it \
+              -v ~/.claude:/home/sprrw/.claude -v ~/.claude.json:/home/sprrw/.claude.json \
+              DOCKERIMG \
+              ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
+          '';
+        })
+        (pkgs.writeShellApplication {
           name = "claude-code-box";
           text = ''
             mkdir -p ~/.claude
             touch ~/.claude.json
 
-            ${config.sprrw.sandboxing.runDocker} \
+            TERM=xterm-256color ${config.sprrw.sandboxing.runDocker} \
               ${config.sprrw.sandboxing.recipes.pwd_starter} \
               -v ~/.claude:/home/sprrw/.claude -v ~/.claude.json:/home/sprrw/.claude.json \
               DOCKERIMG \
@@ -46,7 +59,7 @@
                 sudo mkdir -p /mnt/pwd
                 sudo mount -t 9p -o trans=virtio,version=9p2000.L pwdshare /mnt/pwd
                 cd /mnt/pwd
-                ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
+                TERM=xterm-256color ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
               '';
             }} "$@"
           '';
