@@ -12,7 +12,7 @@ in
   options.sprrw.nvim = {
     enable = lib.mkEnableOption "nvim";
 
-    sandboxAdditionalDockerArgs = lib.mkOption {
+    additionalBwrapArgs = lib.mkOption {
       type = lib.types.str;
       default = "";
     };
@@ -135,7 +135,7 @@ in
           pkgs.writeShellApplication {
             name = pname;
             text = ''
-              ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${config.sprrw.sandboxing.runDocker} ${cfg.sandboxAdditionalDockerArgs} ENDDOCKERARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+              ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${cfg.additionalBwrapArgs} ENDBWRAPARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
             '';
           };
       in
