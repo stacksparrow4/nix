@@ -10,6 +10,7 @@
     ./flameshot.nix
     ./firefox.nix
     ./obs.nix
+    ./brave.nix
   ];
 
   options.sprrw.gui.enable = lib.mkEnableOption "gui";
@@ -34,7 +35,6 @@
       freerdp
       bruno
       feh
-      brave
     ];
   };
 }
