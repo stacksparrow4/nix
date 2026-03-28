@@ -1,17 +1,18 @@
 return {
   {
-    "rebelot/kanagawa.nvim",
+    "folke/tokyonight.nvim",
+    lazy = false,
+    priority = 1000,
     config = function()
-      require("kanagawa").setup({
-        commentStyle = { italic = false },
-        keywordStyle = { italic = false },
-        overrides = function()
-          return {
-            ["@variable.builtin"] = { italic = false },
-          }
-        end,
+      require("tokyonight").setup({
+        styles = {
+          comments = { italic = false },
+          keywords = { italic = false },
+          functions = { italic = false },
+          variables = { italic = false },
+        },
       })
-      vim.cmd.colorscheme("kanagawa-dragon")
+      vim.cmd.colorscheme("tokyonight-night")
     end,
   },
 }

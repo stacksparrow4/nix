@@ -49,7 +49,7 @@ in
           friendly-snippets
           gitsigns-nvim
           img-clip-nvim
-          kanagawa-nvim
+          tokyonight-nvim
           nvim-lspconfig
           nvim-treesitter
           nvim-treesitter-textobjects
