@@ -28,6 +28,7 @@ default_bwrap_args = [
     *["--ro-bind", "/usr", "/usr"],
     *["--ro-bind", "/run/current-system/sw", "/run/current-system/sw"],
     *["--ro-bind", "/home/sprrw/.config/nvim", "/home/sprrw/.config/nvim"],
+    *["--ro-bind", "/home/sprrw/.config/yazi", "/home/sprrw/.config/yazi"],
     *["--tmpfs", "/tmp"],
     *["--proc", "/proc"],
     *["--dev", "/dev"],
