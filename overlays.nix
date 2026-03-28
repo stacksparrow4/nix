@@ -12,6 +12,7 @@ builtins.listToAttrs (
       "_1password-cli"
       "slack"
       "ropr" # Doesnt exist on stable
+      "brave"
     ]
 )
 // (

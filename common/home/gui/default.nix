@@ -34,6 +34,7 @@
       freerdp
       bruno
       feh
+      brave
     ];
   };
 }
