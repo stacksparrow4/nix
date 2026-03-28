@@ -106,6 +106,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
     default_bwrap_args = [
         "bwrap",
         "--unshare-all",
+        "--as-pid-1",
         *["--ro-bind", "/nix", "/nix"],
         *["--ro-bind", "/etc", "/etc"],
         *["--ro-bind", "/usr", "/usr"],
