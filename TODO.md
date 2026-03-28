@@ -1,3 +1,5 @@
+Copy/paste in nvim doesn't infer content type (image pasting)
+
 - Package the following
     - opengrep
 - Nvim prettier formatter for GraphQL

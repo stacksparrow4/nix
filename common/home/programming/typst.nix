@@ -12,6 +12,7 @@
 
   config = lib.mkIf config.sprrw.programming.typst.enable {
     home.packages = with pkgs; [
+      typst
       tinymist
       typstyle
     ];

@@ -18,6 +18,10 @@
   };
 
   config = lib.mkIf config.sprrw.linux.enable {
+    home.packages = with pkgs; [
+      dragon-drop
+    ];
+
     sprrw.linux = {
       rofi.enable = true;
       sway.enable = true;

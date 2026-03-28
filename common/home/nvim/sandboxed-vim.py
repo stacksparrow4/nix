@@ -131,17 +131,17 @@ with tempfile.TemporaryDirectory() as tmpdir:
     else:
         additional_vim_args.extend(vim_args)
 
-    exit_code = subprocess.call(
-        [
-            *default_bwrap_args,
-            *["--bind", share_dir, share_dir],
-            *additional_bwrap_args,
-            "/usr/bin/env",
-            "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
-            vim_path,
-            *additional_vim_args,
-        ]
-    )
+    args = [
+        *default_bwrap_args,
+        *["--bind", share_dir, share_dir],
+        *additional_bwrap_args,
+        "/usr/bin/env",
+        "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
+        vim_path,
+        *additional_vim_args,
+    ]
+
+    exit_code = subprocess.call(args, cwd=share_dir)
 
     os.write(finish_w, b"\x00")
 
