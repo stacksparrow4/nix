@@ -144,6 +144,9 @@ in
         (unsandboxed "vim-unsandboxed")
         (unsandboxed "vi-unsandboxed")
         (sandboxed "bvim")
+        (lib.hiPrio (sandboxed "nvim"))
+        (lib.hiPrio (sandboxed "vim"))
+        (lib.hiPrio (sandboxed "vi"))
       ];
   };
 }
