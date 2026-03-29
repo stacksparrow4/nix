@@ -1,3 +1,4 @@
+- Fix weird issue potentially due to bubblewrap double mounting ~/nixos
 - Package the following
     - opengrep
 - Nvim prettier formatter for GraphQL
