@@ -53,6 +53,8 @@ args = [
     *default_bwrap_args,
     *["--bind", share_dir, share_dir],
     *additional_bwrap_args,
+    *["--chdir", share_dir],
+    "--",
     "/usr/bin/env",
     "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
     "XDG_RUNTIME_DIR=" + XDG_RUNTIME_DIR,
@@ -61,6 +63,6 @@ args = [
     *additional_vim_args,
 ]
 
-exit_code = subprocess.call(args, cwd=share_dir)
+exit_code = subprocess.call(args)
 
 exit(exit_code)
