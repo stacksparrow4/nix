@@ -24,6 +24,8 @@ default_bwrap_args = [
     "--unshare-all",
     "--as-pid-1",
     *["--ro-bind", "/nix", "/nix"],
+    *["--ro-bind", "/bin", "/bin"],
+    *["--ro-bind", "/usr", "/usr"],
     *["--ro-bind", "/etc", "/etc"],
     *["--ro-bind", "/usr", "/usr"],
     *["--ro-bind", "/run/current-system/sw", "/run/current-system/sw"],
@@ -51,9 +53,9 @@ else:
 
 args = [
     *default_bwrap_args,
-    *["--bind", share_dir, share_dir],
+    *["--bind", share_dir, "/pwd"],
     *additional_bwrap_args,
-    *["--chdir", share_dir],
+    *["--chdir", "/pwd"],
     "--",
     "/usr/bin/env",
     "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin",

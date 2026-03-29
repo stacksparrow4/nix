@@ -1,4 +1,4 @@
-- Fix weird issue potentially due to bubblewrap double mounting ~/nixos
+- Override xterm-256color terminfo with terminal emulator terminfo so I don't have to override TERM all the time
 - Package the following
     - opengrep
 - Nvim prettier formatter for GraphQL
