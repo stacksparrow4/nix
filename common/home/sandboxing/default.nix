@@ -217,6 +217,7 @@
 
             mkdir -p ~/.local
 
+            rm -f ~/.local/vm.iso
             ln -s "$isopath" ~/.local/vm.iso
           '';
         })
