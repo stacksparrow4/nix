@@ -13,6 +13,7 @@ builtins.listToAttrs (
       "slack"
       "ropr" # Doesnt exist on stable
       "brave"
+      "claude-code"
     ]
 )
 // (
