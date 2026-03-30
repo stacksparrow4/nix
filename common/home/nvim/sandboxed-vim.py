@@ -34,6 +34,7 @@ default_bwrap_args = [
     *["--tmpfs", "/tmp"],
     *["--proc", "/proc"],
     *["--dev", "/dev"],
+    "--share-net",
     *["--bind", f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}", f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}"]
 ]
 
