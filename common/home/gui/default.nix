@@ -8,16 +8,15 @@
 {
   imports = [
     ./flameshot.nix
-    ./firefox.nix
     ./obs.nix
-    ./brave.nix
+    ./browsers.nix
   ];
 
   options.sprrw.gui.enable = lib.mkEnableOption "gui";
 
   config = lib.mkIf config.sprrw.gui.enable {
     sprrw.gui = {
-      firefox.enable = true;
+      browsers.enable = true;
       flameshot.enable = true;
       obs.enable = true;
     };

@@ -1,3 +1,4 @@
+- Automatically disable sandboxing if already inside a sandbox
 - Override xterm-256color terminfo with terminal emulator terminfo so I don't have to override TERM all the time
 - Package the following
     - opengrep
