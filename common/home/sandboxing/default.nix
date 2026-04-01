@@ -224,6 +224,16 @@
         (cfg.runVMBin {
           name = "vm";
         })
+        (cfg.runVMBin {
+          name = "vm-cwd";
+          qemu_args = "-virtfs local,path=$(pwd),mount_tag=pwdshare,security_model=none,id=host1";
+          script = ''
+            sudo mkdir -p /mnt/pwd
+            sudo mount -t 9p -o trans=virtio,version=9p2000.L pwdshare /mnt/pwd
+            cd /mnt/pwd
+            bash
+          '';
+        })
         (pkgs.writeShellApplication {
           name = "vm-enter";
           text = ''

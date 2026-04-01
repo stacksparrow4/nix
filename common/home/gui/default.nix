@@ -32,7 +32,6 @@
       obsidian
       rofi
       freerdp
-      bruno
       feh
     ];
   };
