@@ -135,7 +135,11 @@ in
           pkgs.writeShellApplication {
             name = pname;
             text = ''
-              ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${cfg.additionalBwrapArgs} ENDBWRAPARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+              if [[ "$(hostname)" == sandbox ]]; then
+                ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+              else
+                ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${cfg.additionalBwrapArgs} ENDBWRAPARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+              fi
             '';
           };
       in
