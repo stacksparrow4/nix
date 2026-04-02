@@ -29,3 +29,43 @@ vim.keymap.set("n", "<leader>c", function()
   vim.fn.setreg("+", vim.fn.expand("%:~:.") .. ":" .. vim.fn.line(".") .. ":" .. vim.fn.col("."))
 end, { noremap = true, silent = true, desc = "Copy file path, line, and column" })
 
+vim.keymap.set("n", "<leader>C", function()
+  local clipboard_content = vim.fn.getreg('+')
+
+  if not clipboard_content or clipboard_content == '' then
+    vim.notify("Clipboard is empty", vim.log.levels.WARN)
+    return
+  end
+
+  local pattern = "^(.*):(%d+):(%d+)$"
+  local file_path, line_str, col_str = string.match(clipboard_content, pattern)
+
+  if not file_path then
+    pattern = "^(.*):(%d+)$"
+    file_path, line_str = string.match(clipboard_content, pattern)
+    col_str = "1"
+  end
+
+  if not file_path then
+    file_path = clipboard_content
+    line_str = "1"
+    col_str = "1"
+  end
+
+  local line = tonumber(line_str) or 1
+  local col = tonumber(col_str) or 1
+
+  local file = io.open(file_path, "r")
+  if not file then
+    vim.notify("File not found: " .. file_path, vim.log.levels.ERROR)
+    return
+  end
+  file:close()
+
+  vim.cmd("edit " .. vim.fn.fnameescape(file_path))
+
+  vim.cmd("normal! " .. line .. "G")
+  vim.cmd("normal! " .. col .. "|")
+
+  vim.notify("Opened " .. file_path .. " at line " .. line .. ", column " .. col, vim.log.levels.INFO)
+end, { noremap = true, silent = true, desc = "Go to path, line, and column in clipboard" })

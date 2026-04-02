@@ -83,7 +83,7 @@
 
             OLLAMA_HOST="''${OLLAMA_HOST:-http://host.docker.internal:11434}"
 
-            ${config.sprrw.sandboxing.runDocker} \
+            TERM=xterm-256color ${config.sprrw.sandboxing.runDocker} \
               ${config.sprrw.sandboxing.recipes.pwd_starter} \
               -v ~/.qwen:/home/sprrw/.qwen \
               --network ollama-network \
