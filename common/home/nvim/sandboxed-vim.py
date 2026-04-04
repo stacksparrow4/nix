@@ -19,6 +19,12 @@ assert XDG_RUNTIME_DIR is not None
 WAYLAND_DISPLAY = os.getenv("WAYLAND_DISPLAY")
 assert WAYLAND_DISPLAY is not None
 
+SHARED_CONFIGS = [
+    "/home/sprrw/.config/nvim",
+    "/home/sprrw/.config/yazi",
+    "/home/sprrw/.config/aichat",
+]
+
 default_bwrap_args = [
     "bwrap",
     "--unshare-all",
@@ -29,13 +35,16 @@ default_bwrap_args = [
     *["--ro-bind", "/etc", "/etc"],
     *["--ro-bind", "/usr", "/usr"],
     *["--ro-bind", "/run/current-system/sw", "/run/current-system/sw"],
-    *["--ro-bind", "/home/sprrw/.config/nvim", "/home/sprrw/.config/nvim"],
-    *["--ro-bind", "/home/sprrw/.config/yazi", "/home/sprrw/.config/yazi"],
+    *[y for x in SHARED_CONFIGS for y in ["--ro-bind", x, x]],
     *["--tmpfs", "/tmp"],
     *["--proc", "/proc"],
     *["--dev", "/dev"],
     "--share-net",
-    *["--bind", f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}", f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}"]
+    *[
+        "--bind",
+        f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}",
+        f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}",
+    ],
 ]
 
 share_dir = os.getcwd()
