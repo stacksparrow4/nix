@@ -82,7 +82,4 @@ alias ssh='TERM=xterm-256color ssh'
 alias ssh-password='TERM=xterm-256color ssh -o PreferredAuthentications=password'
 
 alias qwen='aichat -m ollama:qwen3-coder:30b'
-alias rnj='aichat -m ollama:rnj-1:8b'
-alias gpt-oss='aichat -m ollama:gpt-oss:20b'
-alias gpt='aichat -m openai:gpt-5.2'
 alias claude='aichat -m bedrock:global.anthropic.claude-opus-4-6-v1'

@@ -45,6 +45,11 @@
       audacity
       aseprite
       prismlauncher
+      ares
+      (config.sprrw.sandboxing.runDockerBin {
+        name = "twitch-dl";
+        args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${twitch-dl}/bin/twitch-dl";
+      })
     ];
 
     username = "sprrw";
