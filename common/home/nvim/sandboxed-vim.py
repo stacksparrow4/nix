@@ -29,7 +29,7 @@ default_bwrap_args = [
     "bwrap",
     "--unshare-all",
     "--as-pid-1",
-    *["--ro-bind", "/nix", "/nix"],
+    *["--ro-bind", "/nix/store", "/nix/store"],
     *["--ro-bind", "/bin", "/bin"],
     *["--ro-bind", "/usr", "/usr"],
     *["--ro-bind", "/etc", "/etc"],
@@ -41,7 +41,7 @@ default_bwrap_args = [
     *["--dev", "/dev"],
     "--share-net",
     *[
-        "--bind",
+        "--ro-bind",
         f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}",
         f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}",
     ],

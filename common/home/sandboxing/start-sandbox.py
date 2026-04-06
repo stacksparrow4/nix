@@ -22,7 +22,7 @@ args = [
     "docker", "run",
     "--rm",
     "--hostname", "sandbox",
-    "-v", "/nix:/nix:ro",
+    "-v", "/nix/store:/nix/store:ro",
     "-v", "/etc/fonts:/etc/fonts:ro",
     "-v", "/etc/hm-package:/etc/hm-package:ro",
     "-v", f"{os.path.expanduser("~/nixos")}:/home/sprrw/nixos:ro",
