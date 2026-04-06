@@ -44,8 +44,15 @@
       whois
       curl # technically already exists in system package, but putting it here allows it to show inside docker which only uses home manager
       gnupg
-      shtris
+      (config.sprrw.sandboxing.runDockerBin {
+        name = "shtris";
+        args = "-it DOCKERIMG ${shtris}/bin/shtris";
+      })
       gh
+      (config.sprrw.sandboxing.runDockerBin {
+        name = "zbarimg";
+        args = "-i DOCKERIMG ${zbar}/bin/zbarimg";
+      })
     ];
   };
 }
