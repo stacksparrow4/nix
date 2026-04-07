@@ -31,7 +31,6 @@ default_bwrap_args = [
     "--as-pid-1",
     *["--ro-bind", "/nix/store", "/nix/store"],
     *["--ro-bind", "/bin", "/bin"],
-    *["--ro-bind", "/usr", "/usr"],
     *["--ro-bind", "/etc", "/etc"],
     *["--ro-bind", "/usr", "/usr"],
     *["--ro-bind", "/run/current-system/sw", "/run/current-system/sw"],

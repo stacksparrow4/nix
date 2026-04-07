@@ -1,3 +1,8 @@
+- Better bwrap sandbox
+    - Auto mount all home manager files
+    - Create a easy way to define them sensibly in Nix
+    - Ensure that if run inside a sandbox, then falls through to running the normal binary (no sandbox recursion)
+
 - Try and remove TERM= requirement for Docker and SSH
     - With SSH, perhaps create wrapper script that auto sets it
 - Package the following
