@@ -36,7 +36,7 @@
     extraGroups = [
       "networkmanager"
       "wheel"
-      "docker"
+      "podman"
     ];
   };
 

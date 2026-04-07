@@ -18,6 +18,7 @@
         masscan
         rustscan
         (config.sprrw.sandboxing.runDockerBin {
+          # TODO: mount ~/nuclei-templates to ~/.local/share/nuclei-templates or something
           name = "nuclei";
           args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${nuclei}/bin/nuclei";
         })
