@@ -69,3 +69,38 @@ vim.keymap.set("n", "<leader>C", function()
 
   vim.notify("Opened " .. file_path .. " at line " .. line .. ", column " .. col, vim.log.levels.INFO)
 end, { noremap = true, silent = true, desc = "Go to path, line, and column in clipboard" })
+
+local function grepbuf(pattern)
+  if not pattern or pattern == "" then
+    vim.notify("GrepBuf: pattern required", vim.log.levels.ERROR)
+    return
+  end
+
+  local result = vim.system(
+    { "rg", "--vimgrep", "--no-heading", pattern },
+    { text = true }
+  ):wait()
+
+  local lines
+  if result.stdout and result.stdout ~= "" then
+    -- rg --vimgrep outputs filepath:row:col:match, trim to filepath:row:col
+    lines = {}
+    for line in result.stdout:gmatch("[^\n]+") do
+      local filepath, row, col = line:match("^(.+):(%d+):(%d+):")
+      if filepath then
+        table.insert(lines, filepath .. ":" .. row .. ":" .. col)
+      end
+    end
+  else
+    lines = { "(no results)" }
+  end
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+  vim.api.nvim_set_current_buf(buf)
+end
+
+vim.api.nvim_create_user_command("GrepBuf", function(opts)
+  grepbuf(opts.args)
+end, { nargs = 1, desc = "Grep codebase with ripgrep into a new buffer" })
