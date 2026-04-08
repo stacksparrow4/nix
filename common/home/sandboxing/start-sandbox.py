@@ -20,6 +20,7 @@ afterTargetArgs = sys.argv[sys.argv.index("DOCKERIMG")+1:]
 
 args = [
     "docker", "run",
+    "--userns=keep-id",
     "--rm",
     "--hostname", "sandbox",
     "-v", "/nix/store:/nix/store:ro",
