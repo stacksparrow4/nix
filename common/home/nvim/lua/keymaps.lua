@@ -26,8 +26,8 @@ vim.keymap.set("n", "<leader>b", "<cmd>BufferLinePick<cr>")
 
 -- Misc
 vim.keymap.set("n", "<leader>c", function()
-  vim.fn.setreg("+", vim.fn.expand("%:~:.") .. ":" .. vim.fn.line(".") .. ":" .. vim.fn.col("."))
-end, { noremap = true, silent = true, desc = "Copy file path, line, and column" })
+  vim.fn.setreg("+", vim.fn.expand("%:~:.") .. ":" .. vim.fn.line(".") .. ":" .. vim.fn.col(".") .. " " .. vim.api.nvim_get_current_line():match("^%s*(.*)"))
+end, { noremap = true, silent = true, desc = "Copy file path reference" })
 
 vim.keymap.set("n", "<leader>C", function()
   local clipboard_content = vim.fn.getreg('+')
@@ -68,7 +68,7 @@ vim.keymap.set("n", "<leader>C", function()
   vim.cmd("normal! " .. col .. "|")
 
   vim.notify("Opened " .. file_path .. " at line " .. line .. ", column " .. col, vim.log.levels.INFO)
-end, { noremap = true, silent = true, desc = "Go to path, line, and column in clipboard" })
+end, { noremap = true, silent = true, desc = "Go to file path reference" })
 
 local function grepbuf(pattern)
   if not pattern or pattern == "" then
