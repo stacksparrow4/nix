@@ -86,9 +86,9 @@ local function grepbuf(pattern)
     -- rg --vimgrep outputs filepath:row:col:match, trim to filepath:row:col
     lines = {}
     for line in result.stdout:gmatch("[^\n]+") do
-      local filepath, row, col = line:match("^(.+):(%d+):(%d+):")
+      local filepath, row, col, match = line:match("^(.+):(%d+):(%d+):(.*)")
       if filepath then
-        table.insert(lines, filepath .. ":" .. row .. ":" .. col)
+        table.insert(lines, filepath .. ":" .. row .. ":" .. col .. " " .. match:match("^%s*(.*)"))
       end
     end
   else
@@ -97,7 +97,7 @@ local function grepbuf(pattern)
 
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.bo[buf].modifiable = false
+  -- vim.bo[buf].modifiable = false
   vim.api.nvim_set_current_buf(buf)
 end
 
