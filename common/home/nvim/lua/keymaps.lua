@@ -30,7 +30,7 @@ vim.keymap.set("n", "<leader>c", function()
 end, { noremap = true, silent = true, desc = "Copy file path reference" })
 
 vim.keymap.set("n", "<leader>C", function()
-  local clipboard_content = vim.fn.getreg('+')
+  local clipboard_content = vim.fn.getreg('+'):match("^%s*(.-)%s*$")
 
   if not clipboard_content or clipboard_content == '' then
     vim.notify("Clipboard is empty", vim.log.levels.WARN)

@@ -72,6 +72,8 @@ function ns-unstable() {
   NIXPKGS_ALLOW_UNFREE=1 nix shell --impure $(for i in "$@"; do echo -n ' github:NixOS/nixpkgs/nixos-unstable#'"$i"; done)
 }
 
+function pkgsrc() { pos=$(nix-instantiate --json --eval -E '(import <nixpkgs> {}).'"$1"'.meta.position' | jq -r .); fname=$(echo "$pos" | cut -d: -f1); fpos=$(echo "$pos" | cut -d: -f2); vim +"$fpos" "$fname"; }
+
 alias nss='nix-search --channel=25.11 -d -m 3'
 alias nss-unstable='nix-search --channel=unstable -d -m 3'
 

@@ -12,6 +12,7 @@
 
   config = lib.mkIf config.sprrw.programming.lua.enable {
     home.packages = with pkgs; [
+      lua
       lua-language-server
     ];
   };
