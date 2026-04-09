@@ -22,6 +22,11 @@
       dragon-drop
     ];
 
+    # services.opensnitch-ui = {
+    #   enable = true;
+    # };
+    # systemd.user.services.opensnitch-ui.Service.Environment = [ "DISPLAY=:0" ];
+
     sprrw.linux = {
       rofi.enable = true;
       sway.enable = true;
