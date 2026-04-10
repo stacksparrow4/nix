@@ -26,11 +26,11 @@ vim.keymap.set("n", "<leader>b", "<cmd>BufferLinePick<cr>")
 
 -- Misc
 local function positiontotyp(fname, row, col, code)
-  return "`" .. fname .. ":" .. row .. ":" .. col .. "` ```" .. fname:match("^.+%.(.+)$") .. " " .. code .. "```"
+  return "`" .. fname .. ":" .. row .. ":" .. col .. "` ```" .. fname:match("^.+%.(.+)$") .. " " .. code:match("^%s*(.*)") .. "```"
 end
 
 vim.keymap.set("n", "<leader>c", function()
-  vim.fn.setreg("+", positiontotyp(vim.fn.expand("%:~:."), vim.fn.line("."), vim.fn.col("."), vim.api.nvim_get_current_line():match("^%s*(.*)")))
+  vim.fn.setreg("+", positiontotyp(vim.fn.expand("%:~:."), vim.fn.line("."), vim.fn.col("."), vim.api.nvim_get_current_line()))
 end, { noremap = true, silent = true, desc = "Copy file path reference" })
 
 vim.keymap.set("n", "<leader>C", function()
