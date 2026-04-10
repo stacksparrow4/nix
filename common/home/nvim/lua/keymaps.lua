@@ -25,8 +25,12 @@ vim.keymap.set("n", "<leader>d", "<cmd>bdelete<cr>")
 vim.keymap.set("n", "<leader>b", "<cmd>BufferLinePick<cr>")
 
 -- Misc
+local function positiontotyp(fname, row, col, code)
+  return "`" .. fname .. ":" .. row .. ":" .. col .. "` ```" .. fname:match("^.+%.(.+)$") .. " " .. code .. "```"
+end
+
 vim.keymap.set("n", "<leader>c", function()
-  vim.fn.setreg("+", vim.fn.expand("%:~:.") .. ":" .. vim.fn.line(".") .. ":" .. vim.fn.col(".") .. " " .. vim.api.nvim_get_current_line():match("^%s*(.*)"))
+  vim.fn.setreg("+", positiontotyp(vim.fn.expand("%:~:."), vim.fn.line("."), vim.fn.col("."), vim.api.nvim_get_current_line():match("^%s*(.*)")))
 end, { noremap = true, silent = true, desc = "Copy file path reference" })
 
 vim.keymap.set("n", "<leader>C", function()
@@ -70,14 +74,20 @@ vim.keymap.set("n", "<leader>C", function()
   vim.notify("Opened " .. file_path .. " at line " .. line .. ", column " .. col, vim.log.levels.INFO)
 end, { noremap = true, silent = true, desc = "Go to file path reference" })
 
-local function grepbuf(pattern)
+local function grepbuf(pattern, insensitive)
   if not pattern or pattern == "" then
     vim.notify("GrepBuf: pattern required", vim.log.levels.ERROR)
     return
   end
 
+  local rgargs = { "rg", "--vimgrep", "--no-heading" }
+  if insensitive then
+    table.insert(rgargs, "-i")
+  end
+  table.insert(rgargs, pattern)
+
   local result = vim.system(
-    { "rg", "--vimgrep", "--no-heading", pattern },
+    rgargs,
     { text = true }
   ):wait()
 
@@ -88,7 +98,7 @@ local function grepbuf(pattern)
     for line in result.stdout:gmatch("[^\n]+") do
       local filepath, row, col, match = line:match("^(.+):(%d+):(%d+):(.*)")
       if filepath then
-        table.insert(lines, filepath .. ":" .. row .. ":" .. col .. " " .. match:match("^%s*(.*)"))
+        table.insert(lines, positiontotyp(filepath, row, col, match))
       end
     end
   else
@@ -97,10 +107,15 @@ local function grepbuf(pattern)
 
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].filetype = "typst"
   -- vim.bo[buf].modifiable = false
   vim.api.nvim_set_current_buf(buf)
 end
 
 vim.api.nvim_create_user_command("GrepBuf", function(opts)
-  grepbuf(opts.args)
+  grepbuf(opts.args, false)
 end, { nargs = 1, desc = "Grep codebase with ripgrep into a new buffer" })
+
+vim.api.nvim_create_user_command("GrepBufInsensitive", function(opts)
+  grepbuf(opts.args, true)
+end, { nargs = 1, desc = "Grep codebase with ripgrep into a new buffer (Case insensitive)" })
