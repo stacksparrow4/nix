@@ -6,21 +6,17 @@
 }:
 
 {
-  options.sprrw.sandboxing = {
+  options.sprrw.sandbox = {
     enable = lib.mkEnableOption "sandboxing";
 
-    runDocker = lib.mkOption { };
-    runDockerBin = lib.mkOption { };
-
-    runVM = lib.mkOption { };
-    runVMBin = lib.mkOption { };
-
-    recipes = lib.mkOption { };
+    create = lib.mkOption {
+      type = lib.types.functionTo lib.types.package;
+    };
   };
 
   config =
     let
-      cfg = config.sprrw.sandboxing;
+      cfg = config.sprrw.sandbox;
       dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
         FROM alpine@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
 
@@ -48,9 +44,53 @@
 
           exec "$@"
         '';
-      isMac = lib.strings.hasSuffix "-darwin" pkgs.stdenv.hostPlatform.system;
     in
     {
+      sprrw.sandbox.create = {
+        name,
+        type, # bwrap, docker/podman, vm
+        outsideBeforeScript ? "",
+        prog, # path to the program. Will be called with forwarded arguments
+        sharePwd ? false,
+        sharedFolders ? [], # { hostPath, boxPath, roOnly ? false, type = "dir"|"file" }. Can contain shell characters such as $() but will be wrapped in double quotes
+        envVars ? [],
+        downgradeTerm ? false, # sets term to xterm-256color for tools that don't support terminfo
+        stdin ? true,
+        tty ? true,
+        network ? false,
+        hostNetwork ? false,
+        wayland ? false,
+      }:
+      let
+        fullSharedFolders = sharedFolders ++ (if sharePwd then [{ hostPath = "$(pwd)"; boxPath = "/pwd"; roOnly = false; type = "dir"; }] else []);
+        fullEnvVars = envVars ++ (if downgradeTerm then ["TERM=xterm-256color"] else []);
+      in pkgs.writeShellApplication {
+        inherit name;
+        text = ''
+          # TODO: write some check for already inside sandbox. Possible checking /.sprrw-sandbox file
+
+          ${outsideBeforeScript}
+
+          # Create shared folders if they dont exist
+          ${
+            builtins.concatStringsSep "\n" (map ({ hostPath, type, ... }:
+              if type == "dir" then ''
+                if ! [[ -d "${hostPath}" ]]; then
+                  mkdir -p "${hostPath}"
+                fi
+              '' else assert type == "file"; ''
+                if ! [[ -f "${hostPath}" ]]; then
+                  mkdir -p "$(dirname "${hostPath}")"
+                  touch "${hostPath}"
+                fi
+              ''
+            ) sharedFolders) # note sharedFolders and not fullSharedFolders because pwd will already exist
+          }
+
+          ${builtins.concatStringsSep " " fullEnvVars} ... ${prog} "$@"
+        '';
+      };
+
       sprrw.sandboxing.runDocker =
         if cfg.enable then
           (
