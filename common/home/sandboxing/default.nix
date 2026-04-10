@@ -186,7 +186,7 @@
         (pkgs.writeShellApplication {
           name = "box-enter";
           text = ''
-            targets=$(docker ps --format json | jq -r 'select(.Image == "usermapped-img") | .ID')
+            targets=$(docker ps --format json | jq -r '.[] | select(.Image == "localhost/usermapped-img:latest") | .Id')
 
             if [[ -z "$targets" ]]; then
               echo "No valid sandboxes found"
@@ -194,7 +194,7 @@
             fi
 
             target=$(echo "$targets" | while read -r dockerid; do
-              echo "$dockerid - $(docker exec "$dockerid" ps | tail -n +2 | head -n -1 | awk '{print $4}' | awk -F/ '{print $NF}' | tr '\n' ' ')";
+              echo "''${dockerid:0:10} - $(docker exec "$dockerid" ps | tail -n +2 | head -n -1 | awk '{print $4}' | awk -F/ '{print $NF}' | tr '\n' ' ')";
             done | fzf | awk '{print $1}')
 
             if [[ -z "$target" ]]; then
