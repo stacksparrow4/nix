@@ -22,8 +22,7 @@
 
         RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw && \
           apk add sudo && \
-          echo 'sprrw ALL=(ALL:ALL) NOPASSWD:SETENV: ALL' > /etc/sudoers && \
-          mkdir -p /home/sprrw/.config /home/sprrw/.local/share /home/sprrw/.cache && chown -R sprrw: /home/sprrw
+          echo 'sprrw ALL=(ALL:ALL) NOPASSWD:SETENV: ALL' > /etc/sudoers
       '';
       dockerInit =
         execMode:
@@ -52,7 +51,7 @@
         outsideBeforeScript ? "",
         prog, # path to the program. Will be called with forwarded arguments
         sharePwd ? false,
-        sharedFolders ? [], # { hostPath, boxPath, roOnly ? false, type = "dir"|"file" }. Can contain shell characters such as $() but will be wrapped in double quotes
+        sharedFolders ? [], # { hostPath, boxPath, ro ? false, type = "dir"|"file", needsCreate ? true }. Can contain shell characters such as $() but will be wrapped in double quotes
         envVars ? [],
         downgradeTerm ? false, # sets term to xterm-256color for tools that don't support terminfo
         stdin ? true,
@@ -60,11 +59,61 @@
         network ? false,
         hostNetwork ? false,
         wayland ? false,
+        x11 ? false,
       }:
       let
-        fullSharedFolders = sharedFolders ++ (if sharePwd then [{ hostPath = "$(pwd)"; boxPath = "/pwd"; roOnly = false; type = "dir"; }] else []);
-        fullEnvVars = envVars ++ (if downgradeTerm then ["TERM=xterm-256color"] else []);
-      in pkgs.writeShellApplication {
+        allSharedFolders = sharedFolders ++ (if sharePwd then [{ hostPath = "$(pwd)"; boxPath = "/pwd"; ro = false; type = "dir"; needsCreate = false; }] else []) ++ [
+            { hostPath = "/nix/store"; boxPath = "/nix/store"; ro = true; type = "dir"; needsCreate = false; }
+            { hostPath = "/bin"; boxPath = "/bin"; ro = true; type = "dir"; needsCreate = false; }
+            { hostPath = "/etc"; boxPath = "/etc"; ro = true; type = "dir"; needsCreate = false; }
+            { hostPath = "/usr"; boxPath = "/usr"; ro = true; type = "dir"; needsCreate = false; }
+            { hostPath = "/run/current-system/sw"; boxPath = "/run/current-system/sw"; ro = true; type = "dir"; needsCreate = false; }
+            # TODO: Mount ~/nixos read only for mkOutOfStoreSymlink
+        ] ++ (if wayland then [
+            { hostPath = "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"; boxPath = "/tmp/$WAYLAND_DISPLAY"; ro = true; type = "file"; needsCreate = false; }
+        ] else []) ++ (if x11 then [
+            { hostPath = "/tmp/.X11-unix"; boxPath = "/tmp/.X11-unix"; ro = true; type = "file"; needsCreate = false; }
+        ] else []);
+        allEnvVars = envVars ++
+          (if downgradeTerm then ["TERM=xterm-256color"] else ["TERM=$TERM"]) ++
+          (if wayland then ["WAYLAND_DISPLAY=$WAYLAND_DISPLAY" "XDG_RUNTIME_DIR=/tmp"] else []) ++
+          (if x11 then ["DISPLAY=$DISPLAY"] else []);
+        backslashify = arr: if (builtins.length arr) == 0 then "\\" else builtins.concatStringsSep "\n  " (map (x: "${x} \\") arr);
+        # TODO: check that there are no unix sockets in any of the shares
+        finalCmd = if type == "bwrap" then ''
+          ${builtins.concatStringsSep " " allEnvVars} bwrap \
+            --unshare-all \
+            --as-pid-1 \
+            --tmpfs /tmp \
+            --proc /proc \
+            --dev /dev \
+            ${backslashify (map (
+              { hostPath, boxPath, ro ? true, ... }:
+              "--${if ro then "ro-" else ""}bind \"${hostPath}\" \"${boxPath}\""
+            ) allSharedFolders)}
+            ${prog} "$@"
+        '' else if type == "docker" || type == "podman" then ''
+          if ! podman image inspect usermapped-img &>/dev/null; then
+            podman build -t usermapped-img ${dockerFileDir}
+          fi
+          podman run \
+            --userns=keep-id \
+            --hostname sandbox \
+            -u 1000:100 \
+            --rm \
+            ${if stdin then "-i" else ""} ${if tty then "-t" else ""} \
+            ${if !network then "--network none" else ""} \
+            ${if hostNetwork then "--network host" else ""} \
+            ${backslashify (map (e: "-e ${e}") allEnvVars)}
+            ${backslashify (map (
+              { hostPath, boxPath, ro ? true, ... }:
+              "-v \"${hostPath}\":\"${boxPath}\"${if ro then ":ro" else ""}"
+            ) allSharedFolders)}
+        '' else assert type == "vm"; (
+
+        );
+      in assert !hostNetwork || network; # Can't have hostNetwork = true and network = false
+      pkgs.writeShellApplication {
         inherit name;
         text = ''
           # TODO: write some check for already inside sandbox. Possible checking /.sprrw-sandbox file
@@ -84,10 +133,10 @@
                   touch "${hostPath}"
                 fi
               ''
-            ) sharedFolders) # note sharedFolders and not fullSharedFolders because pwd will already exist
+            ) (builtins.filter ({needsCreate ? true, ...}: needsCreate) allSharedFolders)) # note sharedFolders and not fullSharedFolders because pwd will already exist
           }
 
-          ${builtins.concatStringsSep " " fullEnvVars} ... ${prog} "$@"
+          ${finalCmd}
         '';
       };
 
