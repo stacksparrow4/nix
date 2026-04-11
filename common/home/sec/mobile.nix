@@ -13,13 +13,15 @@
   config = lib.mkIf config.sprrw.sec.mobile.enable {
     home.packages = with pkgs; [
       frida-tools
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "apktool";
-        args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${apktool}/bin/apktool";
+        shareCwd = true;
+        prog = "${apktool}/bin/apktool";
       })
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "jadx";
-        args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${jadx}/bin/jadx";
+        shareCwd = true;
+        prog = "${jadx}/bin/jadx";
       })
       android-tools
       (buildGoModule (finalAttrs: {

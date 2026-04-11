@@ -17,46 +17,66 @@
         nmap
         masscan
         rustscan
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           # TODO: mount ~/nuclei-templates to ~/.local/share/nuclei-templates or something
           name = "nuclei";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${nuclei}/bin/nuclei";
+          shareCwd = true;
+          network = true;
+          prog = "${nuclei}/bin/nuclei";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "sqlmap";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${sqlmap}/bin/sqlmap";
+          shareCwd = true;
+          network = true;
+          prog = "${sqlmap}/bin/sqlmap";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "feroxbuster";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${feroxbuster}/bin/feroxbuster";
+          shareCwd = true;
+          network = true;
+          prog = "${feroxbuster}/bin/feroxbuster";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "ffuf";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${ffuf}/bin/ffuf";
+          shareCwd = true;
+          network = true;
+          prog = "${ffuf}/bin/ffuf";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "shortscan";
-          args = "DOCKERIMG ${shortscan}/bin/shortscan";
+          shareCwd = true;
+          network = true;
+          prog = "${shortscan}/bin/shortscan";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "gau";
-          args = "DOCKERIMG ${gau}/bin/gau";
+          shareCwd = true;
+          network = true;
+          prog = "${gau}/bin/gau";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "naabu";
-          args = "-it DOCKERIMG ${naabu}/bin/naabu";
+          shareCwd = true;
+          network = true;
+          prog = "${naabu}/bin/naabu";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "clairvoyance";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${clairvoyance}/bin/clairvoyance";
+          shareCwd = true;
+          network = true;
+          prog = "${clairvoyance}/bin/clairvoyance";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "sourcemapper";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${sourcemapper}/bin/sourcemapper";
+          shareCwd = true;
+          network = true;
+          prog = "${sourcemapper}/bin/sourcemapper";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "subfinder";
-          args = "-it DOCKERIMG ${subfinder}/bin/subfinder";
+          shareCwd = true;
+          network = true;
+          prog = "${subfinder}/bin/subfinder";
         })
       ]
       ++ [
@@ -92,9 +112,10 @@
               }
             ) { };
           in
-          config.sprrw.sandboxing.runDockerBin {
+          config.sprrw.sandbox.create {
             name = "vulnx";
-            args = "DOCKERIMG ${vulnx}/bin/vulnx";
+            network = true;
+            prog = "${vulnx}/bin/vulnx";
           }
         )
         (
@@ -120,12 +141,13 @@
               '';
             };
           in
-          pkgs.writeShellApplication {
+          config.sprrw.sandbox.create {
             name = "smuggler";
-            text = ''
-              mkdir -p payloads
-              ${config.sprrw.sandboxing.runDocker} -it -v "$(pwd)/payloads:/payloads" DOCKERIMG ${smugglerWrapped}/bin/smuggler "$@"
-            '';
+            sharedPaths = [
+              { hostPath = "$(pwd)/payloads"; boxPath = "/payloads"; ro = false; type = "dir"; }
+            ];
+            network = true;
+            prog = "${smugglerWrapped}/bin/smuggler";
           }
         )
       ];

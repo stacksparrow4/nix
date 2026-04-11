@@ -77,27 +77,27 @@
             } "$@"
           '';
         })
-        (pkgs.writeShellApplication {
-          name = "qwen-code";
-          text = ''
-            mkdir -p ~/.qwen
+        # (pkgs.writeShellApplication {
+        #   name = "qwen-code";
+        #   text = ''
+        #     mkdir -p ~/.qwen
 
-            ${createOllamaBridge}
+        #     ${createOllamaBridge}
 
-            OLLAMA_HOST="''${OLLAMA_HOST:-http://host.docker.internal:11434}"
+        #     OLLAMA_HOST="''${OLLAMA_HOST:-http://host.docker.internal:11434}"
 
-            TERM=xterm-256color ${config.sprrw.sandboxing.runDocker} \
-              ${config.sprrw.sandboxing.recipes.pwd_starter} \
-              -v ~/.qwen:/home/sprrw/.qwen \
-              --network ollama-network \
-              --add-host host.docker.internal="$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')" \
-              -e OPENAI_API_KEY=ollama \
-              -e OPENAI_BASE_URL="$OLLAMA_HOST/v1" \
-              -e OPENAI_MODEL=${cfg.model} \
-              DOCKERIMG \
-              ${pkgs.qwen-code}/bin/qwen --yolo "$@"
-          '';
-        })
+        #     TERM=xterm-256color ${config.sprrw.sandboxing.runDocker} \
+        #       ${config.sprrw.sandboxing.recipes.pwd_starter} \
+        #       -v ~/.qwen:/home/sprrw/.qwen \
+        #       --network ollama-network \
+        #       --add-host host.docker.internal="$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')" \
+        #       -e OPENAI_API_KEY=ollama \
+        #       -e OPENAI_BASE_URL="$OLLAMA_HOST/v1" \
+        #       -e OPENAI_MODEL=${cfg.model} \
+        #       DOCKERIMG \
+        #       ${pkgs.qwen-code}/bin/qwen --yolo "$@"
+        #   '';
+        # })
       ];
     };
 }

@@ -12,13 +12,15 @@
 
   config = lib.mkIf config.sprrw.sec.snmp.enable {
     home.packages = with pkgs; [
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "snmpwalk";
-        args = "DOCKERIMG ${net-snmp}/bin/snmpwalk";
+        network = true;
+        prog = "${net-snmp}/bin/snmpwalk";
       })
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "snmpcheck";
-        args = "DOCKERIMG ${snmpcheck}/bin/snmpcheck";
+        network = true;
+        prog = "${snmpcheck}/bin/snmpcheck";
       })
     ];
   };

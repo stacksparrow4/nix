@@ -60,12 +60,20 @@
         };
       in
       [
-        (pkgs.writeShellApplication {
+        (config.sprrw.sandbox.create {
           name = "jwt_tool";
-          text = ''
-            mkdir -p ~/.jwt_tool
-            ${config.sprrw.sandboxing.runDocker} ${config.sprrw.sandboxing.recipes.pwd_starter} -v ~/.jwt_tool:/home/sprrw/.jwt_tool DOCKERIMG ${jwttool}/bin/jwt_tool "$@"
-          '';
+          sharedPaths = [
+            {
+              hostPath = "$HOME/.jwt_tool";
+              boxPath = "/home/sprrw/.jwt_tool";
+              ro = false;
+              type = "dir";
+            }
+          ];
+          shareCwd = true;
+          stdin = true;
+          tty = true;
+          prog = "${jwttool}/bin/jwt_tool";
         })
       ];
   };

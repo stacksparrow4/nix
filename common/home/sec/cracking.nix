@@ -14,9 +14,11 @@
     home.packages = with pkgs; [
       hashcat
       john
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "hydra";
-        args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${thc-hydra}/bin/hydra";
+        shareCwd = true;
+        network = true;
+        prog = "${thc-hydra}/bin/hydra";
       })
     ];
   };
