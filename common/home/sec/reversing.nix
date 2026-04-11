@@ -55,9 +55,11 @@
             };
           });
         in
-        config.sprrw.sandboxing.runDockerBin {
+        config.sprrw.sandbox.create {
           name = "webcrack";
-          args = "-i -w /pwd -v \"$(pwd):/pwd\" DOCKERIMG ${webcrack}/bin/webcrack";
+          stdin = true;
+          shareCwd = true;
+          prog = "${webcrack}/bin/webcrack";
         }
       )
     ];

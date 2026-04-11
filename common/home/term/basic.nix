@@ -52,9 +52,11 @@
         prog = "${shtris}/bin/shtris";
       })
       gh
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "zbarimg";
-        args = "-i DOCKERIMG ${zbar}/bin/zbarimg";
+        type = "bwrap";
+        stdin = true;
+        prog = "${zbar}/bin/zbarimg";
       })
       (config.sprrw.sandbox.create {
         name = "twitch-dl";

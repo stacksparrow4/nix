@@ -33,17 +33,20 @@
           ignoreCollisions = true;
         })
         patchelf
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "pwninit";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${pwninit}/bin/pwninit";
+          shareCwd = true;
+          prog = "${pwninit}/bin/pwninit";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "ropr";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${ropr}/bin/ropr";
+          shareCwd = true;
+          prog = "${ropr}/bin/ropr";
         })
-        (config.sprrw.sandboxing.runDockerBin {
+        (config.sprrw.sandbox.create {
           name = "ROPgadget";
-          args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${ropgadget}/bin/ROPgadget";
+          shareCwd = true;
+          prog = "${ropgadget}/bin/ROPgadget";
         })
       ];
   };

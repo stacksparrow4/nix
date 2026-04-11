@@ -12,17 +12,23 @@
 
   config = lib.mkIf config.sprrw.sec.forensics.enable {
     home.packages = with pkgs; [
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "exiftool";
-        args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${exiftool}/bin/exiftool";
+        type = "bwrap";
+        shareCwd = true;
+        prog = "${exiftool}/bin/exiftool";
       })
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "binwalk";
-        args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${binwalk}/bin/binwalk";
+        type = "bwrap";
+        shareCwd = true;
+        prog = "${binwalk}/bin/binwalk";
       })
-      (config.sprrw.sandboxing.runDockerBin {
+      (config.sprrw.sandbox.create {
         name = "ent";
-        args = "${config.sprrw.sandboxing.recipes.pwd_starter} DOCKERIMG ${ent}/bin/ent";
+        type = "bwrap";
+        shareCwd = true;
+        prog = "${ent}/bin/ent";
       })
       tcpdump
     ];

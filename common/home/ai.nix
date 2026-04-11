@@ -40,6 +40,14 @@
       home.packages = with pkgs; [
         aichat
 
+        (config.sprrw.sandbox.create {
+          name = "claude-code";
+          sharedPaths = [
+            { hostPath = "$HOME/.local/claude-vm/.claude"; boxPath = "/home/sprrw/.claude"; ro = false; type = "dir"; }
+          ];
+          prog = "${pkgs.claude-code}/bin/claude --dangerously-skip-permissions";
+        })
+
         (pkgs.writeShellApplication {
           name = "claude-code";
           text = ''

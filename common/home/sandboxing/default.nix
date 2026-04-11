@@ -56,11 +56,11 @@
     {
       sprrw.sandbox.create = {
         name,
-        type, # bwrap, docker/podman, vm
+        type ? "bwrap", # bwrap, docker/podman, vm
         outsideBeforeScript ? "",
         prog, # path to the program. Will be called with forwarded arguments
         shareCwd ? false,
-        sharedFolders ? [], # { hostPath, boxPath, ro ? false, type = "dir"|"file", needsCreate ? true }. Can contain shell characters such as $() but will be wrapped in double quotes
+        sharedPaths ? [], # { hostPath, boxPath, ro ? false, type = "dir"|"file", needsCreate ? true }. Can contain shell characters such as $() but will be wrapped in double quotes
         envVars ? [],
         downgradeTerm ? false, # sets term to xterm-256color for tools that don't support terminfo
         stdin ? true,
@@ -71,7 +71,7 @@
         x11 ? false,
       }:
       let
-        allSharedFolders = sharedFolders ++ (if shareCwd then [{ hostPath = "$(pwd)"; boxPath = "/pwd"; ro = false; type = "dir"; needsCreate = false; }] else []) ++ [
+        allSharedPaths = sharedPaths ++ (if shareCwd then [{ hostPath = "$(pwd)"; boxPath = "/pwd"; ro = false; type = "dir"; needsCreate = false; }] else []) ++ [
             { hostPath = "/nix/store"; boxPath = "/nix/store"; ro = true; type = "dir"; needsCreate = false; }
             { hostPath = "/bin"; boxPath = "/bin"; ro = true; type = "dir"; needsCreate = false; }
             { hostPath = "/etc"; boxPath = "/etc"; ro = true; type = "dir"; needsCreate = false; }
@@ -90,16 +90,20 @@
         backslashify = arr: if (builtins.length arr) == 0 then "\\" else builtins.concatStringsSep "\n  " (map (x: "${x} \\") arr);
         # TODO: check that there are no unix sockets in any of the shares
         finalCmd = if type == "bwrap" then ''
-          ${builtins.concatStringsSep " " allEnvVars} bwrap \
+          env -i ${pkgs.bubblewrap}/bin/bwrap \
             --unshare-all \
             --as-pid-1 \
             --tmpfs /tmp \
             --proc /proc \
             --dev /dev \
+            ${if network then "--share-net" else ""} \
+            ${if shareCwd then "--chdir /pwd" else ""} \
             ${backslashify (map (
               { hostPath, boxPath, ro ? true, ... }:
               "--${if ro then "ro-" else ""}bind \"${hostPath}\" \"${boxPath}\""
-            ) allSharedFolders)}
+            ) allSharedPaths)}
+            /usr/bin/env ${builtins.concatStringsSep " " allEnvVars} \
+            PATH="/etc/hm-package/home-path/bin:/run/current-system/sw/bin" \
             ${prog} "$@"
         '' else if type == "docker" || type == "podman" then ''
           if ! podman image inspect usermapped-img &>/dev/null; then
@@ -117,7 +121,7 @@
             ${backslashify (map (
               { hostPath, boxPath, ro ? true, ... }:
               "-v \"${hostPath}\":\"${boxPath}\"${if ro then ":ro" else ""}"
-            ) allSharedFolders)}
+            ) allSharedPaths)}
             usermapped-img \
             ${dockerInit false} \
             ${prog} "$@"
@@ -145,37 +149,37 @@
                   touch "${hostPath}"
                 fi
               ''
-            ) (builtins.filter ({needsCreate ? true, ...}: needsCreate) allSharedFolders)) # note sharedFolders and not fullSharedFolders because pwd will already exist
+            ) (builtins.filter ({needsCreate ? true, ...}: needsCreate) allSharedPaths))
           }
 
           ${finalCmd}
         '';
       };
 
-      sprrw.sandboxing.runDocker = pkgs.writeShellApplication {
+      sprrw.sandboxing.runDocker = lib.warn "runDocker used" (pkgs.writeShellApplication {
         name = "tmp";
         text = ''
           echo TODO
         '';
-      };
+      });
 
-      sprrw.sandboxing.runDockerBin = _: pkgs.writeShellApplication {
+      sprrw.sandboxing.runDockerBin = _: lib.warn "runDockerBin used" (pkgs.writeShellApplication {
         name = "tmp";
         text = ''
           echo TODO
         '';
-      };
+      });
 
-      sprrw.sandboxing.recipes = {
+      sprrw.sandboxing.recipes = lib.warn "recipes used" {
         pwd_starter = "TODO";
       };
 
-      sprrw.sandboxing.runVM = _: pkgs.writeShellApplication {
+      sprrw.sandboxing.runVM = _: lib.warn "runVM used" (pkgs.writeShellApplication {
         name = "tmp";
         text = ''
           echo TODO
         '';
-      };
+      });
 
 #       sprrw.sandboxing.runVM =
 #         {
