@@ -1,7 +1,7 @@
 {
-  config,
   pkgs,
   lib,
+  config,
   ...
 }:
 
@@ -20,13 +20,19 @@
     source = config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";
   };
   programs.ghostty.settings.env = "TERMINFO_DIRS=/Users/dan/.terminfo";
+  programs.ghostty.settings.command = lib.mkForce "zsh";
+
+  home.packages = with pkgs; [ neovim sshpass (
+    pkgs.writeShellApplication {
+      name = "connect";
+      text = ''
+        sshpass -p password ssh -o PreferredAuthentications=password -R /run/user/1000/1p-agent.sock:/Users/dan/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock -t sprrw@192.168.65.2 'export SSH_AUTH_SOCK=/run/user/1000/1p-agent.sock; exec bash'
+      '';
+    }
+  )];
 
   sprrw = {
-    programming.sage.enable = lib.mkForce false;
-    nvim.enable = true;
-    programming.enable = true;
     term = {
-      enable = true;
       ghostty = {
         font = {
           family = "IosevkaTerm Nerd Font Mono";
