@@ -45,25 +45,9 @@
         dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
           FROM alpine@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
 
-          RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw
+          RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw && \
+            mkdir -p /home/sprrw/.config /home/sprrw/.local/share /home/sprrw/.cache && chown -R sprrw: /home/sprrw # TODO: any better way of doing this
         '';
-        dockerInit =
-          execMode:
-          pkgs.writeShellScript "dockerinit" ''
-            set -e
-
-            ${
-              if execMode then
-                ""
-              else
-                ''
-                  cp -r /etc/hm-package/home-files/.* ~/
-                  chmod -R u+w ~/.* &>/dev/null || true
-                ''
-            }
-
-            exec "$@"
-          '';
         allSharedPaths =
           map
             (
@@ -92,6 +76,13 @@
                   [ ]
               )
               ++ [
+                {
+                  hostPath = "${pkgs.writeText "sprrw-sandbox" "sprrw-sandbox"}";
+                  boxPath = "/.sprrw-sandbox";
+                  ro = true;
+                  type = "file";
+                  needsCreate = false;
+                }
                 {
                   hostPath = "/nix/store";
                   boxPath = "/nix/store";
@@ -168,7 +159,6 @@
           envVars
           ++ [
             "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin"
-            "HOME=/home/sprrw"
           ]
           ++ (if downgradeTerm then [ "TERM=xterm-256color" ] else [ "TERM=\"$TERM\"" ])
           ++ (
@@ -191,7 +181,12 @@
         finalCmd =
           if type == "bwrap" then
             ''
-              env -i ${pkgs.bubblewrap}/bin/bwrap \
+              hmmounts=()
+              while IFS= read -r line; do
+                hmmounts+=(--ro-bind "$line" "/home/sprrw/''${line#/etc/hm-package/home-files/}")
+              done < <(find /etc/hm-package/home-files/ -type l)
+
+              ${pkgs.bubblewrap}/bin/bwrap \
                 --unshare-all \
                 --as-pid-1 \
                 --tmpfs /tmp \
@@ -211,6 +206,7 @@
                     "--${if ro then "ro-" else ""}bind \"${hostPath}\" \"${boxPath}\""
                   ) allSharedPaths
                 )}
+                "''${hmmounts[@]}" \
                 /usr/bin/env ${builtins.concatStringsSep " " allEnvVars} \
                 ${prog} "$@"
             ''
@@ -219,6 +215,12 @@
               if ! podman image inspect usermapped-img &>/dev/null; then
                 podman build -t usermapped-img ${dockerFileDir}
               fi
+
+              hmmounts=()
+              while IFS= read -r line; do
+                hmmounts+=(-v "$line":"/home/sprrw/''${line#/etc/hm-package/home-files/}":ro)
+              done < <(find /etc/hm-package/home-files/ -type l)
+
               podman run \
                 --userns=keep-id \
                 --hostname sandbox \
@@ -228,6 +230,7 @@
                 ${if !network then "--network none" else ""} \
                 ${if hostNetwork then "--network host" else ""} \
                 ${if shareCwd then "-w /pwd" else "-w /home/sprrw"} \
+                "''${hmmounts[@]}" \
                 ${backslashify (map (e: "-e ${e}") allEnvVars)}
                 ${backslashify (
                   map (
@@ -241,7 +244,6 @@
                   ) allSharedPaths
                 )}
                 usermapped-img \
-                ${dockerInit false} \
                 ${prog} "$@"
             ''
           else

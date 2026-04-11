@@ -18,7 +18,7 @@
         bashrcExtra = (builtins.readFile ./aliases.sh) + ''
           export PS1='${cfg.ps1}'
 
-          if [[ "$(hostname)" = sandbox ]]; then
+          if [[ -f /.sprrw-sandbox ]]; then
             export PS1='\n\[\033[35m\] \W \$\[\033[0m\] '
           fi
         '';
