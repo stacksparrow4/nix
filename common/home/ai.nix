@@ -44,23 +44,16 @@
           name = "claude-code";
           sharedPaths = [
             { hostPath = "$HOME/.local/claude-vm/.claude"; boxPath = "/home/sprrw/.claude"; ro = false; type = "dir"; }
+            { hostPath = "$HOME/.local/claude-vm/.claude.json"; boxPath = "/home/sprrw/.claude.json"; ro = false; type = "file"; }
           ];
+          downgradeTerm = true;
+          shareCwd = true;
+          stdin = true;
+          tty = true;
+          network = true;
           prog = "${pkgs.claude-code}/bin/claude --dangerously-skip-permissions";
         })
 
-        (pkgs.writeShellApplication {
-          name = "claude-code";
-          text = ''
-            mkdir -p ~/.local/claude-vm/.claude
-            touch ~/.local/claude-vm/.claude.json
-
-            TERM=xterm-256color ${config.sprrw.sandboxing.runDocker} \
-              ${config.sprrw.sandboxing.recipes.pwd_starter} \
-              -v ~/.local/claude-vm/.claude:/home/sprrw/.claude -v ~/.local/claude-vm/.claude.json:/home/sprrw/.claude.json \
-              DOCKERIMG \
-              ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
-          '';
-        })
         (pkgs.writeShellApplication {
           name = "claude-code-vm";
           text = ''

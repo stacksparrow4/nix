@@ -18,14 +18,13 @@ builtins.listToAttrs (
 )
 // (
   let
-    manPatch = import (fetchTarball {
-      url = "https://github.com/NixOS/nixpkgs/archive/fa83fd837f3098e3e678e6cf017b2b36102c7211.tar.gz";
-      sha256 = "sha256:1jig9kwjd52brwfm6n4pipqn1qfjlpasjhfsb8di70cb87z4xdbv";
-    }) { system = pkgsUnstable.stdenv.hostPlatform.system; };
+    asepritePkgs = import (fetchTarball {
+      url = "https://github.com/NixOS/nixpkgs/archive/4e92bbcdb030f3b4782be4751dc08e6b6cb6ccf2.tar.gz";
+      sha256 = "sha256:1mrf745k78ivw11rj1qibgwi966a83lcljc62p4qix25m1ignirq";
+    }) { system = pkgsUnstable.stdenv.hostPlatform.system; config = import ./nixpkgs-config.nix; };
   in
   {
-    linux-manual = manPatch.linux-manual;
-    inetutils = manPatch.inetutils;
+    aseprite = asepritePkgs.aseprite;
   }
 )
 // (

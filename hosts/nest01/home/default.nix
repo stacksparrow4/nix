@@ -11,7 +11,7 @@
   ];
 
   sprrw = {
-    sandboxing.enable = true;
+    sandbox.enable = true;
     ai.enable = true;
     linux.enable = true;
     nvim.enable = true;
