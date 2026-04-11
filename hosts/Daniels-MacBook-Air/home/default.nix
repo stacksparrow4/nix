@@ -26,7 +26,7 @@
     pkgs.writeShellApplication {
       name = "connect";
       text = ''
-        sshpass -p password ssh -o PreferredAuthentications=password -R /run/user/1000/1p-agent.sock:/Users/dan/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock -t sprrw@192.168.65.2 'export SSH_AUTH_SOCK=/run/user/1000/1p-agent.sock; exec bash'
+        sshpass -p password ssh -o PreferredAuthentications=password -R /run/user/1000/1p-agent.sock:/Users/dan/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock -t sprrw@192.168.65.2 'export SSH_AUTH_SOCK=/run/user/1000/1p-agent.sock; exec tmux'
       '';
     }
   )];
