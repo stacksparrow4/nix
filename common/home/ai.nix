@@ -20,11 +20,6 @@
   config =
     let
       cfg = config.sprrw.ai;
-      createOllamaBridge = ''
-        if ! docker network inspect ollama-network &>/dev/null; then
-          docker network create --driver bridge --opt com.docker.network.bridge.name=br-ollama ollama-network
-        fi
-      '';
     in
     lib.mkIf cfg.enable {
       services.ollama = lib.mkIf cfg.ollama.enable {
@@ -43,8 +38,18 @@
         (config.sprrw.sandbox.create {
           name = "claude-code";
           sharedPaths = [
-            { hostPath = "$HOME/.local/claude-vm/.claude"; boxPath = "/home/sprrw/.claude"; ro = false; type = "dir"; }
-            { hostPath = "$HOME/.local/claude-vm/.claude.json"; boxPath = "/home/sprrw/.claude.json"; ro = false; type = "file"; }
+            {
+              hostPath = "$HOME/.local/claude-vm/.claude";
+              boxPath = "/home/sprrw/.claude";
+              ro = false;
+              type = "dir";
+            }
+            {
+              hostPath = "$HOME/.local/claude-vm/.claude.json";
+              boxPath = "/home/sprrw/.claude.json";
+              ro = false;
+              type = "file";
+            }
           ];
           downgradeTerm = true;
           shareCwd = true;
@@ -54,50 +59,52 @@
           prog = "${pkgs.claude-code}/bin/claude --dangerously-skip-permissions";
         })
 
-        (pkgs.writeShellApplication {
+        (config.sprrw.sandbox.create {
           name = "claude-code-vm";
-          text = ''
-            mkdir -p ~/.local/claude-vm/.claude
-            touch ~/.local/claude-vm/.claude.json
-
-            ${
-              config.sprrw.sandboxing.runVM {
-                qemu_args = "-virtfs local,path=$HOME/.local/claude-vm,mount_tag=claudeshare,security_model=none,id=host0 -virtfs local,path=$(pwd),mount_tag=pwdshare,security_model=none,id=host1";
-                script = ''
-                  sudo mkdir -p /mnt/claude
-                  sudo mount -t 9p -o trans=virtio,version=9p2000.L claudeshare /mnt/claude
-                  ln -s /mnt/claude/.claude ~/.claude
-                  ln -s /mnt/claude/.claude.json ~/.claude.json
-                  sudo mkdir -p /mnt/pwd
-                  sudo mount -t 9p -o trans=virtio,version=9p2000.L pwdshare /mnt/pwd
-                  cd /mnt/pwd
-                  TERM=xterm-256color ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
-                '';
-              }
-            } "$@"
+          type = "vm";
+          sharedPaths = [
+            {
+              hostPath = "$HOME/.local/claude-vm";
+              boxPath = "/mnt/claude";
+              ro = false;
+              type = "dir";
+            }
+          ];
+          shareCwd = true;
+          stdin = true;
+          tty = true;
+          network = true;
+          insideBeforeScript = ''
+            ln -s /mnt/claude/.claude ~/.claude
+            ln -s /mnt/claude/.claude.json ~/.claude.json
+            export TERM=xterm-256color
           '';
+          # TODO: version match this with the VM instead of assuming path same as host
+          prog = "${pkgs.claude-code}/bin/claude --dangerously-skip-permissions";
         })
-        # (pkgs.writeShellApplication {
-        #   name = "qwen-code";
-        #   text = ''
-        #     mkdir -p ~/.qwen
 
-        #     ${createOllamaBridge}
-
-        #     OLLAMA_HOST="''${OLLAMA_HOST:-http://host.docker.internal:11434}"
-
-        #     TERM=xterm-256color ${config.sprrw.sandboxing.runDocker} \
-        #       ${config.sprrw.sandboxing.recipes.pwd_starter} \
-        #       -v ~/.qwen:/home/sprrw/.qwen \
-        #       --network ollama-network \
-        #       --add-host host.docker.internal="$(docker network inspect ollama-network --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')" \
-        #       -e OPENAI_API_KEY=ollama \
-        #       -e OPENAI_BASE_URL="$OLLAMA_HOST/v1" \
-        #       -e OPENAI_MODEL=${cfg.model} \
-        #       DOCKERIMG \
-        #       ${pkgs.qwen-code}/bin/qwen --yolo "$@"
-        #   '';
-        # })
+        (config.sprrw.sandbox.create {
+          name = "qwen-code";
+          sharedPaths = [
+            {
+              hostPath = "$HOME/.qwen";
+              boxPath = "/home/sprrw/.qwen";
+              ro = false;
+              type = "dir";
+            }
+          ];
+          envVars = [
+            "OPENAI_API_KEY=ollama"
+            "OPENAI_BASE_URL=\"$OLLAMA_HOST/v1\""
+            "OPENAI_MODEL=\"${cfg.model}\""
+          ];
+          downgradeTerm = true;
+          shareCwd = true;
+          stdin = true;
+          tty = true;
+          network = true;
+          prog = "${pkgs.qwen-code}/bin/qwen --yolo";
+        })
       ];
     };
 }

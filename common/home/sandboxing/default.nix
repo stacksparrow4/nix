@@ -6,20 +6,11 @@
 }:
 
 {
-  options.sprrw = {
-    sandbox = {
-      enable = lib.mkEnableOption "sandboxing";
+  options.sprrw.sandbox = {
+    enable = lib.mkEnableOption "sandboxing";
 
-      create = lib.mkOption {
-        type = lib.types.functionTo lib.types.package;
-      };
-    };
-
-    sandboxing = {
-      runDocker = lib.mkOption { };
-      runDockerBin = lib.mkOption { };
-      recipes = lib.mkOption { };
-      runVM = lib.mkOption { };
+    create = lib.mkOption {
+      type = lib.types.functionTo lib.types.package;
     };
   };
 
@@ -29,6 +20,7 @@
         name,
         type ? "bwrap", # bwrap, docker/podman, vm
         outsideBeforeScript ? "",
+        insideBeforeScript ? "",
         prog, # path to the program. Will be called with forwarded arguments
         shareCwd ? false,
         sharedPaths ? [ ], # { hostPath, boxPath, ro ? false, type = "dir"|"file", needsCreate ? true }. Can contain shell characters such as $() but will be wrapped in double quotes
@@ -48,113 +40,109 @@
           RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw && \
             mkdir -p /home/sprrw/.config /home/sprrw/.local/share /home/sprrw/.cache && chown -R sprrw: /home/sprrw # TODO: any better way of doing this
         '';
-        allSharedPaths =
-          map
-            (
-              x:
-              # Apply defaults
-              {
-                ro = false;
-                needsCreate = true;
-              }
-              // x
-            )
-            (
-              sharedPaths
-              ++ (
-                if shareCwd then
-                  [
-                    {
-                      hostPath = "$(pwd)";
-                      boxPath = "/pwd";
-                      ro = false;
-                      type = "dir";
-                      needsCreate = false;
-                    }
-                  ]
-                else
-                  [ ]
-              )
-              ++ [
+        sharedPathDefaults = {
+          ro = false;
+          needsCreate = true;
+        };
+        qemuSharedPaths = map (x: sharedPathDefaults // x) (
+          sharedPaths
+          ++ (
+            if shareCwd then
+              [
                 {
-                  hostPath = "${pkgs.writeText "sprrw-sandbox" "sprrw-sandbox"}";
-                  boxPath = "/.sprrw-sandbox";
-                  ro = true;
-                  type = "file";
-                  needsCreate = false;
-                }
-                {
-                  hostPath = "/nix/store";
-                  boxPath = "/nix/store";
-                  ro = true;
-                  type = "dir";
-                  needsCreate = false;
-                }
-                {
-                  hostPath = "/bin";
-                  boxPath = "/bin";
-                  ro = true;
-                  type = "dir";
-                  needsCreate = false;
-                }
-                {
-                  hostPath = "/etc";
-                  boxPath = "/etc";
-                  ro = true;
-                  type = "dir";
-                  needsCreate = false;
-                }
-                {
-                  hostPath = "/usr";
-                  boxPath = "/usr";
-                  ro = true;
-                  type = "dir";
-                  needsCreate = false;
-                }
-                {
-                  hostPath = "/run/current-system/sw";
-                  boxPath = "/run/current-system/sw";
-                  ro = true;
-                  type = "dir";
-                  needsCreate = false;
-                }
-                {
-                  hostPath = "/home/sprrw/nixos";
-                  boxPath = "/home/sprrw/nixos";
-                  ro = true;
+                  hostPath = "$(pwd)";
+                  boxPath = "/pwd";
+                  ro = false;
                   type = "dir";
                   needsCreate = false;
                 }
               ]
-              ++ (
-                if wayland then
-                  [
-                    {
-                      hostPath = "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY";
-                      boxPath = "/tmp/$WAYLAND_DISPLAY";
-                      ro = true;
-                      type = "file";
-                      needsCreate = false;
-                    }
-                  ]
-                else
-                  [ ]
-              )
-              ++ (
-                if x11 then
-                  [
-                    {
-                      hostPath = "/tmp/.X11-unix";
-                      boxPath = "/tmp/.X11-unix";
-                      ro = true;
-                      type = "file";
-                      needsCreate = false;
-                    }
-                  ]
-                else
-                  [ ]
-              )
-            );
+            else
+              [ ]
+          )
+        );
+        allSharedPaths = map (x: sharedPathDefaults // x) (
+          qemuSharedPaths
+          ++ [
+            {
+              hostPath = "${pkgs.writeText "sprrw-sandbox" "sprrw-sandbox"}";
+              boxPath = "/.sprrw-sandbox";
+              ro = true;
+              type = "file";
+              needsCreate = false;
+            }
+            {
+              hostPath = "/nix/store";
+              boxPath = "/nix/store";
+              ro = true;
+              type = "dir";
+              needsCreate = false;
+            }
+            {
+              hostPath = "/bin";
+              boxPath = "/bin";
+              ro = true;
+              type = "dir";
+              needsCreate = false;
+            }
+            {
+              hostPath = "/etc";
+              boxPath = "/etc";
+              ro = true;
+              type = "dir";
+              needsCreate = false;
+            }
+            {
+              hostPath = "/usr";
+              boxPath = "/usr";
+              ro = true;
+              type = "dir";
+              needsCreate = false;
+            }
+            {
+              hostPath = "/run/current-system/sw";
+              boxPath = "/run/current-system/sw";
+              ro = true;
+              type = "dir";
+              needsCreate = false;
+            }
+            {
+              hostPath = "/home/sprrw/nixos";
+              boxPath = "/home/sprrw/nixos";
+              ro = true;
+              type = "dir";
+              needsCreate = false;
+            }
+          ]
+          ++ (
+            if wayland then
+              [
+                {
+                  hostPath = "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY";
+                  boxPath = "/tmp/$WAYLAND_DISPLAY";
+                  ro = true;
+                  type = "file";
+                  needsCreate = false;
+                }
+              ]
+            else
+              [ ]
+          )
+          ++ (
+            if x11 then
+              [
+                {
+                  hostPath = "/tmp/.X11-unix";
+                  boxPath = "/tmp/.X11-unix";
+                  ro = true;
+                  type = "file";
+                  needsCreate = false;
+                }
+              ]
+            else
+              [ ]
+          )
+        );
         allEnvVars =
           envVars
           ++ [
@@ -180,6 +168,7 @@
         # TODO: check that there are no unix sockets in any of the shares
         finalCmd =
           if type == "bwrap" then
+            assert insideBeforeScript == ""; # TODO
             ''
               hmmounts=()
               while IFS= read -r line; do
@@ -211,6 +200,7 @@
                 ${prog} "$@"
             ''
           else if type == "docker" || type == "podman" then
+            assert insideBeforeScript == ""; # TODO
             ''
               if ! podman image inspect usermapped-img &>/dev/null; then
                 podman build -t usermapped-img ${dockerFileDir}
@@ -248,8 +238,52 @@
             ''
           else
             assert type == "vm";
+            assert lib.all ({ type, ... }: type == "dir") qemuSharedPaths;
             ''
-              echo TODO
+              open_port=$(comm -23 <(seq 49152 65535) <(ss -tan | awk '{print $4}' | cut -d':' -f2 | grep "[0-9]\{1,5\}" | sort | uniq) | shuf | head -n 1) || true
+              echo "Forwarding SSH to port $open_port"
+              pidfile=$(mktemp)
+              qemu-system-x86_64 \
+                -enable-kvm \
+                -m 16384 -smp 4 \
+                -cdrom ~/.local/vm.iso -boot d \
+                -nic user,hostfwd=tcp:127.0.0.1:"$open_port"-:22 \
+                -display none -daemonize \
+                ${backslashify (
+                  lib.imap0 (
+                    i:
+                    { hostPath, ... }:
+                    "-virtfs local,path=\"${hostPath}\",mount_tag=sandboxshare${toString i},security_model=none,id=host${toString i}"
+                  ) qemuSharedPaths
+                )}
+                -pidfile "$pidfile"
+
+              qemupid=$(cat "$pidfile")
+              rm "$pidfile"
+              echo "Process id $qemupid"
+
+              sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$open_port" bash -c 'cat > /tmp/startup.sh' <<"BIGEOFTHATWONTDUP" || true
+              ${builtins.concatStringsSep "\n" (
+                lib.imap0 (
+                  i:
+                  { boxPath, ... }:
+                  ''
+                    sudo mkdir -p "${boxPath}"
+                    sudo mount -t 9p -o trans=virtio,version=9p2000.L sandboxshare${toString i} "${boxPath}"
+                  ''
+                ) qemuSharedPaths
+              )}
+              ${if shareCwd then "cd /pwd" else ""}
+              ${insideBeforeScript}
+              ${prog} "$@"
+              BIGEOFTHATWONTDUP
+
+              sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$open_port" -t bash /tmp/startup.sh "$@" || true
+
+              echo "Terminating qemu..."
+              kill "$qemupid"
+
+              echo "Done!"
             '';
       in
       assert !hostNetwork || network; # Can't have hostNetwork = true and network = false
@@ -295,80 +329,6 @@
         '';
       };
 
-    sprrw.sandboxing.runDocker = lib.warn "runDocker used" (
-      pkgs.writeShellApplication {
-        name = "tmp";
-        text = ''
-          echo TODO
-        '';
-      }
-    );
-
-    sprrw.sandboxing.runDockerBin =
-      _:
-      lib.warn "runDockerBin used" (
-        pkgs.writeShellApplication {
-          name = "tmp";
-          text = ''
-            echo TODO
-          '';
-        }
-      );
-
-    sprrw.sandboxing.recipes = lib.warn "recipes used" {
-      pwd_starter = "TODO";
-    };
-
-    sprrw.sandboxing.runVM =
-      _:
-      lib.warn "runVM used" (
-        pkgs.writeShellApplication {
-          name = "tmp";
-          text = ''
-            echo TODO
-          '';
-        }
-      );
-
-    #       sprrw.sandboxing.runVM =
-    #         {
-    #           qemu_args ? "",
-    #           script ? "bash",
-    #         }:
-    #         (pkgs.writeShellScript "vm" ''
-    #           open_port=$(comm -23 <(seq 49152 65535) <(ss -tan | awk '{print $4}' | cut -d':' -f2 | grep "[0-9]\{1,5\}" | sort | uniq) | shuf | head -n 1) || true
-    #           echo "Forwarding SSH to port $open_port"
-    #           pidfile=$(mktemp)
-    #           qemu-system-x86_64 -enable-kvm -m 16384 -smp 4 -cdrom ~/.local/vm.iso -boot d -nic user,hostfwd=tcp:127.0.0.1:"$open_port"-:22 -display none -daemonize -pidfile "$pidfile" ${qemu_args}
-    #           qemupid=$(cat "$pidfile")
-    #           rm "$pidfile"
-    #           echo "Process id $qemupid"
-    #
-    #           sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$open_port" bash -c 'cat > /tmp/startup.sh' <<"BIGEOFTHATWONTDUP" || true
-    #           ${script}
-    #           BIGEOFTHATWONTDUP
-    #
-    #           sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$open_port" -t bash /tmp/startup.sh "$@" || true
-    #
-    #           echo "Terminating qemu..."
-    #           kill "$qemupid"
-    #
-    #           echo "Done!"
-    #         '');
-    #
-    #       sprrw.sandboxing.runVMBin =
-    #         {
-    #           name,
-    #           qemu_args ? "",
-    #           script ? "bash",
-    #         }:
-    #         pkgs.writeShellApplication {
-    #           inherit name;
-    #           text = ''
-    #             ${cfg.runVM { inherit qemu_args script; }} "$@"
-    #           '';
-    #         };
-
     home.packages =
       (builtins.concatMap
         (
@@ -383,7 +343,7 @@
                     network = true;
                     stdin = true;
                     tty = true;
-                    prog = "${pkgs.bash}/bin/bash";
+                    prog = "bash"; # use bash from path for vm version differences
                   }
                   // args
                   // {
@@ -457,41 +417,28 @@
             ln -s "$isopath" ~/.local/vm.iso
           '';
         })
-        #         (cfg.runVMBin {
-        #           name = "vm";
-        #         })
-        #         (cfg.runVMBin {
-        #           name = "vm-cwd";
-        #           qemu_args = "-virtfs local,path=$(pwd),mount_tag=pwdshare,security_model=none,id=host1";
-        #           script = ''
-        #             sudo mkdir -p /mnt/pwd
-        #             sudo mount -t 9p -o trans=virtio,version=9p2000.L pwdshare /mnt/pwd
-        #             cd /mnt/pwd
-        #             bash
-        #           '';
-        #         })
-        #         (pkgs.writeShellApplication {
-        #           name = "vm-enter";
-        #           text = ''
-        #             ports=$(ss -tlpn | grep qemu-system | grep -oE '127\.0\.0\.1:[0-9]+' | cut -d: -f2)
-        #
-        #             if [[ -z "$ports" ]]; then
-        #               echo "No valid vms found"
-        #               exit 1
-        #             fi
-        #
-        #             target=$(echo "$ports" | while read -r line; do
-        #               echo "$line - $(sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$line" ps aux 2>/dev/null | grep pts | awk '{print $11}' | tr '\n' ' ')";
-        #             done | fzf | awk '{print $1}')
-        #
-        #             if [[ -z "$target" ]]; then
-        #               echo "Cancelled."
-        #               exit 1
-        #             fi
-        #
-        #             sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$target"
-        #           '';
-        #         })
+        (pkgs.writeShellApplication {
+          name = "vm-enter";
+          text = ''
+            ports=$(ss -tlpn | grep qemu-system | grep -oE '127\.0\.0\.1:[0-9]+' | cut -d: -f2)
+
+            if [[ -z "$ports" ]]; then
+              echo "No valid vms found"
+              exit 1
+            fi
+
+            target=$(echo "$ports" | while read -r line; do
+              echo "$line - $(sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$line" ps aux 2>/dev/null | grep pts | awk '{print $11}' | tr '\n' ' ')";
+            done | fzf | awk '{print $1}')
+
+            if [[ -z "$target" ]]; then
+              echo "Cancelled."
+              exit 1
+            fi
+
+            sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$target"
+          '';
+        })
       ];
   };
 }
