@@ -21,8 +21,8 @@
     let
       cfg = config.sprrw.term.foot;
     in lib.mkIf cfg.enable {
-      home.file.".terminfo" = lib.mkIf cfg.installTerminfo {
-        source = "${pkgs.foot.terminfo}/share/terminfo";
+      home.file.".terminfo/f" = lib.mkIf cfg.installTerminfo {
+        source = "${pkgs.foot.terminfo}/share/terminfo/f";
       };
 
       home.file.".config/foot/foot.ini".source =

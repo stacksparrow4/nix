@@ -9,6 +9,8 @@
   options.sprrw.ai = {
     enable = lib.mkEnableOption "ai";
 
+    ollama.enable = lib.mkEnableOption "ollama";
+
     model = lib.mkOption {
       type = lib.types.str;
       default = "qwen3-coder:30b";
@@ -25,7 +27,7 @@
       '';
     in
     lib.mkIf cfg.enable {
-      services.ollama = {
+      services.ollama = lib.mkIf cfg.ollama.enable {
         enable = true;
         package = pkgs.ollama-cuda;
         environmentVariables = {
