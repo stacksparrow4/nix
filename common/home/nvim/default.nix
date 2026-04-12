@@ -134,8 +134,9 @@ in
           pname:
           pkgs.writeShellApplication {
             name = pname;
+            # TODO: replace sandboxed-vim.py with the actual sandbox solution and use outsideBeforeScript to generate the correct mount and arguments
             text = ''
-              if [[ "$(hostname)" == sandbox ]]; then
+              if [[ -f /.sprrw-sandbox ]] || [[ "$(hostname)" == sandbox ]]; then
                 ${config.programs.neovim.finalPackage}/bin/nvim "$@"
               else
                 ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${cfg.additionalBwrapArgs} ENDBWRAPARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"

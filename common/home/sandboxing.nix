@@ -290,7 +290,10 @@
       pkgs.writeShellApplication {
         inherit name;
         text = ''
-          # TODO: write some check for already inside sandbox. Possible checking /.sprrw-sandbox file
+          if [[ -f /.sprrw-sandbox ]] || [[ "$(hostname)" == sandbox ]]; then
+            ${prog} "$@"
+            exit 0
+          fi
 
           ${outsideBeforeScript}
 
