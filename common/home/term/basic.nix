@@ -46,7 +46,6 @@
       gnupg
       (config.sprrw.sandbox.create {
         name = "shtris";
-        type = "bwrap";
         stdin = true;
         tty = true;
         prog = "${shtris}/bin/shtris";
@@ -54,13 +53,11 @@
       gh
       (config.sprrw.sandbox.create {
         name = "zbarimg";
-        type = "bwrap";
         stdin = true;
         prog = "${zbar}/bin/zbarimg";
       })
       (config.sprrw.sandbox.create {
         name = "twitch-dl";
-        type = "docker";
         shareCwd = true;
         prog = "${twitch-dl}/bin/twitch-dl";
       })
