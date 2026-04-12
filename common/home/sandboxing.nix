@@ -147,6 +147,8 @@
           envVars
           ++ [
             "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin"
+            "__ETC_PROFILE_SOURCED=1"
+            "HOME=/home/sprrw"
           ]
           ++ (if downgradeTerm then [ "TERM=xterm-256color" ] else [ "TERM=\"$TERM\"" ])
           ++ (
@@ -175,7 +177,7 @@
                 hmmounts+=(--ro-bind "$line" "/home/sprrw/''${line#/etc/hm-package/home-files/}")
               done < <(find /etc/hm-package/home-files/ -type l)
 
-              ${pkgs.bubblewrap}/bin/bwrap \
+              /usr/bin/env -i ${pkgs.bubblewrap}/bin/bwrap \
                 --unshare-all \
                 --as-pid-1 \
                 --tmpfs /tmp \

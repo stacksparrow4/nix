@@ -47,77 +47,91 @@
                 };
               };
             };
-          in
-          python.pkgs.buildPythonApplication {
-            pname = "netexec";
-            version = "1.4.0";
-            pyproject = true;
+            netexec = python.pkgs.buildPythonApplication {
+              pname = "netexec";
+              version = "1.4.0";
+              pyproject = true;
 
-            src = pkgs.fetchFromGitHub {
-              owner = "Pennyw0rth";
-              repo = "NetExec";
-              rev = "714c44bac8959861095c6ebfc5b3695f9a025b97";
-              hash = "sha256-FQ4xETy3UEN6vZ2oBKJhvc64g5MrsdxHD9mUMvrR2+A=";
+              src = pkgs.fetchFromGitHub {
+                owner = "Pennyw0rth";
+                repo = "NetExec";
+                rev = "714c44bac8959861095c6ebfc5b3695f9a025b97";
+                hash = "sha256-FQ4xETy3UEN6vZ2oBKJhvc64g5MrsdxHD9mUMvrR2+A=";
+              };
+
+              pythonRelaxDeps = true;
+
+              pythonRemoveDeps = [
+                # Fail to detect dev version requirement
+                "neo4j"
+              ];
+
+              postPatch = ''
+                substituteInPlace pyproject.toml \
+                  --replace-fail " @ git+https://github.com/Pennyw0rth/impacket.git" "" \
+                  --replace-fail " @ git+https://github.com/wbond/oscrypto" "" \
+                  --replace-fail " @ git+https://github.com/Pennyw0rth/NfsClient" ""
+              '';
+
+              build-system = with python.pkgs; [
+                poetry-core
+                poetry-dynamic-versioning
+              ];
+
+              dependencies = with python.pkgs; [
+                jwt
+                aardwolf
+                aioconsole
+                aiosqlite
+                argcomplete
+                asyauth
+                beautifulsoup4
+                bloodhound-py
+                dploot
+                dsinternals
+                impacket
+                lsassy
+                masky
+                minikerberos
+                msgpack
+                msldap
+                neo4j
+                paramiko
+                pyasn1-modules
+                pylnk3
+                pynfsclient
+                pypsrp
+                pypykatz
+                python-dateutil
+                python-libnmap
+                pywerview
+                requests
+                rich
+                sqlalchemy
+                termcolor
+                terminaltables
+                xmltodict
+              ];
+
+              nativeCheckInputs = with python.pkgs; [ pytestCheckHook ] ++ [ writableTmpDirAsHomeHook ];
+
+              # Tests no longer works out-of-box with 1.3.0
+              doCheck = false;
             };
-
-            pythonRelaxDeps = true;
-
-            pythonRemoveDeps = [
-              # Fail to detect dev version requirement
-              "neo4j"
+          in
+          config.sprrw.sandbox.create {
+            name = "nxc";
+            sharedPaths = [
+              {
+                hostPath = "$HOME/.nxc";
+                boxPath = "/home/sprrw/.nxc";
+                ro = false;
+                type = "dir";
+              }
             ];
-
-            postPatch = ''
-              substituteInPlace pyproject.toml \
-                --replace-fail " @ git+https://github.com/Pennyw0rth/impacket.git" "" \
-                --replace-fail " @ git+https://github.com/wbond/oscrypto" "" \
-                --replace-fail " @ git+https://github.com/Pennyw0rth/NfsClient" ""
-            '';
-
-            build-system = with python.pkgs; [
-              poetry-core
-              poetry-dynamic-versioning
-            ];
-
-            dependencies = with python.pkgs; [
-              jwt
-              aardwolf
-              aioconsole
-              aiosqlite
-              argcomplete
-              asyauth
-              beautifulsoup4
-              bloodhound-py
-              dploot
-              dsinternals
-              impacket
-              lsassy
-              masky
-              minikerberos
-              msgpack
-              msldap
-              neo4j
-              paramiko
-              pyasn1-modules
-              pylnk3
-              pynfsclient
-              pypsrp
-              pypykatz
-              python-dateutil
-              python-libnmap
-              pywerview
-              requests
-              rich
-              sqlalchemy
-              termcolor
-              terminaltables
-              xmltodict
-            ];
-
-            nativeCheckInputs = with python.pkgs; [ pytestCheckHook ] ++ [ writableTmpDirAsHomeHook ];
-
-            # Tests no longer works out-of-box with 1.3.0
-            doCheck = false;
+            shareCwd = true;
+            network = true;
+            prog = "${netexec}/bin/nxc";
           }
         )
       ];
