@@ -11,8 +11,14 @@
   };
 
   config = lib.mkIf config.sprrw.programming.sage.enable {
-    home.packages = with pkgs; [
-      (sage.override { requireSageTests = false; })
-    ];
+    home.packages = [(
+      config.sprrw.sandbox.create {
+        name = "sage";
+        stdin = true;
+        tty = true;
+        shareCwd = true;
+        prog = "${pkgs.sage}/bin/sage";
+      }
+    )];
   };
 }

@@ -12,7 +12,10 @@
 
   sprrw = {
     sandbox.enable = true;
-    ai.enable = true;
+    ai = {
+      enable = true;
+      ollama.enable = true;
+    };
     linux.enable = true;
     nvim.enable = true;
     programming.enable = true;
