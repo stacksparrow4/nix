@@ -20,6 +20,10 @@
             run = "remove --permanently";
             on = [ "d" ];
           }
+          {
+            run = "shell 'dragon-drop \"$@\"' --confirm";
+            on = [ "D" ];
+          }
         ];
       };
     };

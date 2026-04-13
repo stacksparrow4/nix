@@ -30,7 +30,9 @@ bindsym $mod+backslash exec --no-startup-id "swaylock -f -F -c 000000 --ring-col
 bindsym Ctrl+Shift+space exec --no-startup-id "1password --quick-access"
 bindsym $mod+Shift+s exec grim -g "$(slurp)" - | swappy -f -
 
-bindcode $mod+40 exec "rofi -modi drun,run -show drun -show-icons"
+bindsym $mod+Shift+f exec foot yazi
+
+bindsym $mod+d exec "rofi -modi drun,run -show drun -show-icons"
 
 bindsym $mod+Shift+q kill
 
