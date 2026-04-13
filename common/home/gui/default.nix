@@ -7,7 +7,6 @@
 
 {
   imports = [
-    ./flameshot.nix
     ./obs.nix
     ./browsers.nix
   ];
@@ -17,7 +16,6 @@
   config = lib.mkIf config.sprrw.gui.enable {
     sprrw.gui = {
       browsers.enable = true;
-      flameshot.enable = true;
       obs.enable = true;
     };
 
@@ -33,6 +31,22 @@
       rofi
       freerdp
       feh
+      (config.sprrw.sandbox.create {
+        name = "grim";
+        wayland = true;
+        prog = "${pkgs.grim}/bin/grim";
+      })
+      (config.sprrw.sandbox.create {
+        name = "slurp";
+        wayland = true;
+        prog = "${pkgs.slurp}/bin/slurp";
+      })
+      (config.sprrw.sandbox.create {
+        name = "swappy";
+        stdin = true;
+        wayland = true;
+        prog = "${pkgs.swappy}/bin/swappy";
+      })
     ];
   };
 }

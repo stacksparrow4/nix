@@ -156,6 +156,7 @@
               [
                 "WAYLAND_DISPLAY=\"$WAYLAND_DISPLAY\""
                 "XDG_RUNTIME_DIR=/tmp"
+                "GTK_THEME=\"$GTK_THEME\""
               ]
             else
               [ ]

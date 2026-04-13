@@ -64,10 +64,4 @@ builtins.listToAttrs (
   vimPlugins = prev.vimPlugins // {
     typst-preview-nvim = pkgsUnstable.vimPlugins.typst-preview-nvim;
   };
-
-  #  # Flameshot is buggy in new versions
-  #  flameshot = (import (fetchTarball {
-  #    url = "https://github.com/NixOS/nixpkgs/archive/aefcb0d50d1124314429a11ed6b7aaaedf2861c5.tar.gz";
-  #    sha256 = "sha256:0bsn2j5p8vf42fydf252mqhg5wfh7907wdjinzajz6pknkqdylnf";
-  #  }) { system = pkgsUnstable.stdenv.hostPlatform.system; }).flameshot;
 }
