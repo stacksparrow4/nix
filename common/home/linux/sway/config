@@ -28,7 +28,9 @@ bindsym $mod+p exec --no-startup-id "1password"
 bindsym $mod+backslash exec --no-startup-id "swaylock -f -F -c 000000 --ring-color 005577 --key-hl-color 444444"
 
 bindsym Ctrl+Shift+space exec --no-startup-id "1password --quick-access"
-bindsym $mod+Shift+s exec grim -g "$(slurp)" - | swappy -f -
+
+bindsym $mod+Shift+e exec grim -g "$(slurp)" - | swappy -f -
+bindsym $mod+Shift+s exec grim -g "$(slurp)" - | wl-copy
 
 bindsym $mod+Shift+f exec foot yazi
 

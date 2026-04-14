@@ -150,7 +150,7 @@
             "__ETC_PROFILE_SOURCED=1"
             "HOME=/home/sprrw"
           ]
-          ++ (if downgradeTerm then [ "TERM=xterm-256color" ] else [ "TERM=\"$TERM\"" ])
+          ++ (if downgradeTerm then [ "TERM=xterm-256color" "COLORTERM=truecolor" ] else [ "TERM=\"$TERM\"" "COLORTERM=truecolor" ])
           ++ (
             if wayland then
               [
