@@ -6,9 +6,9 @@
 }:
 
 {
-  options.sprrw.term.basic.enable = lib.mkEnableOption "basic";
+  options.sprrw.general.enable = lib.mkOption { default = true; };
 
-  config = lib.mkIf config.sprrw.term.basic.enable {
+  config = lib.mkIf config.sprrw.general.enable {
     home.packages = with pkgs; [
       bat
       ydiff
@@ -20,8 +20,6 @@
       unzip
       zip
       p7zip
-      xsel
-      xclip
       uv
       (python3.withPackages (pypkgs: with pypkgs; [ requests ]))
       openssl
@@ -61,6 +59,7 @@
         shareCwd = true;
         prog = "${twitch-dl}/bin/twitch-dl";
       })
+      ffmpeg
     ];
   };
 }

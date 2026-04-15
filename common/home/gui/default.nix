@@ -27,7 +27,6 @@
       kdePackages.kdenlive
       vlc
       blender
-      obsidian
       rofi
       freerdp
       feh
