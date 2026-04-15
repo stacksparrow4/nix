@@ -14,6 +14,7 @@ builtins.listToAttrs (
       "ropr" # Doesnt exist on stable
       "brave"
       "claude-code"
+      "qwen-code"
     ]
 )
 // (
