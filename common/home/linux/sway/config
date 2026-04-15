@@ -29,8 +29,8 @@ bindsym $mod+backslash exec --no-startup-id "swaylock -f -F -c 000000 --ring-col
 
 bindsym Ctrl+Shift+space exec --no-startup-id "1password --quick-access"
 
-bindsym $mod+Shift+e exec grim -g "$(slurp)" - | swappy -f -
-bindsym $mod+Shift+s exec grim -g "$(slurp)" - | wl-copy
+bindsym $mod+Shift+e exec ~/.config/sway/screenshot.sh | swappy -f -
+bindsym $mod+Shift+s exec ~/.config/sway/screenshot.sh | wl-copy
 
 bindsym $mod+Shift+f exec foot yazi
 
