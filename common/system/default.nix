@@ -33,8 +33,6 @@
         Storage=none
         ProcessSizeMax=0
       '';
-
-      networking.firewall.interfaces."br-ollama".allowedTCPPorts = [ 11434 ];
     }
     (lib.mkIf (!config.sprrw.headless) {
       programs._1password.enable = true;
