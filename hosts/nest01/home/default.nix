@@ -14,7 +14,6 @@
     sandbox.enable = true;
     ai = {
       enable = true;
-      ollama.enable = true;
     };
     linux.enable = true;
     nvim.enable = true;
@@ -23,7 +22,6 @@
     sec.enable = true;
     term.enable = true;
     gui.enable = true;
-    docker-config.enable = true;
   };
 
   home = {
