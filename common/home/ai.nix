@@ -8,13 +8,6 @@
 {
   options.sprrw.ai = {
     enable = lib.mkEnableOption "ai";
-
-    ollama.enable = lib.mkEnableOption "ollama";
-
-    model = lib.mkOption {
-      type = lib.types.str;
-      default = "qwen3-coder:30b";
-    };
   };
 
   config =
@@ -53,7 +46,7 @@
         envVars = [
           "OPENAI_API_KEY=ollama"
           "OPENAI_BASE_URL=\"$OLLAMA_HOST/v1\""
-          "OPENAI_MODEL=\"${cfg.model}\""
+          "OPENAI_MODEL=\"qwen3-coder:30b\""
         ];
         downgradeTerm = true;
         stdin = true;
@@ -61,19 +54,18 @@
         network = true;
         prog = "${pkgs.qwen-code}/bin/qwen --yolo";
       };
+      qwenLocalArgs = qwenSandboxArgs // {
+        envVars = [
+          "OPENAI_API_KEY=notimportant"
+          "OPENAI_BASE_URL=\"http://localhost:8033/v1\""
+          "OPENAI_MODEL=\"notimportant\""
+        ];
+        hostNetwork = true;
+      };
     in
     lib.mkIf cfg.enable {
-      services.ollama = lib.mkIf cfg.ollama.enable {
-        enable = true;
-        package = pkgs.ollama-cuda;
-        environmentVariables = {
-          OLLAMA_KEEP_ALIVE = "5m";
-          # OLLAMA_CONTEXT_LENGTH = "64000";
-        };
-        host = "0.0.0.0"; # for docker. protected by firewall anyway
-      };
-
       home.packages = with pkgs; [
+        ollama
         aichat
 
         (config.sprrw.sandbox.create (
@@ -124,6 +116,51 @@
           qwenSandboxArgs
           // {
             name = "qwen-code";
+            shareCwd = true;
+          }
+        ))
+
+        (writeShellApplication {
+          name = "llama-cpp";
+          text = let
+            modelFile = "Qwen3.5-9B-Q4_K_M.gguf";
+            defaultContext = 32768;
+          in
+          ''
+            CONTEXT=${toString defaultContext}
+            if [[ $# -eq 1 ]]; then
+              CONTEXT="$1"
+            fi
+
+            mkdir -p ~/.local/models
+
+            if ! [[ -f ~/.local/models/${modelFile} ]]; then
+              echo "Model not found. Download using"
+              echo "wget -O ~/.local/models https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-Q4_K_M.gguf"
+              exit 1
+            fi
+
+            docker run --rm -it \
+              --name llama-cpp \
+              -p 8033:8033 \
+              --gpus all \
+              -v ~/.local/models:/models \
+              ghcr.io/ggml-org/llama.cpp:server-cuda13 \
+              -m /models/${modelFile} \
+              -c "$CONTEXT" --no-warmup -ngld all \
+              --host 0.0.0.0 --port 8033
+          '';
+        })
+        (config.sprrw.sandbox.create (
+          qwenLocalArgs
+          // {
+            name = "qwen-code-local-tmp";
+          }
+        ))
+        (config.sprrw.sandbox.create (
+          qwenLocalArgs
+          // {
+            name = "qwen-code-local";
             shareCwd = true;
           }
         ))

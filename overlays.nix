@@ -29,24 +29,6 @@ builtins.listToAttrs (
   }
 )
 // (
-  # Ollama updates way too often and takes too long to build
-  let
-    ollamaPkgs =
-      import
-        (fetchTarball {
-          url = "https://github.com/NixOS/nixpkgs/archive/f4b5c655460e9561e1331e6a2aff2d9bbc1f6bc2.tar.gz";
-          sha256 = "sha256:1qnzm5zdbg664v6lban828zgv2mc2hzzn7ii2yqjl408qhpp683l";
-        })
-        {
-          system = pkgsUnstable.stdenv.hostPlatform.system;
-          config = import ./nixpkgs-config.nix;
-        };
-  in
-  {
-    ollama-cuda = ollamaPkgs.ollama-cuda;
-  }
-)
-// (
   # Qemu breaks VMs so pin it to an exact version
   let
     qemu-nixpkgs = import (fetchTarball {
