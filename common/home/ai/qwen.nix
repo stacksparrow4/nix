@@ -51,14 +51,8 @@
             text =
               let
                 modelFile = "Qwen3.5-9B-Q4_K_M.gguf";
-                defaultContext = 32768;
               in
               ''
-                CONTEXT=${toString defaultContext}
-                if [[ $# -eq 1 ]]; then
-                  CONTEXT="$1"
-                fi
-
                 mkdir -p ~/.local/models
 
                 if ! [[ -f ~/.local/models/${modelFile} ]]; then
@@ -74,8 +68,8 @@
                   -v ~/.local/models:/models \
                   ghcr.io/ggml-org/llama.cpp:server-cuda13 \
                   -m /models/${modelFile} \
-                  -c "$CONTEXT" --no-warmup -ngld all \
-                  --host 0.0.0.0 --port 8033
+                  --no-warmup -ngld all \
+                  --host 0.0.0.0 --port 8033 "$@"
               '';
           })
           (config.sprrw.sandbox.create (
