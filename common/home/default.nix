@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./ai.nix
+    ./ai
     ./linux
     ./nvim
     ./programming

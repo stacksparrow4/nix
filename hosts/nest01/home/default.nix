@@ -14,6 +14,7 @@
     sandbox.enable = true;
     ai = {
       enable = true;
+      qwen.enable = true;
     };
     linux.enable = true;
     nvim.enable = true;
