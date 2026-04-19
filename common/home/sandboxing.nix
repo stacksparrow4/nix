@@ -150,7 +150,18 @@
             "__ETC_PROFILE_SOURCED=1"
             "HOME=/home/sprrw"
           ]
-          ++ (if downgradeTerm then [ "TERM=xterm-256color" "COLORTERM=truecolor" ] else [ "TERM=\"$TERM\"" "COLORTERM=truecolor" ])
+          ++ (
+            if downgradeTerm then
+              [
+                "TERM=xterm-256color"
+                "COLORTERM=truecolor"
+              ]
+            else
+              [
+                "TERM=\"$TERM\""
+                "COLORTERM=truecolor"
+              ]
+          )
           ++ (
             if wayland then
               [
@@ -335,7 +346,7 @@
         '';
       };
 
-    home.packages =
+    home.packages = lib.mkIf config.sprrw.sandbox.enable (
       (builtins.concatMap
         (
           type:
@@ -445,6 +456,7 @@
             sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$target"
           '';
         })
-      ];
+      ]
+    );
   };
 }
