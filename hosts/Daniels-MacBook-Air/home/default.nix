@@ -21,18 +21,25 @@
   };
   programs.ghostty.settings.env = "TERMINFO_DIRS=/Users/dan/.terminfo";
   programs.ghostty.settings.command = lib.mkForce "zsh";
+  programs.ghostty.settings.app-notifications = "no-clipboard-copy";
 
-  home.packages = with pkgs; [ neovim sshpass (
-    pkgs.writeShellApplication {
+  home.packages = with pkgs; [
+    sshpass
+    (pkgs.writeShellApplication {
       name = "connect";
       text = ''
         sshpass -p password ssh -o PreferredAuthentications=password -R /run/user/1000/1p-agent.sock:/Users/dan/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock -t sprrw@192.168.65.2 'export SSH_AUTH_SOCK=/run/user/1000/1p-agent.sock; exec tmux'
       '';
-    }
-  )];
+    })
+  ];
 
   sprrw = {
+    nvim = {
+      enable = true;
+      sandboxed = false;
+    };
     term = {
+      zshrc.enable = true;
       ghostty = {
         font = {
           family = "IosevkaTerm Nerd Font Mono";
