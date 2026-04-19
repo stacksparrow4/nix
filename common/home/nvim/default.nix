@@ -12,6 +12,11 @@ in
   options.sprrw.nvim = {
     enable = lib.mkEnableOption "nvim";
 
+    sandboxed = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+    };
+
     additionalBwrapArgs = lib.mkOption {
       type = lib.types.str;
       default = "";
@@ -135,13 +140,19 @@ in
           pkgs.writeShellApplication {
             name = pname;
             # TODO: replace sandboxed-vim.py with the actual sandbox solution and use outsideBeforeScript to generate the correct mount and arguments
-            text = ''
-              if [[ -f /.sprrw-sandbox ]] || [[ "$(hostname)" == sandbox ]]; then
-                ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+            text =
+              if cfg.sandboxed then
+                ''
+                  if [[ -f /.sprrw-sandbox ]] || [[ "$(hostname)" == sandbox ]]; then
+                    ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+                  else
+                    ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${cfg.additionalBwrapArgs} ENDBWRAPARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+                  fi
+                ''
               else
-                ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${cfg.additionalBwrapArgs} ENDBWRAPARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
-              fi
-            '';
+                ''
+                  ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+                '';
           };
       in
       [
