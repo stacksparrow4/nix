@@ -6,6 +6,7 @@
   ];
 
   sprrw = {
+    misc.enable = true;
     ai.enable = true;
     linux.term.enable = true;
     nvim.enable = true;

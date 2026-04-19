@@ -11,6 +11,7 @@
   ];
 
   sprrw = {
+    misc.enable = true;
     sandbox.enable = true;
     ai = {
       enable = true;

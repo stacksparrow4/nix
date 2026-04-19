@@ -12,6 +12,7 @@
     ./gui
     ./sandboxing.nix
     ./general.nix
+    ./misc.nix
   ];
 
   options = {
