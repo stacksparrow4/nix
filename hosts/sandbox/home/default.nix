@@ -6,7 +6,6 @@
   ];
 
   sprrw = {
-    sandbox.enable = true;
     misc.enable = true;
     ai.enable = true;
     linux.term.enable = true;

@@ -15,15 +15,15 @@ additional_vim_args = []
 proc_args = None
 
 XDG_RUNTIME_DIR = os.getenv("XDG_RUNTIME_DIR")
-assert XDG_RUNTIME_DIR is not None
 WAYLAND_DISPLAY = os.getenv("WAYLAND_DISPLAY")
-assert WAYLAND_DISPLAY is not None
 
-SHARED_CONFIGS = [
+no_display = XDG_RUNTIME_DIR is None or WAYLAND_DISPLAY is None
+
+SHARED_CONFIGS = list(filter(lambda _: os.path.isdir(_), [
     "/home/sprrw/.config/nvim",
     "/home/sprrw/.config/yazi",
     "/home/sprrw/.config/aichat",
-]
+]))
 
 default_bwrap_args = [
     "bwrap",
@@ -39,11 +39,15 @@ default_bwrap_args = [
     *["--proc", "/proc"],
     *["--dev", "/dev"],
     "--share-net",
-    *[
-        "--ro-bind",
-        f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}",
-        f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}",
-    ],
+    *(
+        []
+        if no_display
+        else [
+            "--ro-bind",
+            f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}",
+            f"{XDG_RUNTIME_DIR}/{WAYLAND_DISPLAY}",
+        ]
+    ),
 ]
 
 share_dir = os.getcwd()
@@ -68,8 +72,14 @@ args = [
     "--",
     "/usr/bin/env",
     "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
-    "XDG_RUNTIME_DIR=" + XDG_RUNTIME_DIR,
-    "WAYLAND_DISPLAY=" + WAYLAND_DISPLAY,
+    *(
+        []
+        if no_display
+        else [
+            "XDG_RUNTIME_DIR=" + XDG_RUNTIME_DIR,
+            "WAYLAND_DISPLAY=" + WAYLAND_DISPLAY,
+        ]
+    ),
     vim_path,
     *additional_vim_args,
 ]
