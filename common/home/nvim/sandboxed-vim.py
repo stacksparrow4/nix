@@ -3,6 +3,7 @@
 import sys
 import subprocess
 import os
+import shlex
 
 end_bwrap_args_ind = sys.argv.index("ENDBWRAPARGS")
 
@@ -19,11 +20,16 @@ WAYLAND_DISPLAY = os.getenv("WAYLAND_DISPLAY")
 
 no_display = XDG_RUNTIME_DIR is None or WAYLAND_DISPLAY is None
 
-SHARED_CONFIGS = list(filter(lambda _: os.path.isdir(_), [
-    "/home/sprrw/.config/nvim",
-    "/home/sprrw/.config/yazi",
-    "/home/sprrw/.config/aichat",
-]))
+SHARED_CONFIGS = list(
+    filter(
+        lambda _: os.path.isdir(_),
+        [
+            "/home/sprrw/.config/nvim",
+            "/home/sprrw/.config/yazi",
+            "/home/sprrw/.config/aichat",
+        ],
+    )
+)
 
 default_bwrap_args = [
     "bwrap",
@@ -64,6 +70,18 @@ if len(vim_args) == 1 and vim_args[0].startswith("/"):
 else:
     additional_vim_args.extend(vim_args)
 
+cmd = [
+    vim_path,
+    *additional_vim_args,
+]
+
+if os.path.exists(f"{share_dir}/shell.nix"):
+    cmd = [
+        "bash",
+        "-c",
+        f"{subprocess.run(['nix', 'print-dev-env', '-f', 'shell.nix'], cwd=share_dir, stdout=subprocess.PIPE).stdout.decode().strip()}\n\nexec {shlex.join(cmd)}",
+    ]
+
 args = [
     *default_bwrap_args,
     *["--bind", share_dir, "/pwd"],
@@ -80,8 +98,7 @@ args = [
             "WAYLAND_DISPLAY=" + WAYLAND_DISPLAY,
         ]
     ),
-    vim_path,
-    *additional_vim_args,
+    *cmd,
 ]
 
 exit_code = subprocess.call(args)

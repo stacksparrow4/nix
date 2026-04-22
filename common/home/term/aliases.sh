@@ -54,6 +54,10 @@ function rl() {
   echo "$mypath"
 }
 
+if which navi &>/dev/null; then
+  eval "$(navi widget bash)"
+fi
+
 # Necessary because of nix path order
 alias vi='nvim'
 alias vim='nvim'
