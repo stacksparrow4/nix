@@ -25,6 +25,8 @@
   config = {
     home.file.".config/nixpkgs/config.nix".source = ../../nixpkgs-config.nix;
 
+    news.display = "silent";
+
     home.stateVersion = "24.11"; # Please read the comment before changing.
 
     programs.home-manager.enable = true;
