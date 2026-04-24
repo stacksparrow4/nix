@@ -10,7 +10,7 @@
     ./claude.nix
     ./qwen.nix
     ./llama-cpp.nix
-    ./pi.nix
+    ./pi
   ];
 
   options.sprrw.ai.enable = lib.mkEnableOption "ai";

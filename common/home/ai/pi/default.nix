@@ -13,6 +13,20 @@
   config =
     let
       cfg = config.sprrw.ai.pi;
+      pi = pkgs.pi-coding-agent.overrideAttrs rec {
+        version = "0.70.2";
+        src = pkgs.fetchFromGitHub {
+          owner = "badlogic";
+          repo = "pi-mono";
+          tag = "v${version}";
+          hash = "sha256-qqmJloTp3mWuZBGgpwoyoFyXx6QD8xhJEwCZb7xFabM=";
+        };
+        npmDeps = pkgs.fetchNpmDeps {
+          name = "pi-mono-${version}-npm-deps";
+          inherit src;
+          hash = "sha256-ImDvTC0Nm+IGYJuqjwUUfnOtA65uJvjlpP4h2Xt/2vE=";
+        };
+      };
       piArgs = {
         sharedPaths = [
           {
@@ -27,7 +41,7 @@
         tty = true;
         network = true;
         hostNetwork = true;
-        prog = "${pkgs.pi-coding-agent}/bin/pi";
+        prog = "${pi}/bin/pi";
       };
     in
     lib.mkIf cfg.enable {
@@ -51,6 +65,9 @@
             { }
         );
       };
+
+      home.file.".pi/agent/SYSTEM.md".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system.md";
 
       home.packages = lib.mkMerge [
         [
