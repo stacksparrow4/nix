@@ -16,6 +16,8 @@
     ai = {
       enable = true;
       qwen.enable = true;
+      llama-cpp.enable = true;
+      pi.enable = true;
     };
     linux.enable = true;
     nvim.enable = true;

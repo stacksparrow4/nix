@@ -46,32 +46,6 @@
     lib.mkIf cfg.enable {
       home.packages = lib.mkMerge [
         [
-          (pkgs.writeShellApplication {
-            name = "llama-cpp";
-            text =
-              let
-                modelFile = "Qwen3.5-9B-Q4_K_M.gguf";
-              in
-              ''
-                mkdir -p ~/.local/models
-
-                if ! [[ -f ~/.local/models/${modelFile} ]]; then
-                  echo "Model not found. Download using"
-                  echo "wget -O ~/.local/models https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-Q4_K_M.gguf"
-                  exit 1
-                fi
-
-                podman run --rm -it \
-                  --name llama-cpp \
-                  -p 8033:8033 \
-                  --gpus all \
-                  -v ~/.local/models:/models \
-                  ghcr.io/ggml-org/llama.cpp:server-cuda13 \
-                  -m /models/${modelFile} \
-                  --no-warmup -ngld all \
-                  --host 0.0.0.0 --port 8033 "$@"
-              '';
-          })
           (config.sprrw.sandbox.create (
             qwenLocalArgs
             // {

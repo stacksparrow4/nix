@@ -12,7 +12,7 @@
     ./gaming.nix
   ];
 
-  boot.loader.timeout = lib.mkForce 0;
+  boot.loader.timeout = lib.mkForce 9999;
 
   # Swap
   swapDevices = [

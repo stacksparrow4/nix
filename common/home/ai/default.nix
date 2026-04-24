@@ -9,6 +9,8 @@
   imports = [
     ./claude.nix
     ./qwen.nix
+    ./llama-cpp.nix
+    ./pi.nix
   ];
 
   options.sprrw.ai.enable = lib.mkEnableOption "ai";

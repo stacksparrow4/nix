@@ -149,6 +149,7 @@
             "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin"
             "__ETC_PROFILE_SOURCED=1"
             "HOME=/home/sprrw"
+            "EDITOR=\"$EDITOR\""
           ]
           ++ (
             if downgradeTerm then
@@ -198,6 +199,7 @@
                 --dir /home/sprrw \
                 ${if network then "--share-net" else ""} \
                 ${if shareCwd then "--chdir /pwd" else "--chdir /home/sprrw"} \
+                "''${hmmounts[@]}" \
                 ${backslashify (
                   map (
                     {
@@ -209,7 +211,6 @@
                     "--${if ro then "ro-" else ""}bind \"${hostPath}\" \"${boxPath}\""
                   ) allSharedPaths
                 )}
-                "''${hmmounts[@]}" \
                 /usr/bin/env ${builtins.concatStringsSep " " allEnvVars} \
                 ${prog} "$@"
             ''

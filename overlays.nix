@@ -1,5 +1,7 @@
 pkgsUnstable: final: prev:
 
+# Note that it is generally considered bad practice to use overlays to update packages.
+# However as long as I don't upgrade dependencies this way its usually fine
 builtins.listToAttrs (
   map
     (name: {
@@ -15,6 +17,7 @@ builtins.listToAttrs (
       "brave"
       "claude-code"
       "qwen-code"
+      "pi-coding-agent"
     ]
 )
 // (
