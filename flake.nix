@@ -91,17 +91,5 @@
           osConfig.sprrw.font.mainFontMonoName = "IosevkaTerm Nerd Font Mono";
         };
       };
-
-      packages.x86_64-linux.homeConfigurations."docker" = home-manager.lib.homeManagerConfiguration {
-        pkgs = overlayedNixpkgs "x86_64-linux";
-
-        modules = [
-          ./hosts/docker/home/default.nix
-        ];
-
-        extraSpecialArgs = {
-          inputs = inputs;
-        };
-      };
     };
 }

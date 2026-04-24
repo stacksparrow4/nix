@@ -23,7 +23,7 @@
         useUserPackages = true;
       };
 
-      # Place home-files in a place that can easily be mounted by docker
+      # Place home-files in a place that can easily be mounted by containers
       environment.etc."hm-package" = {
         source = config.home-manager.users.sprrw.home.activationPackage;
       };

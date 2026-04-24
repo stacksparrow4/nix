@@ -391,7 +391,6 @@
         [
           "bwrap"
           "podman"
-          "docker"
           "vm"
         ]
       )

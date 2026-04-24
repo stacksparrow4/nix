@@ -61,7 +61,7 @@
                   exit 1
                 fi
 
-                docker run --rm -it \
+                podman run --rm -it \
                   --name llama-cpp \
                   -p 8033:8033 \
                   --gpus all \
