@@ -11,7 +11,7 @@
 
     context = lib.mkOption {
       type = lib.types.int;
-      default = 32768;
+      default = 65536;
     };
   };
 
