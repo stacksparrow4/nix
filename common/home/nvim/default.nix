@@ -139,7 +139,6 @@ in
           pname:
           pkgs.writeShellApplication {
             name = pname;
-            # TODO: replace sandboxed-vim.py with the actual sandbox solution and use outsideBeforeScript to generate the correct mount and arguments
             text =
               if cfg.sandboxed then
                 ''

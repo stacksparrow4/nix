@@ -182,7 +182,7 @@
             builtins.concatStringsSep "\n  " (map (x: "${x} \\") arr);
         finalCmd =
           if type == "bwrap" then
-            assert insideBeforeScript == ""; # TODO
+            assert insideBeforeScript == "";
             ''
               hmmounts=()
               while IFS= read -r line; do
@@ -214,7 +214,7 @@
                 ${prog} "$@"
             ''
           else if type == "docker" || type == "podman" then
-            assert insideBeforeScript == ""; # TODO
+            assert insideBeforeScript == "";
             ''
               if ! podman image inspect usermapped-img &>/dev/null; then
                 podman build -t usermapped-img ${dockerFileDir}
