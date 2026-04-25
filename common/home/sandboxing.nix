@@ -180,7 +180,6 @@
             "\\"
           else
             builtins.concatStringsSep "\n  " (map (x: "${x} \\") arr);
-        # TODO: check that there are no unix sockets in any of the shares
         finalCmd =
           if type == "bwrap" then
             assert insideBeforeScript == ""; # TODO

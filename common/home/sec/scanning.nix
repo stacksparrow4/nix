@@ -18,11 +18,24 @@
         masscan
         rustscan
         (config.sprrw.sandbox.create {
-          # TODO: mount ~/nuclei-templates to ~/.local/share/nuclei-templates or something
           name = "nuclei";
+          sharedPaths = [
+            {
+              hostPath = "$HOME/.local/nuclei-templates";
+              boxPath = "/home/sprrw/.local/nuclei-templates";
+              ro = false;
+              type = "dir";
+            }
+            {
+              hostPath = "$HOME/.config/nuclei";
+              boxPath = "/home/sprrw/.config/nuclei";
+              ro = false;
+              type = "dir";
+            }
+          ];
           shareCwd = true;
           network = true;
-          prog = "${nuclei}/bin/nuclei";
+          prog = "${nuclei}/bin/nuclei -ud /home/sprrw/.local/nuclei-templates -duc";
         })
         (config.sprrw.sandbox.create {
           name = "sqlmap";
@@ -144,7 +157,12 @@
           config.sprrw.sandbox.create {
             name = "smuggler";
             sharedPaths = [
-              { hostPath = "$(pwd)/payloads"; boxPath = "/payloads"; ro = false; type = "dir"; }
+              {
+                hostPath = "$(pwd)/payloads";
+                boxPath = "/payloads";
+                ro = false;
+                type = "dir";
+              }
             ];
             network = true;
             prog = "${smugglerWrapped}/bin/smuggler";
