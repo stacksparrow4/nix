@@ -28,15 +28,18 @@
             };
           in
           ''
+            rm /tmp/llama-cpp/llama.sock || true
+            mkdir -p /tmp/llama-cpp
             podman run --rm -it \
               --name llama-cpp \
-              -p 8033:8033 \
               --gpus all \
               -v ${model}:/model.gguf \
+              -v /tmp/llama-cpp:/tmp/llama-cpp \
+              --network none \
               ghcr.io/ggml-org/llama.cpp:server-cuda13 \
               -m /model.gguf \
               --no-warmup -ngld all \
-              --host 0.0.0.0 --port 8033 \
+              --host /tmp/llama-cpp/llama.sock \
               --reasoning off -c ${builtins.toString cfg.context} \
               "$@"
           '';
@@ -44,17 +47,18 @@
     in
     lib.mkIf cfg.enable {
       home.packages = [
-        llama-cpp
         (pkgs.writeShellApplication {
           name = "llama-start";
           text = ''
             systemctl start --user llama-cpp.service
+            systemctl start --user llama-cpp-tcp.service
           '';
         })
         (pkgs.writeShellApplication {
           name = "llama-stop";
           text = ''
             systemctl stop --user llama-cpp.service
+            systemctl stop --user llama-cpp-tcp.service
           '';
         })
         (pkgs.writeShellApplication {
@@ -74,6 +78,18 @@
           Service = {
             Type = "exec";
             ExecStart = "/usr/bin/env PATH=/run/current-system/sw/bin ${llama-cpp}/bin/llama-cpp";
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
+        };
+        llama-cpp-tcp = {
+          Unit = {
+            Description = "llama-cpp tcp forwarder";
+            After = [ "network.target" ];
+          };
+          Service = {
+            Type = "exec";
+            ExecStart = "${pkgs.socat}/bin/socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama-cpp/llama.sock";
             Restart = "on-failure";
             RestartSec = "5s";
           };
