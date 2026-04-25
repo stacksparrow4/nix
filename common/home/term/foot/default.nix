@@ -20,7 +20,8 @@
   config =
     let
       cfg = config.sprrw.term.foot;
-    in lib.mkIf cfg.enable {
+    in
+    lib.mkIf cfg.enable {
       home.file.".terminfo/f" = lib.mkIf cfg.installTerminfo {
         source = "${pkgs.foot.terminfo}/share/terminfo/f";
       };

@@ -3,7 +3,10 @@
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
 {
-  imports = [ ../../../common/system ./hardware-configuration.nix ];
+  imports = [
+    ../../../common/system
+    ./hardware-configuration.nix
+  ];
 
   sprrw.headless = true;
 

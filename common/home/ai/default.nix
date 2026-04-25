@@ -7,7 +7,7 @@
 
 {
   imports = [
-    ./claude.nix
+    ./claude
     ./qwen.nix
     ./llama-cpp.nix
     ./pi

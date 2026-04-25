@@ -22,10 +22,16 @@ builtins.listToAttrs (
 )
 // (
   let
-    asepritePkgs = import (fetchTarball {
-      url = "https://github.com/NixOS/nixpkgs/archive/4e92bbcdb030f3b4782be4751dc08e6b6cb6ccf2.tar.gz";
-      sha256 = "sha256:1mrf745k78ivw11rj1qibgwi966a83lcljc62p4qix25m1ignirq";
-    }) { system = pkgsUnstable.stdenv.hostPlatform.system; config = import ./nixpkgs-config.nix; };
+    asepritePkgs =
+      import
+        (fetchTarball {
+          url = "https://github.com/NixOS/nixpkgs/archive/4e92bbcdb030f3b4782be4751dc08e6b6cb6ccf2.tar.gz";
+          sha256 = "sha256:1mrf745k78ivw11rj1qibgwi966a83lcljc62p4qix25m1ignirq";
+        })
+        {
+          system = pkgsUnstable.stdenv.hostPlatform.system;
+          config = import ./nixpkgs-config.nix;
+        };
   in
   {
     aseprite = asepritePkgs.aseprite;
