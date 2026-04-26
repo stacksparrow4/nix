@@ -28,7 +28,14 @@
       (config.sprrw.sandbox.create {
         name = "twitch-dl";
         shareCwd = true;
+        network = true;
         prog = "${twitch-dl}/bin/twitch-dl";
+      })
+      (config.sprrw.sandbox.create {
+        name = "yt-dlp";
+        shareCwd = true;
+        network = true;
+        prog = "${yt-dlp}/bin/yt-dlp";
       })
       semgrep
       gh
