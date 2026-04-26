@@ -18,6 +18,7 @@ builtins.listToAttrs (
       "claude-code"
       "qwen-code"
       "pi-coding-agent"
+      "brave-search-cli"
     ]
 )
 // (

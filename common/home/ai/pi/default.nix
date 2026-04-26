@@ -35,6 +35,12 @@
             ro = false;
             type = "dir";
           }
+          {
+            hostPath = "$HOME/.config/brave-search";
+            boxPath = "/home/sprrw/.config/brave-search";
+            ro = true;
+            type = "dir";
+          }
         ];
         downgradeTerm = true;
         stdin = true;
