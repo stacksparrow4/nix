@@ -14,17 +14,17 @@
     let
       cfg = config.sprrw.ai.pi;
       pi = pkgs.pi-coding-agent.overrideAttrs rec {
-        version = "0.70.2";
+        version = "0.70.5";
         src = pkgs.fetchFromGitHub {
           owner = "badlogic";
           repo = "pi-mono";
           tag = "v${version}";
-          hash = "sha256-qqmJloTp3mWuZBGgpwoyoFyXx6QD8xhJEwCZb7xFabM=";
+          hash = "sha256-Jn+hvS/DIwbwAff+UovdIVnmrb4o8gsC4IR24MnwF1I=";
         };
         npmDeps = pkgs.fetchNpmDeps {
           name = "pi-mono-${version}-npm-deps";
           inherit src;
-          hash = "sha256-ImDvTC0Nm+IGYJuqjwUUfnOtA65uJvjlpP4h2Xt/2vE=";
+          hash = "sha256-MZgcHJdGFGSNgQ26/24iA12FdmO7S5vWv4crSNFhHi0=";
         };
       };
       piArgs = {

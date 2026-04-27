@@ -3,7 +3,7 @@
     {
       name = "dev.vencord.Vesktop";
       # Maybe should "set" the permissions rather than removing
-      extraCommands = "flatpak override --user --nosocket=x11 --nofilesystem=~/.steam dev.vencord.Vesktop";
+      extraCommands = "flatpak override --user --nofilesystem=~/.steam dev.vencord.Vesktop";
     }
     {
       name = "org.libreoffice.LibreOffice";
