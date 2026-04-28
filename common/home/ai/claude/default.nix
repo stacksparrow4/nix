@@ -11,25 +11,6 @@
   config =
     let
       cfg = config.sprrw.ai.claude;
-      claudeCode = pkgs.claude-code.overrideAttrs rec {
-        version = "2.1.112";
-        src = pkgs.fetchzip {
-          url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
-          hash = "sha256-SJJqU7XHbu9IRGPMJNUg6oaMZiQUKqJhI2wm7BnR1gs=";
-        };
-        npmDeps = pkgs.fetchNpmDeps {
-          name = "claude-code-${version}-npm-deps";
-          inherit src;
-          postPatch = ''
-            cp ${./package-lock.json} package-lock.json
-          '';
-          hash = "sha256-bdkej9Z41GLew9wi1zdNX+Asauki3nT1+SHmBmaUIBU=";
-        };
-        postPatch = ''
-          cp ${./package-lock.json} package-lock.json
-          substituteInPlace cli.js --replace-fail '#!/bin/sh' '#!/usr/bin/env sh'
-        '';
-      };
       claudeSandboxArgs = {
         sharedPaths = [
           {
@@ -49,7 +30,7 @@
         stdin = true;
         tty = true;
         network = true;
-        prog = "${claudeCode}/bin/claude --dangerously-skip-permissions";
+        prog = "${pkgs.claude-code}/bin/claude --dangerously-skip-permissions";
       };
     in
     lib.mkIf cfg.enable {
