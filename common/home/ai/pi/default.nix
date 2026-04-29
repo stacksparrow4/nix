@@ -8,6 +8,11 @@
 {
   options.sprrw.ai.pi = {
     enable = lib.mkEnableOption "pi";
+
+    extraModels = lib.mkOption {
+      type = lib.types.attrsOf lib.types.anything;
+      default = {};
+    };
   };
 
   config =
@@ -55,7 +60,7 @@
         providers = (
           if config.sprrw.ai.llama-cpp.enable then
             {
-              ollama = {
+              llama = {
                 baseUrl = "http://localhost:8033/v1";
                 api = "openai-completions";
                 apiKey = "llama";
@@ -69,7 +74,7 @@
             }
           else
             { }
-        );
+        ) // cfg.extraModels;
       };
 
       home.file.".pi/agent/SYSTEM.md".source =
