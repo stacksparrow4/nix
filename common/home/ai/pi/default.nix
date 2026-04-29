@@ -80,6 +80,9 @@
       home.file.".pi/agent/SYSTEM.md".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system.md";
 
+      home.file.".pi/agent/extensions".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/extensions";
+
       home.packages = lib.mkMerge [
         [
           (config.sprrw.sandbox.create (
