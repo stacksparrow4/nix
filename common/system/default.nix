@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ pkgs, config, lib, ... }:
 
 {
   imports = [
@@ -33,6 +33,8 @@
         Storage=none
         ProcessSizeMax=0
       '';
+
+      boot.kernelPackages = lib.mkIf (lib.versionOlder pkgs.linux.version "6.18.22") pkgs.linuxPackages_6_18;
     }
     (lib.mkIf (!config.sprrw.headless) {
       programs._1password.enable = true;
