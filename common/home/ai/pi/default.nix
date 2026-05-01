@@ -19,17 +19,17 @@
     let
       cfg = config.sprrw.ai.pi;
       pi = pkgs.pi-coding-agent.overrideAttrs rec {
-        version = "0.70.6";
+        version = "0.71.0";
         src = pkgs.fetchFromGitHub {
           owner = "badlogic";
           repo = "pi-mono";
           tag = "v${version}";
-          hash = "sha256-XZUnKk+B9kWn51kRfMkfInYCz+5hVuWQBvgOm9PO9bo=";
+          hash = "sha256-SDfA+dKW7dCUMp0sjcB7B3gnX+0hcoNROREUH+aSTMo=";
         };
         npmDeps = pkgs.fetchNpmDeps {
           name = "pi-mono-${version}-npm-deps";
           inherit src;
-          hash = "sha256-pEVIqp9rbuHFE6eqSmADmIXWAPey1VbD7qmOJwksz1o=";
+          hash = "sha256-3W2YMBaUe704Y78Zw13o9dC9lwwHri+4OwFwCpq2drA=";
         };
       };
       piArgs = {
