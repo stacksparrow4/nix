@@ -9,6 +9,11 @@
   options.sprrw.ai.llama-cpp = {
     enable = lib.mkEnableOption "llama-cpp";
 
+    reasoning = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+    };
+
     context = lib.mkOption {
       type = lib.types.int;
       default = 65536;
@@ -18,6 +23,12 @@
   config =
     let
       cfg = config.sprrw.ai.llama-cpp;
+      llama-help = pkgs.writeShellApplication {
+        name = "llama-help";
+        text = ''
+          podman run --rm -it --network none ghcr.io/ggml-org/llama.cpp:server-cuda13 --help
+        '';
+      };
       llama-cpp = pkgs.writeShellApplication {
         name = "llama-cpp";
         text =
@@ -40,13 +51,14 @@
               -m /model.gguf \
               --no-warmup -ngld all \
               --host /tmp/llama-cpp/llama.sock \
-              --reasoning off -c ${builtins.toString cfg.context} \
+              --reasoning ${if cfg.reasoning then "on" else "off"} -c ${builtins.toString cfg.context} \
               "$@"
           '';
       };
     in
     lib.mkIf cfg.enable {
       home.packages = [
+        llama-help
         (pkgs.writeShellApplication {
           name = "llama-start";
           text = ''
