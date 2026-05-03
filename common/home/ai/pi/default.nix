@@ -136,14 +136,14 @@
             (config.sprrw.sandbox.create (
               (piArgsWithSystem "system-code.md")
               // {
-                name = "pi-code";
+                name = "pi";
                 shareCwd = true;
               }
             ))
             (config.sprrw.sandbox.create (
               (piArgsWithSystem "system-code.md")
               // {
-                name = "pi-code-tmp";
+                name = "pi-tmp";
               }
             ))
             (config.sprrw.sandbox.create (
