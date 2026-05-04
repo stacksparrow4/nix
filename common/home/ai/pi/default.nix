@@ -118,42 +118,104 @@
       home.file.".pi/agent/extensions".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/extensions";
 
-      home.packages =
-        let
-          piArgsWithSystem =
-            fname:
-            piArgs [
+      home.packages = [
+        (config.sprrw.sandbox.create (
+          (piArgs [
+            {
+              hostPath = "$HOME/.pi/agent/system-code.md";
+              boxPath = "/home/sprrw/.pi/agent/SYSTEM.md";
+              ro = true;
+              type = "file";
+            }
+          ])
+          // {
+            name = "pi";
+            shareCwd = true;
+          }
+        ))
+        (config.sprrw.sandbox.create (
+          (piArgs [
+            {
+              hostPath = "$HOME/.pi/agent/system-code.md";
+              boxPath = "/home/sprrw/.pi/agent/SYSTEM.md";
+              ro = true;
+              type = "file";
+            }
+          ])
+          // {
+            name = "pi-tmp";
+          }
+        ))
+        (config.sprrw.sandbox.create (
+          (piArgs [
+            {
+              hostPath = "$HOME/.pi/agent/system-chat.md";
+              boxPath = "/home/sprrw/.pi/agent/SYSTEM.md";
+              ro = true;
+              type = "file";
+            }
+          ])
+          // {
+            name = "pi-chat";
+            prog = "${pi}/bin/pi --no-tools --tools bash";
+          }
+        ))
+        (config.sprrw.sandbox.create {
+          sharedPaths = (
+            builtins.map createPiMount [
               {
-                hostPath = "$HOME/.pi/agent/${fname}";
-                boxPath = "/home/sprrw/.pi/agent/SYSTEM.md";
+                path = "extensions";
+                ro = true;
+                type = "dir";
+              }
+              {
+                path = "settings.json";
+                ro = false;
+                type = "file";
+              }
+            ]
+            ++ [
+              {
+                hostPath = "/tmp/llama-cpp";
+                boxPath = "/tmp/llama-cpp";
+                ro = true;
+                type = "dir";
+              }
+              {
+                hostPath = "${pkgs.writeText "audit-models" (
+                  builtins.toJSON {
+                    providers = {
+                      llama = {
+                        baseUrl = "http://localhost:11434/v1";
+                        api = "openai-completions";
+                        apiKey = "llama";
+                        models = [
+                          {
+                            id = "llama";
+                            contextWindow = config.sprrw.ai.llama-cpp.context;
+                          }
+                        ];
+                      };
+                    };
+                  }
+                )}";
+                boxPath = "/home/sprrw/.pi/agent/models.json";
                 ro = true;
                 type = "file";
               }
-            ];
-        in
-        lib.mkMerge [
-          [
-            (config.sprrw.sandbox.create (
-              (piArgsWithSystem "system-code.md")
-              // {
-                name = "pi";
-                shareCwd = true;
-              }
-            ))
-            (config.sprrw.sandbox.create (
-              (piArgsWithSystem "system-code.md")
-              // {
-                name = "pi-tmp";
-              }
-            ))
-            (config.sprrw.sandbox.create (
-              (piArgsWithSystem "system-chat.md")
-              // {
-                name = "pi-chat";
-                prog = "${pi}/bin/pi --no-tools --tools bash";
-              }
-            ))
-          ]
-        ];
+            ]
+          );
+          downgradeTerm = true;
+          stdin = true;
+          tty = true;
+          network = false; # No network!!
+          name = "pi-local";
+          shareCwd = true;
+          prog = "${pkgs.writeShellScript "" ''
+            socat TCP-LISTEN:11434,reuseaddr,fork UNIX-CONNECT:/tmp/llama-cpp/llama.sock &
+            ${pi}/bin/pi --models llama "$@"
+          ''}";
+        })
+      ];
     };
 }
