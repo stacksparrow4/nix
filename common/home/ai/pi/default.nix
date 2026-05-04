@@ -32,189 +32,162 @@
           hash = "sha256-KUC1xQK6oJXtg962YeLOnO76uTdR10/VNa9iiCdT3VM=";
         };
       };
-      createPiMount =
+      createPiSandbox =
         {
-          path,
-          ro,
-          type,
+          name,
+          tools ? [
+            "read"
+            "write"
+            "edit"
+            "bash"
+          ],
+          system,
+          braveSearch ? false,
+          # Settings are locked down by defualt
+          shareCwd ? false,
+          network ? false,
         }:
-        {
-          hostPath = "$HOME/.pi/agent/${path}";
-          boxPath = "/home/sprrw/.pi/agent/${path}";
-          inherit ro type;
-        };
-      piArgs = additionalSharedPaths: {
-        sharedPaths =
-          (builtins.map createPiMount [
+        (config.sprrw.sandbox.create {
+          inherit name;
+          sharedPaths = [
             {
-              path = "auth.json";
-              ro = false;
-              type = "file";
-            }
-            {
-              path = "extensions";
+              hostPath = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/extensions";
+              boxPath = "/home/sprrw/.pi/agent/extensions";
               ro = true;
               type = "dir";
             }
             {
-              path = "models.json";
-              ro = true;
-              type = "file";
-            }
-            {
-              path = "settings.json";
+              hostPath = "$HOME/.pi/agent/settings.json";
+              boxPath = "/home/sprrw/.pi/agent/settings.json";
               ro = false;
               type = "file";
             }
-          ])
-          ++ [
             {
-              hostPath = "$HOME/.config/brave-search";
-              boxPath = "/home/sprrw/.config/brave-search";
+              hostPath = pkgs.writeText "pi-models" (
+                builtins.toJSON {
+                  providers =
+                    (
+                      if config.sprrw.ai.llama-cpp.enable then
+                        {
+                          llama = {
+                            baseUrl = "http://localhost:8033/v1";
+                            api = "openai-completions";
+                            apiKey = "llama";
+                            models = [
+                              {
+                                id = "llama";
+                                contextWindow = config.sprrw.ai.llama-cpp.context;
+                              }
+                            ];
+                          };
+                        }
+                      else
+                        { }
+                    )
+                    // cfg.extraModels;
+                }
+              );
+              boxPath = "/home/sprrw/.pi/agent/models.json";
               ro = true;
-              type = "dir";
+              type = "file";
+            }
+            {
+              hostPath = system;
+              boxPath = "/home/sprrw/.pi/agent/SYSTEM.md";
+              ro = true;
+              type = "file";
             }
           ]
-          ++ additionalSharedPaths;
-        downgradeTerm = true;
-        stdin = true;
-        tty = true;
-        network = true;
-        hostNetwork = true;
-        prog = "${pi}/bin/pi";
-      };
-    in
-    lib.mkIf cfg.enable {
-      # All the home.file can technically be forwarded directly to sandbox but this is done so that
-      #  ~/.pi exists on the host so it is easy to look at if required
-      home.file.".pi/agent/models.json".text = builtins.toJSON {
-        providers =
-          (
-            if config.sprrw.ai.llama-cpp.enable then
-              {
-                llama = {
-                  baseUrl = "http://localhost:8033/v1";
-                  api = "openai-completions";
-                  apiKey = "llama";
-                  models = [
-                    {
-                      id = "default";
-                      contextWindow = config.sprrw.ai.llama-cpp.context;
-                    }
-                  ];
-                };
-              }
+          ++ (
+            if network then
+              [
+                {
+                  hostPath = "$HOME/.pi/agent/auth.json";
+                  boxPath = "/home/sprrw/.pi/agent/auth.json";
+                  ro = false;
+                  type = "file";
+                }
+              ]
             else
-              { }
+              [
+                {
+                  hostPath = "/tmp/llama-cpp";
+                  boxPath = "/tmp/llama-cpp";
+                  ro = true;
+                  type = "dir";
+                }
+              ]
           )
-          // cfg.extraModels;
-      };
-
-      home.file.".pi/agent/system-code.md".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-code.md";
-      home.file.".pi/agent/system-chat.md".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-chat.md";
-
-      home.file.".pi/agent/extensions".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/extensions";
-
-      home.packages = [
-        (config.sprrw.sandbox.create (
-          (piArgs [
-            {
-              hostPath = "$HOME/.pi/agent/system-code.md";
-              boxPath = "/home/sprrw/.pi/agent/SYSTEM.md";
-              ro = true;
-              type = "file";
-            }
-          ])
-          // {
-            name = "pi";
-            shareCwd = true;
-          }
-        ))
-        (config.sprrw.sandbox.create (
-          (piArgs [
-            {
-              hostPath = "$HOME/.pi/agent/system-code.md";
-              boxPath = "/home/sprrw/.pi/agent/SYSTEM.md";
-              ro = true;
-              type = "file";
-            }
-          ])
-          // {
-            name = "pi-tmp";
-          }
-        ))
-        (config.sprrw.sandbox.create (
-          (piArgs [
-            {
-              hostPath = "$HOME/.pi/agent/system-chat.md";
-              boxPath = "/home/sprrw/.pi/agent/SYSTEM.md";
-              ro = true;
-              type = "file";
-            }
-          ])
-          // {
-            name = "pi-chat";
-            prog = "${pi}/bin/pi --no-tools --tools bash";
-          }
-        ))
-        (config.sprrw.sandbox.create {
-          sharedPaths = (
-            builtins.map createPiMount [
-              {
-                path = "extensions";
-                ro = true;
-                type = "dir";
-              }
-              {
-                path = "settings.json";
-                ro = false;
-                type = "file";
-              }
-            ]
-            ++ [
-              {
-                hostPath = "/tmp/llama-cpp";
-                boxPath = "/tmp/llama-cpp";
-                ro = true;
-                type = "dir";
-              }
-              {
-                hostPath = "${pkgs.writeText "audit-models" (
-                  builtins.toJSON {
-                    providers = {
-                      llama = {
-                        baseUrl = "http://localhost:11434/v1";
-                        api = "openai-completions";
-                        apiKey = "llama";
-                        models = [
-                          {
-                            id = "llama";
-                            contextWindow = config.sprrw.ai.llama-cpp.context;
-                          }
-                        ];
-                      };
-                    };
-                  }
-                )}";
-                boxPath = "/home/sprrw/.pi/agent/models.json";
-                ro = true;
-                type = "file";
-              }
-            ]
+          ++ (
+            if braveSearch then
+              [
+                {
+                  hostPath = "$HOME/.config/brave-search";
+                  boxPath = "/home/sprrw/.config/brave-search";
+                  ro = true;
+                  type = "dir";
+                }
+              ]
+            else
+              [ ]
           );
           downgradeTerm = true;
           stdin = true;
           tty = true;
-          network = false; # No network!!
-          name = "pi-local";
+          inherit shareCwd network;
+          hostNetwork = network;
+          prog = "${
+            pkgs.writeShellApplication {
+              name = "pi";
+              text = ''
+                ${
+                  if network then
+                    ""
+                  else
+                    "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama-cpp/llama.sock &"
+                }
+
+                ${pi}/bin/pi \
+                  --no-tools --tools ${builtins.concatStringsSep "," tools} \
+                  ${if network then "" else "--models llama"} \
+                  "$@"
+              '';
+            }
+          }/bin/pi";
+        });
+    in
+    lib.mkIf cfg.enable {
+      home.packages = [
+        (createPiSandbox {
+          name = "pi";
+          system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-code.md";
+          braveSearch = true;
           shareCwd = true;
-          prog = "${pkgs.writeShellScript "" ''
-            socat TCP-LISTEN:11434,reuseaddr,fork UNIX-CONNECT:/tmp/llama-cpp/llama.sock &
-            ${pi}/bin/pi --models llama "$@"
-          ''}";
+          network = true;
+        })
+        (createPiSandbox {
+          name = "pi-tmp";
+          system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-code.md";
+          braveSearch = true;
+          network = true;
+        })
+        (createPiSandbox {
+          name = "pi-chat";
+          system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-chat.md";
+          braveSearch = true;
+          tools = [ "bash" ];
+          network = true;
+        })
+        (createPiSandbox {
+          name = "pi-local";
+          system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-local.md";
+          shareCwd = true;
+          network = false;
+        })
+        (createPiSandbox {
+          name = "pi-local-tmp";
+          system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-local.md";
+          network = false;
         })
       ];
     };
