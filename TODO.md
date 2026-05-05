@@ -1,3 +1,4 @@
+- Create a pkgs/ folder and put the packages there with better update scripts
 - Package the following
     - opengrep
 - Nvim prettier formatter for GraphQL
