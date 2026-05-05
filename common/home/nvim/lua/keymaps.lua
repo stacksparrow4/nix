@@ -34,6 +34,10 @@ vim.keymap.set("n", "<leader>c", function()
   vim.fn.setreg("+", positiontotyp(vim.fn.expand("%:~:."), vim.fn.line("."), vim.fn.col("."), vim.api.nvim_get_current_line()))
 end, { noremap = true, silent = true, desc = "Copy file path reference" })
 
+vim.keymap.set("n", "<leader>b", function()
+  vim.fn.setreg("+", vim.fn.expand("%:~:."))
+end, { noremap = true, silent = true, desc = "Copy bare file path reference" })
+
 vim.keymap.set("n", "<leader>C", function()
   local clipboard_content = vim.fn.getreg('+'):match("^%s*(.-)%s*$")
 
