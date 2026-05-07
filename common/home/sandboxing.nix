@@ -424,7 +424,7 @@
             cd ~/${config.sprrw.nixosRepoPath}
             git add .
 
-            isopath=$(nixos-rebuild build-image --flake .#sandbox --image-variant iso --no-link)
+            isopath=$(nixos-rebuild build-image --flake .#vm --image-variant iso --no-link)
             echo "$isopath"
 
             mkdir -p ~/.local
