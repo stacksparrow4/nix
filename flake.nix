@@ -45,22 +45,11 @@
         specialArgs = { inherit inputs; };
       };
 
-      nixosConfigurations.macbook-vm = nixpkgs.lib.nixosSystem rec {
-        system = "aarch64-linux";
-        pkgs = overlayedNixpkgs system;
-        modules = [
-          ./hosts/macbook-vm/system/configuration.nix
-          home-manager.nixosModules.home-manager
-          { home-manager.extraSpecialArgs = { inherit inputs; }; }
-        ];
-        specialArgs = { inherit inputs; };
-      };
-
-      nixosConfigurations.sandbox = nixpkgs.lib.nixosSystem rec {
+      nixosConfigurations.vm = nixpkgs.lib.nixosSystem rec {
         system = "x86_64-linux";
         pkgs = overlayedNixpkgs system;
         modules = [
-          ./hosts/sandbox/system/configuration.nix
+          ./hosts/vm/system/configuration.nix
           home-manager.nixosModules.home-manager
           { home-manager.extraSpecialArgs = { inherit inputs; }; }
         ];
@@ -76,19 +65,6 @@
 
         extraSpecialArgs = {
           inputs = inputs;
-        };
-      };
-
-      packages.x86_64-linux.homeConfigurations."kali" = home-manager.lib.homeManagerConfiguration {
-        pkgs = overlayedNixpkgs "x86_64-linux";
-
-        modules = [
-          ./hosts/kali/home/default.nix
-        ];
-
-        extraSpecialArgs = {
-          inputs = inputs;
-          osConfig.sprrw.font.mainFontMonoName = "IosevkaTerm Nerd Font Mono";
         };
       };
     };

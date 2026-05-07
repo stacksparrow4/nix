@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 
@@ -15,23 +16,39 @@
     homeDirectory = "/Users/dan";
   };
 
-  programs.ghostty.package = null;
+  programs.ghostty = {
+    enable = true;
+    package = null;
+    settings = {
+      env = "TERMINFO_DIRS=/Users/dan/.terminfo";
+      command = lib.mkForce "${pkgs.tmux}/bin/tmux";
+      app-notifications = "no-clipboard-copy";
+    };
+  };
+
   home.file.".terminfo" = {
     source = config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";
   };
-  programs.ghostty.settings.env = "TERMINFO_DIRS=/Users/dan/.terminfo";
-  programs.ghostty.settings.command = lib.mkForce "zsh";
-  programs.ghostty.settings.app-notifications = "no-clipboard-copy";
 
   home.packages = with pkgs; [
     sshpass
-    (pkgs.writeShellApplication {
-      name = "connect";
-      text = ''
-        sshpass -p password ssh -o PreferredAuthentications=password -R /run/user/1000/1p-agent.sock:/Users/dan/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock -t sprrw@192.168.65.2 'export SSH_AUTH_SOCK=/run/user/1000/1p-agent.sock; exec tmux'
-      '';
-    })
+    # (pkgs.writeShellApplication {
+    #   name = "connect";
+    #   text = ''
+    #     sshpass -p password ssh -o PreferredAuthentications=password -R /run/user/1000/1p-agent.sock:/Users/dan/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock -t sprrw@192.168.65.2 'export SSH_AUTH_SOCK=/run/user/1000/1p-agent.sock; exec tmux'
+    #   '';
+    # })
+
+    # TODO: set up docker builder so this works
+    # then override the pi-coding-agent
+    #(
+      #import ../../../pkgs/pi { pkgs = import pkgs-unstable { system = "aarch64-linux"; }; }
+    #)
   ];
+
+  home.sessionVariables = {
+    NIX_PATH = "nixpkgs=${inputs.nixpkgs}:nixpkgs-unstable=${inputs.nixpkgs-unstable}";
+  };
 
   sprrw = {
     nvim = {
@@ -40,6 +57,11 @@
     };
     term = {
       zshrc.enable = true;
+      yazi.enable = true;
+      tmux = {
+        enable = true;
+        defaultTerm = "ghostty";
+      };
       ghostty = {
         font = {
           family = "IosevkaTerm Nerd Font Mono";

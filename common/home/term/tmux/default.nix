@@ -1,15 +1,24 @@
 { lib, config, ... }:
 
 {
-  options = {
-    sprrw.term.tmux.enable = lib.mkEnableOption "tmux";
+  options.sprrw.term.tmux = {
+    enable = lib.mkEnableOption "tmux";
+
+    defaultTerm = lib.mkOption {
+      type = lib.types.str;
+      default = "foot";
+    };
   };
 
-  config = lib.mkIf config.sprrw.term.tmux.enable {
+  config = let
+    cfg = config.sprrw.term.tmux;
+  in lib.mkIf cfg.enable {
     programs.tmux = {
       enable = true;
 
-      extraConfig = builtins.readFile ./tmux.conf;
+      extraConfig =
+        builtins.replaceStrings [ "REPLACE_WITH_DEFAULT_TERM" ] [ cfg.defaultTerm ]
+          (builtins.readFile ./tmux.conf);
     };
   };
 }

@@ -36,7 +36,7 @@
     initialPassword = "password";
   };
 
-  networking.hostName = "sandbox";
+  networking.hostName = "vm";
   networking.networkmanager.enable = true;
 
   # Set your time zone.
