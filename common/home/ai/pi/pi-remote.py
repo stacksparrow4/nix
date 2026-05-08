@@ -36,21 +36,18 @@ def handle_connection(conn, template):
     req = recv(conn)
 
     command = req["command"]
-    cwd = req["cwd"]
-    timeout = req["timeout"]
-    extra_env = req["extra_env"]
+    timeout = req.get("timeout") or 5
+    extra_env = req.get("extra_env") or {}
 
-    full_command = ""
-    if cwd:
-        full_command += f"cd {shlex.quote(cwd)} && env "
-
+    full_command = "env "
     if extra_env:
         for k, v in extra_env.items():
             full_command += shlex.quote(f"{k}={v}") + " "
 
     full_command += f"bash -c {shlex.quote(command)}"
-
     host_cmd = template.replace(CMD_PLACEHOLDER, shlex.quote(full_command))
+
+    # print(f"Executing the following command: {host_cmd}")
 
     proc = subprocess.Popen(
         ["bash", "-c", host_cmd],
@@ -134,27 +131,26 @@ def serve(socket_path, template):
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument(
-        "template",
-        help=f"Host command template containing {CMD_PLACEHOLDER}, e.g. 'ssh user@host {CMD_PLACEHOLDER}'",
-    )
-    args = p.parse_args()
+    if len(sys.argv) != 3:
+        # Note: the second argument is internal with nix and not shown to the user
+        print(f"Usage: pi-remote 'docker exec container sh -c {CMD_PLACEHOLDER}'")
+        exit(1)
 
-    if CMD_PLACEHOLDER not in args.template:
+    sandbox_path = sys.argv[1]
+    template = sys.argv[2]
+
+    if CMD_PLACEHOLDER not in template:
         print(f"error: template must contain {CMD_PLACEHOLDER}", file=sys.stderr)
         exit(2)
 
     with tempfile.TemporaryDirectory() as sock_dir:
         socket_path = f"{sock_dir}/pi.sock"
-        print(socket_path)
 
         server_thread = threading.Thread(
-            target=serve, args=(socket_path, args.template), daemon=True
+            target=serve, args=(socket_path, template), daemon=True
         )
         server_thread.start()
 
-        print("TODO: run sandbox")
-
-        import time
-        time.sleep(999999)
+        env = os.environ.copy()
+        env["PIPEDIR"] = sock_dir
+        subprocess.run([sandbox_path], env=env)

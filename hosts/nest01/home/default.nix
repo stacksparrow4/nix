@@ -16,7 +16,11 @@
     ai = {
       enable = true;
       qwen.enable = true;
-      llama-cpp.enable = true;
+      llama-cpp = {
+        enable = true;
+        # context = 32768;
+        context = 65536;
+      };
       pi.enable = true;
     };
     linux.enable = true;
