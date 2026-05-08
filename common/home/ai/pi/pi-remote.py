@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import argparse
 import base64
 import json
 import os
@@ -36,16 +35,9 @@ def handle_connection(conn, template):
     req = recv(conn)
 
     command = req["command"]
-    timeout = req.get("timeout") or 5
-    extra_env = req.get("extra_env") or {}
+    timeout = req.get("timeout") or 60
 
-    full_command = "env "
-    if extra_env:
-        for k, v in extra_env.items():
-            full_command += shlex.quote(f"{k}={v}") + " "
-
-    full_command += f"bash -c {shlex.quote(command)}"
-    host_cmd = template.replace(CMD_PLACEHOLDER, shlex.quote(full_command))
+    host_cmd = template.replace(CMD_PLACEHOLDER, shlex.quote(command))
 
     # print(f"Executing the following command: {host_cmd}")
 

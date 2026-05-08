@@ -144,7 +144,7 @@
                 }
 
                 ${pi}/bin/pi \
-                  --no-tools --tools ${builtins.concatStringsSep "," tools} \
+                  --no-tools ${if (builtins.length tools) > 0 then "--tools ${builtins.concatStringsSep "," tools}" else ""} \
                   ${if network then "" else "--models llama"} \
                   "$@"
               '';
@@ -202,7 +202,8 @@
             };
             pi-remote-sandbox = createPiSandbox {
               name = "pi-remote-sandbox";
-              system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-code.md";
+              system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-remote.md";
+              tools = [ "command" ];
               extensions = [ "pi-remote.ts" ]; # TODO: add others and resolve conflicts
               network = true;
               extraMounts = [

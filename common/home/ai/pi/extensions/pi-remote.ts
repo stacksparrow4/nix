@@ -3,25 +3,16 @@ import { connect } from "node:net";
 import {
   type BashOperations,
   createBashTool,
-  createEditTool,
-  createReadTool,
-  createWriteTool,
   createBashToolDefinition,
-  createEditToolDefinition,
-  createReadToolDefinition,
-  createWriteToolDefinition,
-  type EditOperations,
   type ExtensionAPI,
-  type ReadOperations,
-  type WriteOperations,
 } from "@mariozechner/pi-coding-agent";
+import { Type } from "typebox";
 
 
 const SOCKET_PATH = "/tmp/pi-remote/pi.sock";
 
 interface ExecOptions {
   timeout?: number; // seconds
-  env?: Record<string, string>;
   signal?: AbortSignal;
   onData?: (data: Buffer, kind: "stdout" | "stderr") => void;
 }
@@ -98,7 +89,6 @@ function bridgeExec(command: string, options: ExecOptions = {}): Promise<ExecRes
       const req = JSON.stringify({
         command,
         timeout: options.timeout ?? null,
-        env: options.env ?? null,
       });
       sock.write(`${req}\n`);
     });
@@ -159,86 +149,11 @@ function bridgeExec(command: string, options: ExecOptions = {}): Promise<ExecRes
   });
 }
 
-async function execCapture(
-  command: string,
-  options: ExecOptions = {},
-): Promise<{ stdout: Buffer; stderr: Buffer; exitCode: number | null }> {
-  const result = await bridgeExec(command, options);
-  if (result.error && result.exitCode === null) {
-    throw new Error(result.error);
-  }
-  return { stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode };
-}
-
-async function execOk(command: string, options: ExecOptions = {}): Promise<Buffer> {
-  const { stdout, stderr, exitCode } = await execCapture(command, options);
-  if (exitCode !== 0) {
-    throw new Error(
-      `Command ${command} failed with exit code ${exitCode}:\n${stderr.toString("utf-8").slice(0, 2000)}`,
-    );
-  }
-  return stdout;
-}
-
-const SHELL_SAFE = /^[A-Za-z0-9_@%+=:,./-]+$/;
-function shq(value: string): string {
-  if (value.length === 0) return "''";
-  if (SHELL_SAFE.test(value)) return value;
-  return `'${value.replace(/'/g, "'\\''")}'`;
-}
-
-function createBridgeReadOps(): ReadOperations {
-  return {
-    readFile: async (p) => execOk(`cat -- ${shq(p)}`),
-    access: async (p) => {
-      await execOk(`test -r ${shq(p)}`);
-    },
-    detectImageMimeType: async (p) => {
-      try {
-        const out = await execOk(`file --mime-type -b -- ${shq(p)}`);
-        const mime = out.toString("utf-8").trim();
-        return ["image/jpeg", "image/png", "image/gif", "image/webp"].includes(mime) ? mime : null;
-      } catch {
-        return null;
-      }
-    },
-  };
-}
-
-function createBridgeWriteOps(): WriteOperations {
-  return {
-    writeFile: async (p, content) => {
-      const b64 = Buffer.from(content, "utf-8").toString("base64");
-      await execOk(`printf %s ${shq(b64)} | base64 -d > ${shq(p)}`);
-    },
-    mkdir: async (dir) => {
-      await execOk(`mkdir -p -- ${shq(dir)}`);
-    },
-  };
-}
-
-function createBridgeEditOps(): EditOperations {
-  const r = createBridgeReadOps();
-  const w = createBridgeWriteOps();
-  return {
-    readFile: r.readFile,
-    access: async (p) => {
-      await execOk(`test -r ${shq(p)} && test -w ${shq(p)}`);
-    },
-    writeFile: w.writeFile,
-  };
-}
-
 function createBridgeBashOps(): BashOperations {
   return {
-    exec: async (command, _cwd, { onData, signal, timeout, env }) => {
+    exec: async (command, _cwd, { onData, signal, timeout }) => {
       const result = await bridgeExec(command, {
         timeout,
-        env: env
-          ? (Object.fromEntries(
-            Object.entries(env).filter(([, v]) => typeof v === "string"),
-          ) as Record<string, string>)
-          : undefined,
         signal,
         onData: (chunk) => onData(chunk),
       });
@@ -258,31 +173,16 @@ function createBridgeBashOps(): BashOperations {
 
 export default function(pi: ExtensionAPI) {
   pi.registerTool({
-    ...createReadToolDefinition("/"),
-    async execute(id, params, signal, onUpdate, _ctx) {
-      const tool = createReadTool("/", { operations: createBridgeReadOps() });
-      return tool.execute(id, params, signal, onUpdate);
-    },
-  });
-
-  pi.registerTool({
-    ...createWriteToolDefinition("/"),
-    async execute(id, params, signal, onUpdate, _ctx) {
-      const tool = createWriteTool("/", { operations: createBridgeWriteOps() });
-      return tool.execute(id, params, signal, onUpdate);
-    },
-  });
-
-  pi.registerTool({
-    ...createEditToolDefinition("/"),
-    async execute(id, params, signal, onUpdate, _ctx) {
-      const tool = createEditTool("/", { operations: createBridgeEditOps() });
-      return tool.execute(id, params, signal, onUpdate);
-    },
-  });
-
-  pi.registerTool({
     ...createBashToolDefinition("/"),
+    // Avoid using the name "bash" because it could technically be a non bash command interface (eg powershell)
+    name: "command",
+    label: "command",
+    description: "Execute a command. Returns stdout and stderr. Output may be truncated if it is too long. Optionally provide a timeout in seconds.",
+    promptSnippet: "Execute commands",
+    parameters: Type.Object({
+      command: Type.String({ description: "Command to execute" }),
+      timeout: Type.Optional(Type.Number({ description: "Timeout in seconds (optional, no default timeout)" })),
+    }),
     async execute(id, params, signal, onUpdate, _ctx) {
       const tool = createBashTool("/", { operations: createBridgeBashOps() });
       return tool.execute(id, params, signal, onUpdate);
