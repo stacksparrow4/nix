@@ -1,4 +1,8 @@
-- Create a pkgs/ folder and put the packages there with better update scripts
+- Pi
+    - Wrapper for running tools inside eg. ssh or docker
+        - Probably want to be creating some kind of pipe to a bash connection?
+        - Rewire tools to use that pipe
+    - Save/Load extension (rather than global sessions)
 - Package the following
     - opengrep
 - Nvim prettier formatter for GraphQL
