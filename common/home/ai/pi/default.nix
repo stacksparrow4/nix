@@ -144,12 +144,15 @@
                 }
 
                 ${pi}/bin/pi \
-                  --no-tools ${if (builtins.length tools) > 0 then "--tools ${builtins.concatStringsSep "," tools}" else ""} \
+                  --no-tools ${
+                    if (builtins.length tools) > 0 then "--tools ${builtins.concatStringsSep "," tools}" else ""
+                  } \
                   ${if network then "" else "--models llama"} \
                   "$@"
               '';
             }
           }/bin/pi";
+          roDotGit = shareCwd;
         });
     in
     lib.mkIf cfg.enable {

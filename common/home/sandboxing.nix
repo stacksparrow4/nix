@@ -32,7 +32,9 @@
         hostNetwork ? false,
         wayland ? false,
         x11 ? false,
-      }:
+        roDotGit ? false,
+        _roDotGit ? false, # used internally with recursion (use roDotGit for external use)
+      }@allArgs:
       let
         dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
           FROM alpine@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
@@ -53,6 +55,19 @@
                   hostPath = "$(pwd)";
                   boxPath = "/pwd";
                   ro = false;
+                  type = "dir";
+                  needsCreate = false;
+                }
+              ]
+            else
+              [ ]
+          ) ++ (
+            if _roDotGit then
+              [
+                {
+                  hostPath = "$(pwd)/.git";
+                  boxPath = "/pwd/.git";
+                  ro = true;
                   type = "dir";
                   needsCreate = false;
                 }
@@ -301,7 +316,17 @@
             '';
       in
       assert !hostNetwork || network; # Can't have hostNetwork = true and network = false
-      pkgs.writeShellApplication {
+      assert shareCwd || !roDotGit; # Can't have shareCwd = false and roDotGit = true
+      if roDotGit then pkgs.writeShellApplication {
+        inherit name;
+        text = ''
+          if [[ -d .git ]]; then
+            ${config.sprrw.sandbox.create (allArgs // { name = "${name}-dotgit-wrapped"; roDotGit = false; _roDotGit = true; })}/bin/${name}-dotgit-wrapped "$@"
+          else
+            ${config.sprrw.sandbox.create (allArgs // { name = "${name}-nodotgit-wrapped"; roDotGit = false; _roDotGit = false; })}/bin/${name}-nodotgit-wrapped "$@"
+          fi
+        '';
+      } else pkgs.writeShellApplication {
         inherit name;
         text = ''
           if [[ -f /.sprrw-sandbox ]] || [[ "$(hostname)" == sandbox ]]; then
