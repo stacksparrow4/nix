@@ -35,6 +35,12 @@
       '';
 
       boot.kernelPackages = lib.mkIf (lib.versionOlder pkgs.linux.version "6.18.22") pkgs.linuxPackages_6_18;
+
+      boot.blacklistedKernelModules = [ "esp4" "esp6" ];
+      boot.extraModprobeConfig = ''
+        install esp4 ${pkgs.coreutils}/bin/false
+        install esp6 ${pkgs.coreutils}/bin/false
+      '';
     }
     (lib.mkIf (!config.sprrw.headless) {
       programs._1password.enable = true;
