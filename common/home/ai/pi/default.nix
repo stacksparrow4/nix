@@ -162,16 +162,9 @@
           network = true;
         })
         (createPiSandbox {
-          name = "pi-tmp";
+          name = "pi-chat";
           system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-code.md";
           braveSearch = true;
-          network = true;
-        })
-        (createPiSandbox {
-          name = "pi-chat";
-          system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-chat.md";
-          braveSearch = true;
-          tools = [ "bash" ];
           network = true;
         })
         (createPiSandbox {
@@ -181,7 +174,7 @@
           network = false;
         })
         (createPiSandbox {
-          name = "pi-local-tmp";
+          name = "pi-local-chat";
           system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-local.md";
           network = false;
         })
