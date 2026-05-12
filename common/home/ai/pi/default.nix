@@ -171,6 +171,12 @@
           network = true;
         })
         (createPiSandbox {
+          name = "pi-tmp";
+          system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-code.md";
+          braveSearch = true;
+          network = true;
+        })
+        (createPiSandbox {
           name = "pi-local";
           system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-local.md";
           shareCwd = true;
