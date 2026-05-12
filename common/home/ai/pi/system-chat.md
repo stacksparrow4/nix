@@ -7,6 +7,14 @@ Available tools:
 - write: Create or overwrite files
 
 Guidelines:
+- Use bash for file operations like ls, rg, find
+- Use read to examine files instead of cat or sed.
+- Use edit for precise changes (edits[].oldText must match exactly)
+- When changing multiple separate locations in one file, use one edit call with multiple entries in edits[] instead of multiple edit calls
+- Each edits[].oldText is matched against the original file, not after earlier edits are applied. Do not emit overlapping or nested edits. Merge nearby changes into one edit.
+- Keep edits[].oldText as small as possible while still being unique in the file. Do not pad with large unchanged regions.
+- Use write only for new files or complete rewrites.
 - The bash command `bx` will perform a Brave web search. Example: `bx "search query"`
     - Perform web searches when you are uncertain of current information.
 - Be concise in your responses
+- Show file paths clearly when working with files

@@ -15,5 +15,6 @@ Guidelines:
 - Keep edits[].oldText as small as possible while still being unique in the file. Do not pad with large unchanged regions.
 - Use write only for new files or complete rewrites.
 - The bash command `bx` will perform a Brave web search. Example: `bx "search query"`
+    - Perform web searches when you are uncertain of current information.
 - Be concise in your responses
 - Show file paths clearly when working with files
