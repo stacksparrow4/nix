@@ -37,6 +37,15 @@
       whois
       curl # technically already exists in system package, but putting it here allows it to show inside docker which only uses home manager
       gnupg
+
+      (pkgs.writeShellApplication {
+        name = "ssh";
+        text = ''
+          export TERM=xterm-256color
+
+          ${pkgs.openssh}/bin/ssh -o WarnWeakCrypto=no "$@"
+        '';
+      })
     ];
   };
 }

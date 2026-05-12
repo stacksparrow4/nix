@@ -39,8 +39,6 @@ def handle_connection(conn, template):
 
     host_cmd = template.replace(CMD_PLACEHOLDER, shlex.quote(command))
 
-    # print(f"Executing the following command: {host_cmd}")
-
     proc = subprocess.Popen(
         ["bash", "-c", host_cmd],
         stdin=subprocess.DEVNULL,
@@ -73,13 +71,16 @@ def handle_connection(conn, template):
                     sel.unregister(stream)
                     open_streams -= 1
                     continue
-                send(
-                    conn,
-                    {
-                        "type": kind,
-                        "data": base64.b64encode(chunk).decode(),
-                    },
-                )
+                try:
+                    send(
+                        conn,
+                        {
+                            "type": kind,
+                            "data": base64.b64encode(chunk).decode(),
+                        },
+                    )
+                except BrokenPipeError:
+                    return
 
     output_thread = threading.Thread(target=output_thread_function, daemon=True)
     output_thread.start()
@@ -96,10 +97,13 @@ def handle_connection(conn, template):
 
     output_thread.join()
 
-    if timed_out.is_set():
-        send(conn, {"type": "error", "message": f"timeout after {timeout}s"})
-    else:
-        send(conn, {"type": "exit", "code": int(code)})
+    try:
+        if timed_out.is_set():
+            send(conn, {"type": "error", "message": f"timeout after {timeout}s"})
+        else:
+            send(conn, {"type": "exit", "code": int(code)})
+    except BrokenPipeError:
+        pass
 
     conn.close()
 
