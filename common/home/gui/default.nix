@@ -30,6 +30,7 @@
       rofi
       freerdp
       feh
+      xfce.thunar
       (config.sprrw.sandbox.create {
         name = "grim";
         wayland = true;

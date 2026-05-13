@@ -32,7 +32,7 @@ bindsym Ctrl+Shift+space exec --no-startup-id "1password --quick-access"
 bindsym $mod+Shift+e exec ~/.config/sway/screenshot.sh | swappy -f -
 bindsym $mod+Shift+s exec ~/.config/sway/screenshot.sh | wl-copy
 
-bindsym $mod+Shift+f exec foot yazi
+bindsym $mod+Shift+f exec thunar
 
 bindsym $mod+d exec "rofi -modi drun,run -show drun -show-icons"
 
