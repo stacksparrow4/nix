@@ -13,30 +13,12 @@ let
     hash = "sha256-wEiqOezD8w08vyuenh3Kk+YCYBbQoEq67wATDEKy5XM=";
   };
 
-  # When package-lock.json becomes non malformed this can be removed
-  # The below code is really bad practice because its a FOD however
-  # it doesn't use a deterministic npm command
-  src = pkgs.stdenvNoCC.mkDerivation {
-    name = "pi-mono-${version}-src";
-    src = rawSrc;
-    nativeBuildInputs = [ pkgs.nodejs pkgs.cacert ];
-    dontConfigure = true;
-    dontBuild = true;
-    dontFixup = true;
-    dontPatchShebangs = true;
-    installPhase = ''
-      runHook preInstall
-      rm package-lock.json
-      export HOME=$TMPDIR
-      npm install --package-lock-only --ignore-scripts --force
-      mkdir -p $out
-      cp -r . $out/
-      runHook postInstall
-    '';
-    outputHashMode = "recursive";
-    outputHashAlgo = "sha256";
-    outputHash = "sha256-gbapE5o23vBH5tgh6jVLLgAobMuYrbEPw6OqnY2T6JY=";
-  };
+  # Pi version 0.74.0 had a cooked package-lock.json. This can be removed when it is fixed upstream
+  src = pkgs.runCommand "pi-mono-${version}-src" { } ''
+    cp -r ${rawSrc} $out
+    chmod -R u+w $out
+    cp ${./package-lock.json} $out/package-lock.json
+  '';
 in
 pkgs.pi-coding-agent.overrideAttrs (
   finalAttrs: prevAttrs: {
@@ -44,7 +26,7 @@ pkgs.pi-coding-agent.overrideAttrs (
     npmDeps = pkgs.fetchNpmDeps {
       name = "pi-mono-${version}-npm-deps";
       inherit src;
-      hash = "sha256-TjkZu/gM153nbvEoh1LditMMZlXjHUM3NTgh0L+5+t0=";
+      hash = "sha256-XJrE96xosvT2L9OVCOn29x+HiZyUlaFy3wKqXzv4EKY=";
     };
 
     postInstall = ''
@@ -63,24 +45,3 @@ pkgs.pi-coding-agent.overrideAttrs (
     '';
   }
 )
-
-# Simple version
-# {
-#   nixpkgs-inputs ? { },
-#   pkgs ? import <nixpkgs-unstable> nixpkgs-inputs,
-# }:
-# 
-# pkgs.pi-coding-agent.overrideAttrs rec {
-#   version = "0.73.1";
-#   src = pkgs.fetchFromGitHub {
-#     owner = "badlogic";
-#     repo = "pi-mono";
-#     tag = "v${version}";
-#     hash = "sha256-ZcqMWghMACzEUswLujwClPF1pbwjTKzTbcYW86ZvjL4=";
-#   };
-#   npmDeps = pkgs.fetchNpmDeps {
-#     name = "pi-mono-${version}-npm-deps";
-#     inherit src;
-#     hash = "sha256-tneAcwtTIfkcqQ8/Ch1Xa6OiOkTjJNYbH8wfhNneT/g=";
-#   };
-# }
