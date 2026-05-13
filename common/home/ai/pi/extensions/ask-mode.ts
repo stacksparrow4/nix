@@ -12,7 +12,7 @@ export default function(pi: ExtensionAPI) {
   });
 
   pi.on("tool_call", async (event, ctx) => {
-    if (event.toolName !== "bash") return undefined;
+    if (!["bash", "command"].includes(event.toolName)) return undefined;
 
     const command = event.input.command as string;
 

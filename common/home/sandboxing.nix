@@ -40,7 +40,7 @@
           FROM alpine@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
 
           RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw && \
-            mkdir -p /home/sprrw/.config /home/sprrw/.local/share /home/sprrw/.cache && chown -R sprrw: /home/sprrw # TODO: any better way of doing this
+            mkdir -p /home/sprrw/.config /home/sprrw/.local/share /home/sprrw/.cache && chown -R sprrw: /home/sprrw
         '';
         sharedPathDefaults = {
           ro = false;

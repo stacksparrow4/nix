@@ -49,29 +49,6 @@
             shareCwd = true;
           }
         ))
-        (config.sprrw.sandbox.create (
-          claudeSandboxArgs
-          // {
-            # TODO: version match with the VM instead of assuming path same as host
-            name = "claude-code-vm";
-            type = "vm";
-            sharedPaths = [
-              {
-                hostPath = "$HOME/.local/claude-vm";
-                boxPath = "/mnt/claude";
-                ro = false;
-                type = "dir";
-              }
-            ];
-            shareCwd = true;
-            insideBeforeScript = ''
-              ln -s /mnt/claude/.claude ~/.claude
-              ln -s /mnt/claude/.claude.json ~/.claude.json
-              export TERM=xterm-256color
-              export COLORTERM=truecolor
-            '';
-          }
-        ))
       ];
     };
 }

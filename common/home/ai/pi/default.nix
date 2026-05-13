@@ -201,7 +201,7 @@
               name = "pi-remote-sandbox";
               system = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system-remote.md";
               tools = [ "command" ];
-              extensions = [ "pi-remote.ts" ]; # TODO: add others and resolve conflicts
+              extensions = defaultExtensions ++ [ "pi-remote.ts" ];
               network = true;
               extraMounts = [
                 {
