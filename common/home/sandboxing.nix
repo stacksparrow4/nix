@@ -291,7 +291,7 @@
               rm "$pidfile"
               echo "Process id $qemupid"
 
-              sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$open_port" bash -c 'cat > /tmp/startup.sh' <<"BIGEOFTHATWONTDUP" || true
+              ${pkgs.sshpass}/bin/sshpass -p password ${pkgs.openssh}/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost -p "$open_port" bash -c 'cat > /tmp/startup.sh' <<"BIGEOFTHATWONTDUP" || true
               ${builtins.concatStringsSep "\n" (
                 lib.imap0 (
                   i:
@@ -307,7 +307,7 @@
               ${prog} "$@"
               BIGEOFTHATWONTDUP
 
-              sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$open_port" -t bash /tmp/startup.sh "$@" || true
+              ${pkgs.sshpass}/bin/sshpass -p password ${pkgs.openssh}/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost -p "$open_port" -t bash /tmp/startup.sh "$@" || true
 
               echo "Terminating qemu..."
               kill "$qemupid"

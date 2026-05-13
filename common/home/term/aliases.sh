@@ -54,7 +54,7 @@ function rl() {
   echo "$mypath"
 }
 
-if which navi &>/dev/null; then
+if which navi &>/dev/null && [[ $- == *i* ]]; then
   eval "$(navi widget bash)"
 fi
 
