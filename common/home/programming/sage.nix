@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -12,7 +13,7 @@
 
   config = lib.mkIf config.sprrw.programming.sage.enable {
     home.packages = [
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "sage";
         stdin = true;
         tty = true;

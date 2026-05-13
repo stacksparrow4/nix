@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }@inputs:
 
@@ -41,7 +42,7 @@
 
       home.packages = with pkgs; [
         rlwrap
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "evil-winrm";
           prog = "${evil-winrm}/bin/evil-winrm";
           network = true;
@@ -49,7 +50,7 @@
         samba # rpcclient
         certipy
         python312Packages.bloodyad
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "pwsh";
           prog = "${powershell}/bin/pwsh";
           network = true;

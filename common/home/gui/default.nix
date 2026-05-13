@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }:
 
@@ -31,17 +32,17 @@
       freerdp
       feh
       xfce.thunar
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "grim";
         wayland = true;
         prog = "${pkgs.grim}/bin/grim";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "slurp";
         wayland = true;
         prog = "${pkgs.slurp}/bin/slurp";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "swappy";
         stdin = true;
         wayland = true;

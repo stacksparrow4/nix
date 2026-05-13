@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -13,12 +14,12 @@
   config = lib.mkIf config.sprrw.sec.mobile.enable {
     home.packages = with pkgs; [
       frida-tools
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "apktool";
         shareCwd = true;
         prog = "${apktool}/bin/apktool";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "jadx";
         shareCwd = true;
         prog = "${jadx}/bin/jadx";

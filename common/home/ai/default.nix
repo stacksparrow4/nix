@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }:
 
@@ -22,7 +23,7 @@
     lib.mkIf cfg.enable {
       home.packages = with pkgs; [
         aichat
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "bx";
           sharedPaths = [
             {

@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -33,17 +34,17 @@
           ignoreCollisions = true;
         })
         patchelf
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "pwninit";
           shareCwd = true;
           prog = "${pwninit}/bin/pwninit";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "ropr";
           shareCwd = true;
           prog = "${ropr}/bin/ropr";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "ROPgadget";
           shareCwd = true;
           prog = "${ropgadget}/bin/ROPgadget";

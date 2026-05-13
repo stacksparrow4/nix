@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }:
 
@@ -46,13 +47,13 @@
     lib.mkIf cfg.enable {
       home.packages = lib.mkMerge [
         [
-          (config.sprrw.sandbox.create (
+          (mkSandbox (
             qwenLocalArgs
             // {
               name = "qwen-code-tmp";
             }
           ))
-          (config.sprrw.sandbox.create (
+          (mkSandbox (
             qwenLocalArgs
             // {
               name = "qwen-code";
@@ -64,13 +65,13 @@
         (lib.mkIf cfg.enable-remote [
           pkgs.ollama
 
-          (config.sprrw.sandbox.create (
+          (mkSandbox (
             qwenRemoteArgs
             // {
               name = "qwen-code-remote-tmp";
             }
           ))
-          (config.sprrw.sandbox.create (
+          (mkSandbox (
             qwenRemoteArgs
             // {
               name = "qwen-remote-code";

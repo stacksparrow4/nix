@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -17,7 +18,7 @@
         nmap
         masscan
         rustscan
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "nuclei";
           sharedPaths = [
             {
@@ -37,55 +38,55 @@
           network = true;
           prog = "${nuclei}/bin/nuclei -ud /home/sprrw/.local/nuclei-templates -duc";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "sqlmap";
           shareCwd = true;
           network = true;
           prog = "${sqlmap}/bin/sqlmap";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "feroxbuster";
           shareCwd = true;
           network = true;
           prog = "${feroxbuster}/bin/feroxbuster";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "ffuf";
           shareCwd = true;
           network = true;
           prog = "${ffuf}/bin/ffuf";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "shortscan";
           shareCwd = true;
           network = true;
           prog = "${shortscan}/bin/shortscan";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "gau";
           shareCwd = true;
           network = true;
           prog = "${gau}/bin/gau";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "naabu";
           shareCwd = true;
           network = true;
           prog = "${naabu}/bin/naabu";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "clairvoyance";
           shareCwd = true;
           network = true;
           prog = "${clairvoyance}/bin/clairvoyance";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "sourcemapper";
           shareCwd = true;
           network = true;
           prog = "${sourcemapper}/bin/sourcemapper";
         })
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "subfinder";
           shareCwd = true;
           network = true;
@@ -125,7 +126,7 @@
               }
             ) { };
           in
-          config.sprrw.sandbox.create {
+          mkSandbox {
             name = "vulnx";
             network = true;
             prog = "${vulnx}/bin/vulnx";
@@ -154,7 +155,7 @@
               '';
             };
           in
-          config.sprrw.sandbox.create {
+          mkSandbox {
             name = "smuggler";
             sharedPaths = [
               {

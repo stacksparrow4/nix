@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }:
 
@@ -14,24 +15,24 @@
         export PATH="${pkgs.vim}/bin:$PATH"
         ${pkgs.vimgolf}/bin/vimgolf "$@"
       '')
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "shtris";
         stdin = true;
         tty = true;
         prog = "${shtris}/bin/shtris";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "zbarimg";
         stdin = true;
         prog = "${zbar}/bin/zbarimg";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "twitch-dl";
         shareCwd = true;
         network = true;
         prog = "${twitch-dl}/bin/twitch-dl";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "yt-dlp";
         shareCwd = true;
         network = true;

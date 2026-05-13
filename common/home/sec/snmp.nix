@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -12,12 +13,12 @@
 
   config = lib.mkIf config.sprrw.sec.snmp.enable {
     home.packages = with pkgs; [
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "snmpwalk";
         network = true;
         prog = "${net-snmp}/bin/snmpwalk";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "snmpcheck";
         network = true;
         prog = "${snmpcheck}/bin/snmpcheck";

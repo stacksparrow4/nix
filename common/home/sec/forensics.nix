@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -12,19 +13,19 @@
 
   config = lib.mkIf config.sprrw.sec.forensics.enable {
     home.packages = with pkgs; [
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "exiftool";
         type = "bwrap";
         shareCwd = true;
         prog = "${exiftool}/bin/exiftool";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "binwalk";
         type = "bwrap";
         shareCwd = true;
         prog = "${binwalk}/bin/binwalk";
       })
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "ent";
         type = "bwrap";
         shareCwd = true;

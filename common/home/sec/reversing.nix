@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -55,7 +56,7 @@
             };
           });
         in
-        config.sprrw.sandbox.create {
+        mkSandbox {
           name = "webcrack";
           stdin = true;
           shareCwd = true;

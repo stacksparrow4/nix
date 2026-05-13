@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }:
 
@@ -35,14 +36,14 @@
     in
     lib.mkIf cfg.enable {
       home.packages = [
-        (config.sprrw.sandbox.create (
+        (mkSandbox (
           claudeSandboxArgs
           // {
             name = "claude-code-tmp";
           }
         ))
 
-        (config.sprrw.sandbox.create (
+        (mkSandbox (
           claudeSandboxArgs
           // {
             name = "claude-code";

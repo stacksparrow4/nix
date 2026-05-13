@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -60,7 +61,7 @@
         };
       in
       [
-        (config.sprrw.sandbox.create {
+        (mkSandbox {
           name = "jwt_tool";
           sharedPaths = [
             {

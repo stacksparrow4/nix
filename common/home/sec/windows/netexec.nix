@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }@inputs:
 
@@ -119,7 +120,7 @@
               doCheck = false;
             };
           in
-          config.sprrw.sandbox.create {
+          mkSandbox {
             name = "nxc";
             sharedPaths = [
               {

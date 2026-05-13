@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  mkSandbox,
   ...
 }:
 
@@ -14,7 +15,7 @@
     home.packages = with pkgs; [
       hashcat
       john
-      (config.sprrw.sandbox.create {
+      (mkSandbox {
         name = "hydra";
         shareCwd = true;
         network = true;
