@@ -18,12 +18,6 @@ Get-LocalGroupMember "<group>"
 # list all members in Administrators group
 Get-LocalGroupMember Administrators
 
-# list running processes
-Get-Process
-
-# list details for specific process
-Get-Process <processname> | Format-List *
-
 # list installed apps (displayname only)
 Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
 Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname

