@@ -9,12 +9,15 @@
   config = lib.mkMerge [
     {
       # virtualisation.docker.enable = true;
-      environment.systemPackages = with pkgs; [ slirp4netns ];
+      environment.systemPackages = with pkgs; [ slirp4netns podman-compose ];
 
       virtualisation = {
         containers = {
           enable = true;
-          containersConf.settings.network.default_rootless_network_cmd = "slirp4netns";
+          containersConf.settings = {
+            network.default_rootless_network_cmd = "slirp4netns";
+            engine.compose_warning_logs = false;
+          };
         };
         podman = {
           enable = true;
