@@ -10,6 +10,7 @@
   imports = [
     ./obs.nix
     ./browsers.nix
+    ./emoji-picker.nix
   ];
 
   options.sprrw.gui.enable = lib.mkEnableOption "gui";
@@ -18,6 +19,7 @@
     sprrw.gui = {
       browsers.enable = true;
       obs.enable = true;
+      emoji-picker.enable = true;
     };
 
     home.packages = with pkgs; [
