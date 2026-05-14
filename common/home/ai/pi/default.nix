@@ -14,6 +14,10 @@
       type = lib.types.attrsOf lib.types.anything;
       default = { };
     };
+
+    execModel = lib.mkOption {
+      type = lib.types.str;
+    };
   };
 
   config =
@@ -68,6 +72,28 @@
               defaultExtensions
               ;
             extraModels = cfg.extraModels;
+          })
+          (import ./pi-exec.nix {
+            inherit
+              pkgs
+              config
+              mkSandbox
+              ;
+            name = "pi-exec";
+            extraModels = cfg.extraModels;
+            execModel = cfg.execModel;
+            system = "system-exec.md";
+          })
+          (import ./pi-exec.nix {
+            inherit
+              pkgs
+              config
+              mkSandbox
+              ;
+            name = "pi-exec-pwsh";
+            extraModels = cfg.extraModels;
+            execModel = cfg.execModel;
+            system = "system-exec-pwsh.md";
           })
         ];
     };
