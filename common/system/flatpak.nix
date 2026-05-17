@@ -27,7 +27,13 @@
     services.flatpak.enable = true;
     systemd.services.flatpak-sync = {
       wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       path = [ pkgs.flatpak ];
+      serviceConfig = {
+        Restart = "on-failure";
+        RestartSec = 10;
+      };
       script = ''
         flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
       ''

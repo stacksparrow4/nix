@@ -20,6 +20,9 @@
   config = lib.mkIf config.sprrw.linux.enable {
     home.packages = with pkgs; [
       dragon-drop
+      htop
+      usbutils
+      pciutils
     ];
 
     sprrw.linux = {
