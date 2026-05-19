@@ -32,6 +32,7 @@
 
   home.packages = with pkgs; [
     sshpass
+    shtris
     # (pkgs.writeShellApplication {
     #   name = "connect";
     #   text = ''
