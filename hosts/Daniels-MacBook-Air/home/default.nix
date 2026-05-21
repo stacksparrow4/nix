@@ -23,6 +23,7 @@
       env = "TERMINFO_DIRS=/Users/dan/.terminfo";
       command = lib.mkForce "${pkgs.tmux}/bin/tmux";
       app-notifications = "no-clipboard-copy";
+      macos-option-as-alt = true;
     };
   };
 
