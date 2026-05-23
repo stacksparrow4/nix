@@ -39,6 +39,7 @@
       "networkmanager"
       "wheel"
       "podman"
+      "audio"
     ];
   };
 

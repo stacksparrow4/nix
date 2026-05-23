@@ -19,6 +19,7 @@ builtins.listToAttrs (
       "qwen-code"
       "pi-coding-agent"
       "brave-search-cli"
+      "lmms-full"
     ]
 )
 // (

@@ -21,7 +21,10 @@
         # context = 32768;
         context = 65536;
       };
-      pi.enable = true;
+      pi = {
+        enable = true;
+        execModel = "llama";
+      };
     };
     linux.enable = true;
     nvim.enable = true;
@@ -50,7 +53,7 @@
         EOF
         ln -s ${signal-desktop-bin}/share/icons $out/share/icons
       '')
-      lmms
+      lmms-full
       audacity
       aseprite
       prismlauncher
