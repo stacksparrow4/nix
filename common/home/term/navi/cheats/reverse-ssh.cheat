@@ -13,6 +13,12 @@ docker run --rm -d -p3232:2222 -v ./rssh-data:/data -e EXTERNAL_ADDRESS=<externa
 # Fix backspace in rssh
 Set-PSReadLineKeyHandler -Key "Ctrl+Backspace" -Function BackwardDeleteChar
 
+# RSSH ssh
+ssh -J rssh <rssh-client>
+
+# RSSH scp
+scp -J rssh <rssh-client>
+
 # RSSH: Port forward and listen remotely
 ssh -J rssh -N -R <remoteinterface>:<remoteport>:<localinterface>:<localport> <rssh-client>
 
