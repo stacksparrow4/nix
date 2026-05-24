@@ -35,6 +35,8 @@ vim.lsp.config.cmake = {}
 vim.lsp.enable("cmake")
 vim.lsp.config.jdtls = {}
 vim.lsp.enable("jdtls")
+vim.lsp.config.roslyn_ls = {}
+vim.lsp.enable("roslyn_ls")
 
 -- Setup Lua LSP for neovim dev
 vim.lsp.config.lua_ls = {

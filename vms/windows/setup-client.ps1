@@ -2,6 +2,8 @@
 # Open admin powershell
 # IEX (IWR http://192.168.122.1:8000/setup-client.ps1)
 
+Set-ExecutionPolicy Bypass -Force
+
 $viosvc = (Get-Service | ? {$_.DisplayName -match "virtio"})
 if ($viosvc.Length -eq 0) {
   echo "Installing virtio"
@@ -20,7 +22,7 @@ if ($viosvc.Length -eq 0) {
 
 if ((Get-Command "choco.exe" -ErrorAction SilentlyContinue) -eq $null) {
   echo "Installing choco"
-  Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+  [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
   
   $env:ChocolateyInstall = Convert-Path "$((Get-Command choco).Path)\..\.."   
   Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
@@ -32,20 +34,26 @@ if ((Get-Command "choco.exe" -ErrorAction SilentlyContinue) -eq $null) {
 choco feature enable -n allowGlobalConfirmation
 choco install -y Firefox dnspyex processhacker procexp x64dbg.portable visualstudio2022community nmap
 
-$confirmation = Read-Host "Do you wish to install OpenSSH Server? (y/n)"
-if ($confirmation -eq 'y' -or $confirmation -eq 'Y') {
-  echo "Installing OpenSSH Server..."
-  Add-WindowsCapability -Online -Name OpenSSH.Server
-  echo "Done"
-} else {
-  echo "Not installing OpenSSH Server"
-}
+echo "Installing OpenSSH Server..."
+Add-WindowsCapability -Online -Name OpenSSH.Server
+echo "Done"
 
-$confirmation = Read-Host "Do you wish to set MTU? (y/n)"
-if ($confirmation -eq 'y' -or $confirmation -eq 'Y') {
-  netsh interface ipv4 set interface "Ethernet" mtu=1280
-} else {
-  echo "Not setting MTU."
-}
+echo "Disabling firewall"
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+echo "Done"
+
+echo "Installing powershell modules..."
+Install-WindowsFeature -Name RSAT-AD-PowerShell
+Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools
+Install-Module OleViewDotNet
+Install-Module NtObjectManager
+echo "Done"
+
+# $confirmation = Read-Host "Do you wish to set MTU? (y/n)"
+# if ($confirmation -eq 'y' -or $confirmation -eq 'Y') {
+#   netsh interface ipv4 set interface "Ethernet" mtu=1280
+# } else {
+#   echo "Not setting MTU."
+# }
 
 echo "Done!"

@@ -13,6 +13,7 @@
   config = lib.mkIf config.sprrw.programming.dotnet.enable {
     home.packages = with pkgs; [
       dotnet-sdk
+      roslyn-ls
     ];
   };
 }
