@@ -11,6 +11,7 @@
     ./obs.nix
     ./browsers.nix
     ./emoji-picker.nix
+    ./signal.nix
   ];
 
   options.sprrw.gui.enable = lib.mkEnableOption "gui";

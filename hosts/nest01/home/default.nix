@@ -32,27 +32,14 @@
     programming.sage.enable = lib.mkForce true;
     sec.enable = true;
     term.enable = true;
-    gui.enable = true;
+    gui = {
+      enable = true;
+      signal.enable = true;
+    };
   };
 
   home = {
     packages = with pkgs; [
-      (runCommand "signal" { } ''
-        mkdir -p $out/share/applications
-        cat <<EOF > $out/share/applications/signal.desktop
-        [Desktop Entry]
-        Name=Signal
-        Exec=env QT_QPA_PLATFORM=xcb ${signal-desktop-bin}/bin/signal-desktop --disable-gpu %U
-        Terminal=false
-        Type=Application
-        Icon=signal-desktop
-        StartupWMClass=signal
-        Comment=Private messaging from your desktop
-        MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
-        Categories=Network;InstantMessaging;Chat;
-        EOF
-        ln -s ${signal-desktop-bin}/share/icons $out/share/icons
-      '')
       lmms-full
       audacity
       aseprite
