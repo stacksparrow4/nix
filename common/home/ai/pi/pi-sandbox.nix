@@ -75,6 +75,12 @@ mkSandbox {
         ro = true;
         type = "file";
       }
+      {
+        hostPath = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/skills";
+        boxPath = "/home/sprrw/.pi/agent/skills";
+        ro = true;
+        type = "dir";
+      }
     ]
     ++ (
       if network then

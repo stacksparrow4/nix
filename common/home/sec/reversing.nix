@@ -14,6 +14,14 @@
   config = lib.mkIf config.sprrw.sec.reversing.enable {
     home.packages = with pkgs; [
       (rizin.withPlugins (plugins: with plugins; [ rz-ghidra ]))
+      (pkgs.runCommand "python3-rzpipe" { } ''
+        mkdir -p $out/bin
+        ln -s ${
+          pkgs.python3.withPackages (ppkgs: [
+            ppkgs.rzpipe
+          ])
+        }/bin/python3 $out/bin/python3-rzpipe
+      '')
 
       (
         let
