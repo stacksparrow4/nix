@@ -13,7 +13,7 @@
 
   config = lib.mkIf config.sprrw.sec.reversing.enable {
     home.packages = with pkgs; [
-      radare2
+      (rizin.withPlugins (plugins: with plugins; [ rz-ghidra ]))
 
       (
         let
