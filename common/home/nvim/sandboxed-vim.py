@@ -27,7 +27,6 @@ SHARED_CONFIGS = list(
         [
             "/home/sprrw/.config/nvim",
             "/home/sprrw/.config/yazi",
-            "/home/sprrw/.config/aichat",
         ],
     )
 )

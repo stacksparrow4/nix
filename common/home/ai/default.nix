@@ -21,7 +21,6 @@
     in
     lib.mkIf cfg.enable {
       home.packages = with pkgs; [
-        aichat
         (mkSandbox {
           name = "bx";
           sharedPaths = [

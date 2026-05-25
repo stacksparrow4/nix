@@ -20,9 +20,9 @@ alias gbv='git branch -v'
 
 function take() {
   if [[ $# -ne 1 ]]; then
-    echo "Usage: take path/to/dir"
+    echo "Usage: take <dir>"
   fi
-  mkdir -p "$1"
+  mkdir "$1"
   cd "$1"
 }
 
@@ -84,6 +84,3 @@ alias nss-unstable='nix-search --channel=unstable -d -m 3'
 export UV_LINK_MODE=symlink
 
 alias nixurl='nix store prefetch-file'
-
-alias qwen='aichat -m ollama:qwen3-coder:30b'
-alias claude='aichat -m bedrock:global.anthropic.claude-opus-4-6-v1'

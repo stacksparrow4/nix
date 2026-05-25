@@ -16,7 +16,6 @@ When starting a new decompilation project, create a new Rizin instance:
 
 This will return a socket path that can be used to run Rizin commands.
 
-
 ## Commands
 
 Run a Rizin command as follows, supply the socket path from `./start.py`:
@@ -34,6 +33,7 @@ Run a Rizin command as follows, supply the socket path from `./start.py`:
 
 ## General guidelines
 
+- When writing a C/C++ file, create a new file per function. Write global variables in another file, separate to the function.
 - Do not decompile commonly known/compiler generated functions unless explicitly asked. Aim to reproduce the original source code.
 - If you are not sure how to do something, do not guess the command. Instead, search Rizin's command list using `?* ~searchquery`. Once an appropriate command is found, use `?` to get help for that command. Eg `afl?`
 
