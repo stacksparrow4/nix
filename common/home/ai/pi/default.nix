@@ -25,7 +25,6 @@
       cfg = config.sprrw.ai.pi;
       defaultExtensions = [
         "ask-mode.ts"
-        "hide-tool-bodies.ts"
       ];
       defaultSandboxOptions = {
         inherit pkgs config mkSandbox;

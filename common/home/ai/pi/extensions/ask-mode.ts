@@ -18,13 +18,21 @@ export default function(pi: ExtensionAPI) {
 
     if (ask_mode) {
       if (!ctx.hasUI) {
-        return { block: true, reason: "Ask-mode enabled in non-interactive mode, this should never happen" };
+        return {
+          block: true,
+          reason:
+            "Ask-mode enabled in non-interactive mode, this should never happen",
+        };
       }
 
-      const choice = await ctx.ui.select(`Run the following command? ${command}`, ["Yes", "No"]);
+      const choice = await ctx.ui.select(
+        `Run the following command? ${command}`,
+        ["Yes", "No"],
+      );
 
       if (choice !== "Yes") {
-        return { block: true, reason: "Blocked by user" };
+        const reason = await ctx.ui.input(`Why should this be blocked?`);
+        return { block: true, reason: `Blocked by user: ${reason}` };
       }
     }
 
