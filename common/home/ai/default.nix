@@ -9,7 +9,6 @@
 {
   imports = [
     ./claude
-    ./qwen.nix
     ./llama-cpp.nix
     ./pi
   ];

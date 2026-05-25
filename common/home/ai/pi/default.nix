@@ -18,6 +18,11 @@
     execModel = lib.mkOption {
       type = lib.types.str;
     };
+
+    networkLocalModels = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+    };
   };
 
   config =
@@ -35,33 +40,41 @@
     in
     lib.mkIf cfg.enable {
       home.packages =
-        (builtins.map (opts: createPiSandbox (defaultSandboxOptions // opts)) [
-          {
-            name = "pi";
-            system = "system-code.md";
-            braveSearch = true;
-            shareCwd = true;
-            network = true;
-          }
-          {
-            name = "pi-chat";
-            system = "system-chat.md";
-            braveSearch = true;
-            network = true;
-          }
-          {
-            name = "pi-tmp";
-            system = "system-code.md";
-            braveSearch = true;
-            network = true;
-          }
-          {
-            name = "pi-local";
+        (builtins.map (opts: createPiSandbox (defaultSandboxOptions // opts)) (
+          [
+            {
+              name = "pi";
+              system = "system-code.md";
+              braveSearch = true;
+              shareCwd = true;
+              network = true;
+            }
+            {
+              name = "pi-chat";
+              system = "system-chat.md";
+              braveSearch = true;
+              network = true;
+            }
+            {
+              name = "pi-tmp";
+              system = "system-code.md";
+              braveSearch = true;
+              network = true;
+            }
+            {
+              name = "pi-local";
+              system = "system-local.md";
+              shareCwd = true;
+              network = false;
+            }
+          ]
+          ++ (builtins.map (networkLocalModel: {
+            name = "pi-local-${networkLocalModel}";
             system = "system-local.md";
             shareCwd = true;
             network = false;
-          }
-        ])
+          }) cfg.networkLocalModels)
+        ))
         ++ [
           (import ./pi-remote.nix {
             inherit

@@ -16,7 +16,6 @@ builtins.listToAttrs (
       "ropr" # Doesnt exist on stable
       "brave"
       "claude-code"
-      "qwen-code"
       "pi-coding-agent"
       "brave-search-cli"
       "lmms-full"

@@ -15,7 +15,6 @@
     sandbox.enable = true;
     ai = {
       enable = true;
-      qwen.enable = true;
       llama-cpp = {
         enable = true;
         # context = 32768;

@@ -22,6 +22,8 @@
 let
   pi = import ../../../../pkgs/pi { inherit pkgs; };
 
+  localModelName = "local-qwen3.5";
+
   createExtensionMount = extname: {
     hostPath = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/extensions/${extname}";
     boxPath = "/home/sprrw/.pi/agent/extensions/${extname}";
@@ -47,13 +49,13 @@ mkSandbox {
               (
                 if config.sprrw.ai.llama-cpp.enable then
                   {
-                    llama = {
+                    local-llama = {
                       baseUrl = "http://localhost:8033/v1";
                       api = "openai-completions";
                       apiKey = "llama";
                       models = [
                         {
-                          id = "llama";
+                          id = localModelName;
                           contextWindow = config.sprrw.ai.llama-cpp.context;
                         }
                       ];
@@ -136,7 +138,7 @@ mkSandbox {
           --no-tools ${
             if (builtins.length tools) > 0 then "--tools ${builtins.concatStringsSep "," tools}" else ""
           } \
-          ${if network then "" else "--models llama"} \
+          ${if network then "" else "--models ${localModelName}"} \
           "$@"
       '';
     }
