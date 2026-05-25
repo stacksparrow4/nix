@@ -16,13 +16,16 @@
   # Settings are locked down by defualt
   shareCwd ? false,
   network ? false,
+  # hostForward applies only if network = false. Structure: { host = "..."; model = "model"; context = ...; }
+  hostForward ? null,
   extraMounts ? [ ],
 }:
 
+assert !(network && hostForward != null); # can't have network = true and hostForward != null
 let
   pi = import ../../../../pkgs/pi { inherit pkgs; };
 
-  localModelName = "local-qwen3.5";
+  localModelName = "local";
 
   createExtensionMount = extname: {
     hostPath = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/extensions/${extname}";
@@ -54,10 +57,18 @@ mkSandbox {
                       api = "openai-completions";
                       apiKey = "llama";
                       models = [
-                        {
-                          id = localModelName;
-                          contextWindow = config.sprrw.ai.llama-cpp.context;
-                        }
+                        (
+                          if hostForward != null then
+                            {
+                              id = hostForward.model;
+                              contextWindow = hostForward.context;
+                            }
+                          else
+                            {
+                              id = localModelName;
+                              contextWindow = config.sprrw.ai.llama-cpp.context;
+                            }
+                        )
                       ];
                     };
                   }
@@ -97,7 +108,7 @@ mkSandbox {
       else
         [
           {
-            hostPath = "/tmp/llama-cpp";
+            hostPath = if hostForward != null then "$SOCAT_DIR" else "/tmp/llama-cpp";
             boxPath = "/tmp/llama-cpp";
             ro = true;
             type = "dir";
@@ -123,6 +134,18 @@ mkSandbox {
   tty = true;
   inherit shareCwd network;
   hostNetwork = network;
+  outsideBeforeScript =
+    if hostForward != null then
+      ''
+        SOCAT_DIR=$(mktemp -d)
+
+        socat UNIX-LISTEN:"$SOCAT_DIR"/llama.sock,fork OPENSSL:${hostForward.host}:443 &>/dev/null &
+        SOCAT_PID=$!
+
+        trap 'rm -rf $SOCAT_DIR 2>/dev/null; kill $SOCAT_PID 2>/dev/null; wait $SOCAT_PID 2>/dev/null' EXIT
+      ''
+    else
+      "";
   prog = "${
     pkgs.writeShellApplication {
       name = "pi";
@@ -138,7 +161,12 @@ mkSandbox {
           --no-tools ${
             if (builtins.length tools) > 0 then "--tools ${builtins.concatStringsSep "," tools}" else ""
           } \
-          ${if network then "" else "--models ${localModelName}"} \
+          ${
+            if network then
+              ""
+            else
+              "--models ${if hostForward != null then hostForward.model else localModelName}"
+          } \
           "$@"
       '';
     }

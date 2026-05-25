@@ -20,7 +20,14 @@
     };
 
     networkLocalModels = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
+      type = lib.types.listOf (lib.types.submodule {
+        options = {
+          pname = lib.mkOption { type = lib.types.str; };
+          host = lib.mkOption { type = lib.types.str; };
+          model = lib.mkOption { type = lib.types.str; };
+          context = lib.mkOption { type = lib.types.int; };
+        };
+      });
       default = [ ];
     };
   };
@@ -68,11 +75,12 @@
               network = false;
             }
           ]
-          ++ (builtins.map (networkLocalModel: {
-            name = "pi-local-${networkLocalModel}";
+          ++ (builtins.map (hostForward: {
+            name = hostForward.pname;
             system = "system-local.md";
             shareCwd = true;
             network = false;
+            inherit hostForward;
           }) cfg.networkLocalModels)
         ))
         ++ [
