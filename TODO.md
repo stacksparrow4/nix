@@ -1,3 +1,4 @@
+- Fix fonts in vesktop
 - Package the following
     - opengrep
 - Nvim prettier formatter for GraphQL

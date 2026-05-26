@@ -14,7 +14,7 @@
         opener = {
           viewimg = [
             {
-              run = "feh $1";
+              run = "feh \"$1\"";
               orphan = true;
               for = "unix";
             }
@@ -22,7 +22,7 @@
 
           viewvid = [
             {
-              run = "vlc $1";
+              run = "vlc \"$1\"";
               orphan = true;
               for = "unix";
             }
@@ -30,7 +30,7 @@
 
           xdgopen = [
             {
-              run = "xdg-open $1";
+              run = "xdg-open \"$1\"";
               orphan = true;
               for = "unix";
             }
