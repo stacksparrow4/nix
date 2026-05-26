@@ -32,6 +32,9 @@ in
 
     fonts.packages = [
       cfg.mainFont
+      pkgs.noto-fonts
+      pkgs.noto-fonts-cjk-sans
+      pkgs.noto-fonts-cjk-serif
     ];
   };
 }
