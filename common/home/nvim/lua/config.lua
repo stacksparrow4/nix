@@ -73,5 +73,6 @@ vim.diagnostic.config({
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Folding
-vim.opt.foldmethod = "indent"
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevel = 99

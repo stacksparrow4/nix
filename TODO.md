@@ -1,3 +1,5 @@
+- Create a fuse filesystem and mount it as /nix within the nix sandbox. Create a sort of overlayfs except fix the chmod chown part
+- Fix terminfo inside every container (there was some edge case that doesn't work, don't really remember though)
 - Fix fonts in vesktop
 - Package the following
     - opengrep
