@@ -70,35 +70,20 @@ if len(vim_args) == 1 and vim_args[0].startswith("/"):
 else:
     additional_vim_args.extend(vim_args)
 
-cmd = [
-    vim_path,
-    *additional_vim_args,
-]
 
-with tempfile.NamedTemporaryFile() as sourcefile:
-    sourcefile.write(b"export PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin\n")
-
-    if os.path.exists(f"{share_dir}/shell.nix"):
-        sourcefile.write(subprocess.run(['nix', 'print-dev-env', '-f', 'shell.nix'], cwd=share_dir, stdout=subprocess.PIPE).stdout + b"\n")
-
-    if not no_display:
-        sourcefile.write(f"export XDG_RUNTIME_DIR={XDG_RUNTIME_DIR}\n".encode())
-        sourcefile.write(f"export WAYLAND_DISPLAY={WAYLAND_DISPLAY}\n".encode())
-
-    sourcefile.write(f"exec {shlex.join(cmd)}\n".encode())
-    sourcefile.flush()
-
-    args = [
+# Note: don't clean environment so that env vars from eg nix-shell work
+exit_code = subprocess.call(
+    [
         *default_bwrap_args,
         *["--bind", share_dir, "/pwd"],
         *additional_bwrap_args,
         *["--chdir", "/pwd"],
-        "--ro-bind", sourcefile.name, "/.init",
         "--",
         "/usr/bin/env",
-        "/run/current-system/sw/bin/bash", "/.init"
+        "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
+        vim_path,
+        *additional_vim_args,
     ]
-
-    exit_code = subprocess.call(args)
+)
 
 exit(exit_code)
