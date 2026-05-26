@@ -391,53 +391,77 @@ in
     _module.args.mkSandbox = mkSandbox;
 
     home.packages = lib.mkIf config.sprrw.sandbox.enable (
-      (builtins.concatMap
-        (
-          type:
-          (
-            let
-              create =
-                args:
-                mkSandbox (
-                  {
-                    inherit type;
-                    network = true;
-                    stdin = true;
-                    tty = true;
-                    prog = "bash"; # use bash from path for vm version differences
-                  }
-                  // args
-                  // {
-                    name = if type == "bwrap" then args.name else "${args.name}-${type}";
-                  }
-                );
-            in
-            [
-              (create { name = "box"; })
-              (create {
-                name = "box-cwd";
-                shareCwd = true;
-              })
-              (create {
-                name = "box-gui";
-                wayland = true;
-                x11 = true;
-              })
-              (create {
-                name = "box-gui-cwd";
-                shareCwd = true;
-                wayland = true;
-                x11 = true;
-              })
-            ]
-          )
-        )
-        [
+      let
+        mkVariant =
+          type: args:
+          mkSandbox (
+            {
+              name = "box-internal";
+              inherit type;
+              network = true;
+              stdin = true;
+              tty = true;
+              prog = "bash";
+            }
+            // args
+          );
+        variantArgs = [
+          { }
+          { shareCwd = true; }
+          {
+            wayland = true;
+            x11 = true;
+          }
+          {
+            shareCwd = true;
+            wayland = true;
+            x11 = true;
+          }
+        ];
+        types = [
           "bwrap"
           "podman"
           "vm"
-        ]
-      )
+        ];
+        scriptEntries = builtins.concatMap (
+          type:
+          map (
+            args:
+            let
+              drv = mkVariant type args;
+              boolStr = b: if b then "True" else "False";
+              cwd = args.shareCwd or false;
+              gui = (args.wayland or false) || (args.x11 or false);
+            in
+            ''("${type}", ${boolStr cwd}, ${boolStr gui}): "${drv}/bin/box-internal",''
+          ) variantArgs
+        ) types;
+      in
+      [
+        (pkgs.writeScriptBin "box" ''
+          #!${pkgs.python3}/bin/python3
+          import argparse
+          import os
+          import sys
+
+          SCRIPTS = {
+          ${builtins.concatStringsSep "\n" scriptEntries}
+          }
+
+          parser = argparse.ArgumentParser(description="Launch a sandboxed shell")
+          parser.add_argument("--type", choices=["bwrap", "podman", "vm"], default="bwrap",
+                              help="Sandbox backend (default: bwrap)")
+          parser.add_argument("--cwd", action="store_true",
+                              help="Share the current working directory into the sandbox")
+          parser.add_argument("--gui", action="store_true",
+                              help="Enable Wayland and X11 passthrough")
+
+          args, remaining = parser.parse_known_args()
+
+          script = SCRIPTS[(args.type, args.cwd, args.gui)]
+          os.execv(script, [script] + remaining)
+        '')
+      ]
       ++ [
         (pkgs.writeShellApplication {
           name = "box-enter";
