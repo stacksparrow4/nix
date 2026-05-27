@@ -14,7 +14,7 @@
         opener = {
           viewimg = [
             {
-              run = "feh \"$1\"";
+              run = "gimp \"$1\"";
               orphan = true;
               for = "unix";
             }

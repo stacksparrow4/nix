@@ -33,7 +33,6 @@
       blender
       rofi
       freerdp
-      feh
       xfce.thunar
       (mkSandbox {
         name = "grim";
