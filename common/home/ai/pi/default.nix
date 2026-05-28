@@ -37,6 +37,7 @@
       cfg = config.sprrw.ai.pi;
       defaultExtensions = [
         "ask-mode.ts"
+        "hide-bash-body.ts"
       ];
       defaultSandboxOptions = {
         inherit pkgs config mkSandbox;
