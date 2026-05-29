@@ -18,6 +18,9 @@ alias gf='git fetch'
 alias grv='git remote -v'
 alias gbv='git branch -v'
 
+alias b='box'
+alias bc='box --cwd'
+
 function take() {
   if [[ $# -ne 1 ]]; then
     echo "Usage: take <dir>"

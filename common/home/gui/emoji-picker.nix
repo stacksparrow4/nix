@@ -34,6 +34,7 @@
             ✔️ Check
             ❌ Cross
             ❤️ Heart
+            🥺 Pleading
             EOF
             )
 
