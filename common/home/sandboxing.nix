@@ -79,13 +79,6 @@ let
             needsCreate = false;
           }
           {
-            hostPath = "/nix/store";
-            boxPath = "/nix/store";
-            ro = true;
-            type = "dir";
-            needsCreate = false;
-          }
-          {
             hostPath = "/bin";
             boxPath = "/bin";
             ro = true;
@@ -157,6 +150,7 @@ let
           "__ETC_PROFILE_SOURCED=1"
           "HOME=/home/sprrw"
           "EDITOR=\"$EDITOR\""
+          "NIX_PATH=\"$NIX_PATH\""
         ]
         ++ (
           if downgradeTerm then
@@ -196,6 +190,36 @@ let
               hmmounts+=(--ro-bind "$line" "/home/sprrw/''${line#/etc/hm-package/home-files/}")
             done < <(find /etc/hm-package/home-files/ -type l)
 
+            # Nix store fuse stuff
+            STORE_UPPER=$(mktemp -d /tmp/nix-store-upper.XXXXXX)
+            STORE_MOUNT=$(mktemp -d /tmp/nix-store-fuse.XXXXXX)
+            NIX_VAR=$(mktemp -d /tmp/nix-var.XXXXXX)
+            cleanup() {
+                fusermount3 -u "$STORE_MOUNT" 2>/dev/null || true
+                # Nix makes store paths read-only; fix permissions before removing
+                chmod -R u+w "$STORE_UPPER" 2>/dev/null || true
+                rm -rf "$STORE_UPPER" "$STORE_MOUNT" "$NIX_VAR"
+            }
+            trap cleanup EXIT
+
+            nix-shell -p python3Packages.fusepy fuse3 --run "python3 ${./nix-overlay.py} /nix/store $STORE_UPPER $STORE_MOUNT" &
+
+            # Wait for mount to appear
+            for _ in $(seq 1 50); do
+                if mountpoint -q "$STORE_MOUNT" 2>/dev/null; then break; fi
+                sleep 0.1
+            done
+            if ! mountpoint -q "$STORE_MOUNT"; then
+                echo "ERROR: FUSE mount failed" >&2
+                exit 1
+            fi
+
+            # Create a writable copy of /nix/var/nix, excluding daemon-socket
+            cp -a /nix/var/nix/db "$NIX_VAR/db" 2>/dev/null || mkdir -p "$NIX_VAR/db"
+            cp -a /nix/var/nix/gcroots "$NIX_VAR/gcroots" 2>/dev/null || mkdir -p "$NIX_VAR/gcroots"
+            mkdir -p "$NIX_VAR/temproots" "$NIX_VAR/profiles" "$NIX_VAR/daemon-socket"
+            # daemon-socket dir is empty (no socket) for security
+
             /usr/bin/env -i ${pkgs.bubblewrap}/bin/bwrap \
               --unshare-all \
               --as-pid-1 \
@@ -203,6 +227,8 @@ let
               --proc /proc \
               --dev /dev \
               --dir /home/sprrw \
+              --bind "$STORE_MOUNT" "/nix/store" \
+              --bind "$NIX_VAR" "/nix/var/nix" \
               ${if network then "--share-net" else ""} \
               ${if shareCwd then "--chdir /pwd" else "--chdir /home/sprrw"} \
               "''${hmmounts[@]}" \
@@ -223,6 +249,8 @@ let
         else if type == "docker" || type == "podman" then
           assert insideBeforeScript == "";
           ''
+            echo "WARNING: this is broken"
+
             if ! podman image inspect usermapped-img &>/dev/null; then
               podman build -t usermapped-img ${dockerFileDir}
             fi
