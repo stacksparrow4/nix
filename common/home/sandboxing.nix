@@ -449,8 +449,14 @@ in
           }
 
           parser = argparse.ArgumentParser(description="Launch a sandboxed shell")
-          parser.add_argument("--type", choices=["bwrap", "podman", "vm"], default="bwrap",
-                              help="Sandbox backend (default: bwrap)")
+          backend = parser.add_mutually_exclusive_group()
+          backend.add_argument("--bwrap", action="store_const", const="bwrap", dest="type",
+                              help="Use bwrap backend (default)")
+          backend.add_argument("--podman", action="store_const", const="podman", dest="type",
+                              help="Use podman backend")
+          backend.add_argument("--vm", action="store_const", const="vm", dest="type",
+                              help="Use VM backend")
+          parser.set_defaults(type="bwrap")
           parser.add_argument("--cwd", action="store_true",
                               help="Share the current working directory into the sandbox")
           parser.add_argument("--gui", action="store_true",

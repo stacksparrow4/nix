@@ -130,7 +130,8 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         # Note: the second argument is internal with nix and not shown to the user
         print(f"Docker example: pi-remote 'docker exec container sh -c {CMD_PLACEHOLDER}'")
-        print(f"SSH example: pi-remote 'echo {CMD_PLACEHOLDER} | ssh user@target")
+        print(f"SSH example: pi-remote 'echo {CMD_PLACEHOLDER} | ssh user@target'")
+        print(f"Box SSH example: pi-remote 'echo {CMD_PLACEHOLDER} | sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost -p port'")
         exit(1)
 
     sandbox_path = sys.argv[1]

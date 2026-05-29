@@ -36,6 +36,13 @@
       config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar/waybar.jsonc";
     home.file.".config/waybar/style.css".source =
       config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar/style.css";
+    home.packages = [(pkgs.writeShellApplication {
+      name = "waybar-restart";
+      text = ''
+        pkill waybar || true
+        nohup waybar &>/dev/null &
+      '';
+    })];
 
     services.mako = {
       enable = true;
