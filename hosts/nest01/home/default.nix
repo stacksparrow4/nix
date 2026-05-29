@@ -34,12 +34,12 @@
     gui = {
       enable = true;
       signal.enable = true;
+      lmms.enable = true;
     };
   };
 
   home = {
     packages = with pkgs; [
-      lmms-full
       audacity
       aseprite
       prismlauncher
