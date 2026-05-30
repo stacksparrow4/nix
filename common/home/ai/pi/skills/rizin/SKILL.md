@@ -4,37 +4,35 @@ description: Reverse engineering tool. Use for decompiling executables.
 disable-model-invocation: true
 ---
 
-# Rizin
+# Example Rizin commands
 
-## Starting a new instance
+## Argument reference
 
-When starting a new decompilation project, create a new Rizin instance:
+- `-A`: Analysis. Use when a binary argument is specified.
+- `-q`: Quiet mode.
+- `-c`: Run command.
 
-```bash
-./start.py path/to/binary
-```
-
-This will return a socket path that can be used to run Rizin commands.
-
-## Commands
-
-Run a Rizin command as follows, supply the socket path from `./start.py`:
+## List functions
 
 ```bash
-./client.py /tmp/socketname 'command'
+rizin -A -q -c 'afl' path/to/binary
 ```
 
-## Useful commands
+## Ghidra decompile function at address 0x1234
 
-- `?`: Get basic help
-- `afl`: List functions
-- `pdg @ 0x1234`: Print Ghidra decompilation of the function at address 0x1234
-- `exit`: Shut down the Rizin instance started with `./start.py`.
+```bash
+rizin -A -q -c 'pdg @ 0x1234' path/to/binary
+```
 
-## General guidelines
+## List available Rizin commands
+
+```bash
+rizin -q -c '?*'
+```
+
+# General guidelines
 
 - When writing a C/C++ file, create a new file per function. Write global variables in another file, separate to the function.
 - Do not decompile commonly known/compiler generated functions unless explicitly asked. Aim to reproduce the original source code.
-- If you are not sure how to do something, do not guess the command. Instead, search Rizin's command list using `?* ~searchquery`. Once an appropriate command is found, use `?` to get help for that command. Eg `afl?`
 
-After this tool is loaded, report back with "Rizin engine ready." and nothing else.
+After this tool is loaded, report back with "Rizin loaded." and nothing else.
