@@ -3,6 +3,8 @@
 set -e
 cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null
 
+(cd ./pkgs && ./update.sh)
+
 nix flake update
 ./build.sh
 
