@@ -1,6 +1,8 @@
-- Create a fuse filesystem and mount it as /nix within the nix sandbox. Create a sort of overlayfs except fix the chmod chown part
+- Fuse overlay in memory
+- Sandbox standalone in pkgs/ so that agent can modify it easily
+- Podman runs inside box
+- Secure Pi session sharing
+- Shortcut to open tmux inside box in new Foot terminal
 - Fix terminfo inside every container (there was some edge case that doesn't work, don't really remember though)
 - Fix fonts in vesktop
-- Package the following
-    - opengrep
 - Nvim prettier formatter for GraphQL
