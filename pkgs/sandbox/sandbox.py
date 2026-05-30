@@ -83,7 +83,6 @@ class Mount:
     box_path: str
     type: str = "unknown"
     ro: bool = False
-    needs_create: bool = False
 
     def to_bwrap_args(self):
         return ["--ro-bind" if self.ro else "--bind", self.host_path, self.box_path]
@@ -102,8 +101,46 @@ def ensure_env(key):
 
 
 if args.subcommand == "run":
-    # TODO: cancel if already in a sandbox
-    # TODO: create dirs/files that don't exist
+    if os.getenv("IN_SPRRW_SANDBOX") is not None:
+        exit(subprocess.run(args.exec).returncode)
+
+    volume_mounts = []
+    for v in args.volumes:
+        components = v.split(":")
+        ro = False
+        if len(components) >= 3:
+            if components[2] == "ro":
+                ro = True
+            elif components[2] == "rw":
+                ro = False
+            else:
+                print("The mount", v, "has invalid type", components[2])
+                exit(1)
+        volume_mounts.append(
+            Mount(
+                components[0],
+                components[1],
+                type=components[3] if len(components) >= 4 else "unknown",
+                ro=ro,
+            )
+        )
+
+    for v in volume_mounts:
+        if not os.path.exists(v.host_path):
+            if v.type == "unknown":
+                print(
+                    "The mount",
+                    v,
+                    "did not exist on the host and no type was specified to autocreate with",
+                )
+                exit(1)
+            elif v.type == "dir":
+                os.makedirs(v.host_path)
+            elif v.type == "file":
+                Path(v.host_path).touch()
+            else:
+                print("Invalid type for", v, ":", v.type)
+
     if args.type == "bwrap":
         mounts = [
             Mount(
@@ -111,22 +148,11 @@ if args.subcommand == "run":
                 "/home/sprrw/" + f.removeprefix("/etc/hm-package/home-files/"),
                 "file",
                 ro=True,
-                needs_create=False,
             )
             for f in find_symlinks("/etc/hm-package/home-files")
         ]
 
-        for v in args.volumes:
-            components = v.split(":")
-            mounts.append(
-                Mount(
-                    components[0],
-                    components[1],
-                    type=components[3] if len(components) >= 4 else "unknown",
-                    ro=components[2] == "ro" if len(components) >= 3 else False,
-                    needs_create=True,
-                )
-            )
+        mounts.extend(volume_mounts)
 
         if args.cwd:
             mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
