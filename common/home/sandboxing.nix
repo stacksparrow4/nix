@@ -151,6 +151,7 @@ let
           "HOME=/home/sprrw"
           "EDITOR=\"$EDITOR\""
           "NIX_PATH=\"$NIX_PATH\""
+          "IN_SPRRW_SANDBOX=1"
         ]
         ++ (
           if downgradeTerm then
@@ -218,7 +219,6 @@ let
             cp -a /nix/var/nix/db "$NIX_VAR/db" 2>/dev/null || mkdir -p "$NIX_VAR/db"
             cp -a /nix/var/nix/gcroots "$NIX_VAR/gcroots" 2>/dev/null || mkdir -p "$NIX_VAR/gcroots"
             mkdir -p "$NIX_VAR/temproots" "$NIX_VAR/profiles" "$NIX_VAR/daemon-socket"
-            # daemon-socket dir is empty (no socket) for security
 
             /usr/bin/env -i ${pkgs.bubblewrap}/bin/bwrap \
               --unshare-all \
