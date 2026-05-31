@@ -46,6 +46,12 @@ mkSandbox {
         type = "file";
       }
       {
+        hostPath = "$HOME/.pi/agent/sessions";
+        boxPath = "/home/sprrw/.pi/agent/sessions";
+        ro = false;
+        type = "dir";
+      }
+      {
         hostPath = pkgs.writeText "pi-models" (
           builtins.toJSON {
             providers =

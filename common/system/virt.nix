@@ -27,8 +27,6 @@
       };
     }
     (lib.mkIf (!config.sprrw.headless) {
-      # services.opensnitch.enable = true;
-
       hardware.nvidia-container-toolkit.enable = true;
 
       programs.virt-manager.enable = true;
