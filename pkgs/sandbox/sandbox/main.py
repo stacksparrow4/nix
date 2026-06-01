@@ -1,8 +1,12 @@
 import argparse
 import os
+import random
+import shlex
+import signal
 import subprocess
 import tempfile
 import shutil
+import time
 from pathlib import Path
 from dataclasses import dataclass
 from .nixstorefuse import start_overlay
@@ -119,6 +123,10 @@ def main():
     args = parser.parse_args()
 
     if args.subcommand == "run":
+        if args.ro_git and not args.cwd:
+            print("Cannot specify --ro-git without --cwd")
+            exit(1)
+
         if os.getenv("IN_SPRRW_SANDBOX") is not None:
             exit(subprocess.run(args.exec).returncode)
 
@@ -325,6 +333,120 @@ def main():
                 shutil.rmtree(store_mount)
                 shutil.rmtree(store_var)
 
+            exit(return_code)
+
+        elif args.type == "vm":
+            # All VM shared paths must be directories
+            for v in volume_mounts:
+                if v.type != "dir":
+                    print("VM backend only supports directory mounts, got", v.type, "for", v.host_path)
+                    exit(1)
+
+            mounts = list(volume_mounts)
+
+            if args.cwd:
+                mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
+
+            if args.ro_git:
+                mounts.append(
+                    Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True)
+                )
+
+            # Find an open port in the ephemeral range
+            used_ports = set()
+            ss_output = subprocess.run(
+                ["ss", "-tan"],
+                capture_output=True, text=True
+            ).stdout
+            for line in ss_output.splitlines():
+                parts = line.split()
+                if len(parts) >= 4:
+                    addr = parts[3]
+                    if ":" in addr:
+                        port_str = addr.rsplit(":", 1)[-1]
+                        if port_str.isdigit():
+                            used_ports.add(int(port_str))
+
+            candidates = [p for p in range(49152, 65536) if p not in used_ports]
+            open_port = random.choice(candidates)
+
+            print(f"Forwarding SSH to port {open_port}")
+            print("Enter the VM yourself with:")
+            print(f"sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {open_port} localhost")
+
+            virtfs_args = []
+            for i, m in enumerate(mounts):
+                virtfs_args.extend([
+                    "-virtfs",
+                    f"local,path={m.host_path},mount_tag=sandboxshare{i},security_model=none,id=host{i}",
+                ])
+
+            with tempfile.TemporaryDirectory(prefix="sprrw-sandbox-qemu-pid.") as piddir:
+                pidfile_path = os.path.join(piddir, "pid")
+                qemu_args = [
+                    "qemu-system-x86_64",
+                    "-enable-kvm",
+                    "-m", "16384",
+                    "-smp", "4",
+                    "-cdrom", os.path.expanduser("~/.local/vm.iso"),
+                    "-boot", "d",
+                    "-nic", f"user,hostfwd=tcp:127.0.0.1:{open_port}-:22",
+                    "-display", "none",
+                    "-daemonize",
+                    *virtfs_args,
+                    "-pidfile", pidfile_path,
+                ]
+
+                result = subprocess.run(qemu_args)
+                if result.returncode != 0:
+                    print("Failed to start QEMU")
+                    exit(1)
+
+                with open(pidfile_path) as f:
+                    qemu_pid = int(f.read().strip())
+
+            print(f"Process id {qemu_pid}")
+
+            return_code = 1
+            try:
+                ssh_base = [
+                    "sshpass", "-p", "password",
+                    "ssh",
+                    "-o", "StrictHostKeyChecking=no",
+                    "-o", "UserKnownHostsFile=/dev/null",
+                    "localhost", "-p", str(open_port),
+                ]
+
+                startup_lines = []
+                for i, m in enumerate(mounts):
+                    startup_lines.append(f'sudo mkdir -p "{m.box_path}"')
+                    startup_lines.append(
+                        f'sudo mount -t 9p -o trans=virtio,version=9p2000.L sandboxshare{i} "{m.box_path}"'
+                    )
+                if args.cwd:
+                    startup_lines.append("cd /pwd")
+                startup_lines.append(" ".join(shlex.quote(a) for a in args.exec))
+                startup_script = "\n".join(startup_lines) + "\n"
+
+                _ = subprocess.run(
+                    [*ssh_base, "cat > /tmp/startup.sh"],
+                    input=startup_script,
+                    text=True,
+                    capture_output=True,
+                    check=True
+                )
+
+                return_code = subprocess.run(
+                    [*ssh_base, "-t", "bash /tmp/startup.sh"],
+                ).returncode
+            finally:
+                print("Terminating qemu...")
+                try:
+                    os.kill(qemu_pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+
+            print("Done!")
             exit(return_code)
 
     raise NotImplementedError()
