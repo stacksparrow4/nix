@@ -30,11 +30,8 @@ pkgs.writeShellApplication {
       exit 1
     fi
 
-    data=$(cat)
-
     ${pi-convert-sandbox}/bin/pi-convert-sandbox \
       --model ${model} \
       --system-prompt "$1. Do not output markdown or any additional explanation, only the raw output." \
-      -p "$data"
   '';
 }
