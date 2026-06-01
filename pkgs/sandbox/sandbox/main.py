@@ -183,7 +183,7 @@ def main():
             if args.cwd:
                 mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
 
-            if args.ro_git and os.path.exists('./.git'):
+            if args.ro_git and os.path.exists("./.git"):
                 mounts.append(
                     Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True)
                 )
@@ -335,15 +335,24 @@ def main():
             # All VM shared paths must be directories
             for v in volume_mounts:
                 if v.type != "dir":
-                    print("VM backend only supports directory mounts, got", v.type, "for", v.host_path)
+                    print(
+                        "VM backend only supports directory mounts, got",
+                        v.type,
+                        "for",
+                        v.host_path,
+                    )
                     exit(1)
 
             mounts = list(volume_mounts)
 
+            mounts.append(
+                Mount("/home/sprrw/nixos", "/home/sprrw/nixos", "dir", ro=True)
+            )
+
             if args.cwd:
                 mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
 
-            if args.ro_git and os.path.exists('./.git'):
+            if args.ro_git and os.path.exists("./.git"):
                 mounts.append(
                     Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True)
                 )
@@ -351,8 +360,7 @@ def main():
             # Find an open port in the ephemeral range
             used_ports = set()
             ss_output = subprocess.run(
-                ["ss", "-tan"],
-                capture_output=True, text=True
+                ["ss", "-tan"], capture_output=True, text=True
             ).stdout
             for line in ss_output.splitlines():
                 parts = line.split()
@@ -368,29 +376,42 @@ def main():
 
             print(f"Forwarding SSH to port {open_port}")
             print("Enter the VM yourself with:")
-            print(f"sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {open_port} localhost")
+            print(
+                f"sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {open_port} localhost"
+            )
 
             virtfs_args = []
             for i, m in enumerate(mounts):
-                virtfs_args.extend([
-                    "-virtfs",
-                    f"local,path={m.host_path},mount_tag=sandboxshare{i},security_model=none,id=host{i}",
-                ])
+                virtfs_args.extend(
+                    [
+                        "-virtfs",
+                        f"local,path={m.host_path},mount_tag=sandboxshare{i},security_model=none,id=host{i}{',readonly=on' if m.ro else ''}",
+                    ]
+                )
 
-            with tempfile.TemporaryDirectory(prefix="sprrw-sandbox-qemu-pid.") as piddir:
+            with tempfile.TemporaryDirectory(
+                prefix="sprrw-sandbox-qemu-pid."
+            ) as piddir:
                 pidfile_path = os.path.join(piddir, "pid")
                 qemu_args = [
                     "qemu-system-x86_64",
                     "-enable-kvm",
-                    "-m", "16384",
-                    "-smp", "4",
-                    "-cdrom", os.path.expanduser("~/.local/vm.iso"),
-                    "-boot", "d",
-                    "-nic", f"user,hostfwd=tcp:127.0.0.1:{open_port}-:22",
-                    "-display", "none",
+                    "-m",
+                    "16384",
+                    "-smp",
+                    "4",
+                    "-cdrom",
+                    os.path.expanduser("~/.local/vm.iso"),
+                    "-boot",
+                    "d",
+                    "-nic",
+                    f"user,hostfwd=tcp:127.0.0.1:{open_port}-:22",
+                    "-display",
+                    "none",
                     "-daemonize",
                     *virtfs_args,
-                    "-pidfile", pidfile_path,
+                    "-pidfile",
+                    pidfile_path,
                 ]
 
                 result = subprocess.run(qemu_args)
@@ -406,11 +427,17 @@ def main():
             return_code = 1
             try:
                 ssh_base = [
-                    "sshpass", "-p", "password",
+                    "sshpass",
+                    "-p",
+                    "password",
                     "ssh",
-                    "-o", "StrictHostKeyChecking=no",
-                    "-o", "UserKnownHostsFile=/dev/null",
-                    "localhost", "-p", str(open_port),
+                    "-o",
+                    "StrictHostKeyChecking=no",
+                    "-o",
+                    "UserKnownHostsFile=/dev/null",
+                    "localhost",
+                    "-p",
+                    str(open_port),
                 ]
 
                 startup_lines = []
@@ -429,7 +456,7 @@ def main():
                     input=startup_script,
                     text=True,
                     capture_output=True,
-                    check=True
+                    check=True,
                 )
 
                 return_code = subprocess.run(
