@@ -3,7 +3,7 @@
   config,
   mkSandbox,
   extraModels,
-  execModel,
+  model,
   system,
   name,
 }:
@@ -26,7 +26,7 @@ in
 pkgs.writeShellApplication {
   inherit name;
   text = ''
-    output=$(${pi-exec-sandbox}/bin/pi-exec-sandbox --model ${execModel} -p "$@")
+    output=$(${pi-exec-sandbox}/bin/pi-exec-sandbox --model ${model} -p "$@")
     echo "$output"
     printf "\n\e[33m[e]\e[0m exec  \e[33m[c]\e[0m copy: "
     read -r choice

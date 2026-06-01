@@ -21,6 +21,9 @@ alias gbv='git branch -v'
 alias b='box'
 alias bc='box --cwd'
 
+alias p='pi'
+alias pc='pi-chat'
+
 function take() {
   if [[ $# -ne 1 ]]; then
     echo "Usage: take <dir>"

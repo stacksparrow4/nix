@@ -102,7 +102,7 @@
               ;
             name = "pi-exec";
             extraModels = cfg.extraModels;
-            execModel = cfg.execModel;
+            model = cfg.execModel;
             system = "system-exec.md";
           })
           (import ./pi-exec.nix {
@@ -113,8 +113,18 @@
               ;
             name = "pi-exec-pwsh";
             extraModels = cfg.extraModels;
-            execModel = cfg.execModel;
+            model = cfg.execModel;
             system = "system-exec-pwsh.md";
+          })
+          (import ./pi-convert.nix {
+            inherit
+              pkgs
+              config
+              mkSandbox
+              ;
+            name = "pi-convert";
+            extraModels = cfg.extraModels;
+            model = cfg.execModel;
           })
         ];
     };
