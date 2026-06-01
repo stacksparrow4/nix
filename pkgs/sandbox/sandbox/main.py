@@ -75,7 +75,7 @@ def main():
     run_parser.add_argument(
         "-v",
         "--volume",
-        nargs="*",
+        action="append",
         dest="volumes",
         help="Share volumes, form hostpath:boxpath:ro/rw:type",
     )
@@ -89,7 +89,7 @@ def main():
     run_parser.add_argument(
         "-e",
         "--env",
-        nargs="*",
+        action="append",
         dest="env_vars",
         help="Provide environment variables",
     )
