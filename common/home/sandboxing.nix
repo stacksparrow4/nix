@@ -34,7 +34,7 @@ let
       text = ''
         ${outsideBeforeScript}
 
-        sandbox run \
+        sandbox \
           ${backslashify (
             (if shareCwd then [ "--cwd" ] else [ ])
             ++ (builtins.concatMap (
