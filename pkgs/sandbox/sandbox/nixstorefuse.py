@@ -117,12 +117,10 @@ class NixOverlay(Operations):
         return fd
 
     def read(self, path, size, offset, fh):
-        os.lseek(fh, offset, os.SEEK_SET)
-        return os.read(fh, size)
+        return os.pread(fh, size, offset)
 
     def write(self, path, data, offset, fh):
-        os.lseek(fh, offset, os.SEEK_SET)
-        return os.write(fh, data)
+        return os.pwrite(fh, data, offset)
 
     def release(self, path, fh):
         os.close(fh)
