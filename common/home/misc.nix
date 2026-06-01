@@ -17,13 +17,10 @@
       '')
       (mkSandbox {
         name = "shtris";
-        stdin = true;
-        tty = true;
         prog = "${shtris}/bin/shtris";
       })
       (mkSandbox {
         name = "zbarimg";
-        stdin = true;
         prog = "${zbar}/bin/zbarimg";
       })
       (mkSandbox {

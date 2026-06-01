@@ -47,7 +47,6 @@
       })
       (mkSandbox {
         name = "swappy";
-        stdin = true;
         wayland = true;
         prog = "${pkgs.swappy}/bin/swappy";
       })

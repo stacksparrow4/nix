@@ -58,7 +58,6 @@
         in
         mkSandbox {
           name = "webcrack";
-          stdin = true;
           shareCwd = true;
           prog = "${webcrack}/bin/webcrack";
         }

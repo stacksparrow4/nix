@@ -11,406 +11,53 @@ let
       name,
       type ? "bwrap", # bwrap, docker/podman, vm
       outsideBeforeScript ? "",
-      insideBeforeScript ? "",
       prog, # path to the program. Will be called with forwarded arguments
       shareCwd ? false,
       sharedPaths ? [ ], # { hostPath, boxPath, ro ? false, type = "dir"|"file", needsCreate ? true }. Can contain shell characters such as $() but will be wrapped in double quotes
-      envVars ? [ ],
       downgradeTerm ? false, # sets term to xterm-256color for tools that don't support terminfo
-      stdin ? true,
-      tty ? true,
       network ? false,
-      hostNetwork ? false,
       wayland ? false,
       x11 ? false,
       roDotGit ? false,
-      _roDotGit ? false, # used internally with recursion (use roDotGit for external use)
-    }@allArgs:
+    }:
     let
-      dockerFileDir = pkgs.writeTextDir "Dockerfile" ''
-        FROM alpine@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
-
-        RUN adduser -s ${pkgs.bash}/bin/bash -G users -D sprrw && \
-          mkdir -p /home/sprrw/.config /home/sprrw/.local/share /home/sprrw/.cache && chown -R sprrw: /home/sprrw
-      '';
-      sharedPathDefaults = {
-        ro = false;
-        needsCreate = true;
-      };
-      qemuSharedPaths = map (x: sharedPathDefaults // x) (
-        sharedPaths
-        ++ (
-          if shareCwd then
-            [
-              {
-                hostPath = "$(pwd)";
-                boxPath = "/pwd";
-                ro = false;
-                type = "dir";
-                needsCreate = false;
-              }
-            ]
-          else
-            [ ]
-        )
-        ++ (
-          if _roDotGit then
-            [
-              {
-                hostPath = "$(pwd)/.git";
-                boxPath = "/pwd/.git";
-                ro = true;
-                type = "dir";
-                needsCreate = false;
-              }
-            ]
-          else
-            [ ]
-        )
-      );
-      allSharedPaths = map (x: sharedPathDefaults // x) (
-        qemuSharedPaths
-        ++ [
-          {
-            hostPath = "${pkgs.writeText "sprrw-sandbox" "sprrw-sandbox"}";
-            boxPath = "/.sprrw-sandbox";
-            ro = true;
-            type = "file";
-            needsCreate = false;
-          }
-          {
-            hostPath = "/bin";
-            boxPath = "/bin";
-            ro = true;
-            type = "dir";
-            needsCreate = false;
-          }
-          {
-            hostPath = "/etc";
-            boxPath = "/etc";
-            ro = true;
-            type = "dir";
-            needsCreate = false;
-          }
-          {
-            hostPath = "/usr";
-            boxPath = "/usr";
-            ro = true;
-            type = "dir";
-            needsCreate = false;
-          }
-          {
-            hostPath = "/run/current-system/sw";
-            boxPath = "/run/current-system/sw";
-            ro = true;
-            type = "dir";
-            needsCreate = false;
-          }
-          {
-            hostPath = "/home/sprrw/nixos";
-            boxPath = "/home/sprrw/nixos";
-            ro = true;
-            type = "dir";
-            needsCreate = false;
-          }
-        ]
-        ++ (
-          if wayland then
-            [
-              {
-                hostPath = "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY";
-                boxPath = "/tmp/$WAYLAND_DISPLAY";
-                ro = true;
-                type = "file";
-                needsCreate = false;
-              }
-            ]
-          else
-            [ ]
-        )
-        ++ (
-          if x11 then
-            [
-              {
-                hostPath = "/tmp/.X11-unix";
-                boxPath = "/tmp/.X11-unix";
-                ro = true;
-                type = "file";
-                needsCreate = false;
-              }
-            ]
-          else
-            [ ]
-        )
-      );
-      allEnvVars =
-        envVars
-        ++ [
-          "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin"
-          "__ETC_PROFILE_SOURCED=1"
-          "HOME=/home/sprrw"
-          "EDITOR=\"$EDITOR\""
-          "NIX_PATH=\"$NIX_PATH\""
-          "IN_SPRRW_SANDBOX=1"
-        ]
-        ++ (
-          if downgradeTerm then
-            [
-              "TERM=xterm-256color"
-              "COLORTERM=truecolor"
-            ]
-          else
-            [
-              "TERM=\"$TERM\""
-              "COLORTERM=truecolor"
-            ]
-        )
-        ++ (
-          if wayland then
-            [
-              "WAYLAND_DISPLAY=\"$WAYLAND_DISPLAY\""
-              "XDG_RUNTIME_DIR=/tmp"
-              "GTK_THEME=\"$GTK_THEME\""
-            ]
-          else
-            [ ]
-        )
-        ++ (if x11 then [ "DISPLAY=\"$DISPLAY\"" ] else [ ]);
       backslashify =
         arr:
         if (builtins.length arr) == 0 then
           "\\"
         else
           builtins.concatStringsSep "\n  " (map (x: "${x} \\") arr);
-      finalCmd =
-        if type == "bwrap" then
-          assert insideBeforeScript == "";
-          ''
-            hmmounts=()
-            while IFS= read -r line; do
-              hmmounts+=(--ro-bind "$line" "/home/sprrw/''${line#/etc/hm-package/home-files/}")
-            done < <(find /etc/hm-package/home-files/ -type l)
-
-            # Nix store fuse stuff
-            STORE_UPPER=$(mktemp -d /tmp/nix-store-upper.XXXXXX)
-            STORE_MOUNT=$(mktemp -d /tmp/nix-store-fuse.XXXXXX)
-            NIX_VAR=$(mktemp -d /tmp/nix-var.XXXXXX)
-            cleanup() {
-                fusermount3 -u "$STORE_MOUNT" 2>/dev/null || true
-                # Nix makes store paths read-only; fix permissions before removing
-                chmod -R u+w "$STORE_UPPER" 2>/dev/null || true
-                rm -rf "$STORE_UPPER" "$STORE_MOUNT" "$NIX_VAR"
-            }
-            trap cleanup EXIT
-
-            nix-shell -p python3Packages.fusepy fuse3 --run "python3 ${./nix-overlay.py} /nix/store $STORE_UPPER $STORE_MOUNT" &
-
-            # Wait for mount to appear
-            for _ in $(seq 1 50); do
-                if mountpoint -q "$STORE_MOUNT" 2>/dev/null; then break; fi
-                sleep 0.1
-            done
-            if ! mountpoint -q "$STORE_MOUNT"; then
-                echo "ERROR: FUSE mount failed" >&2
-                exit 1
-            fi
-
-            # Create a writable copy of /nix/var/nix, excluding daemon-socket
-            cp -a /nix/var/nix/db "$NIX_VAR/db" 2>/dev/null || mkdir -p "$NIX_VAR/db"
-            cp -a /nix/var/nix/gcroots "$NIX_VAR/gcroots" 2>/dev/null || mkdir -p "$NIX_VAR/gcroots"
-            mkdir -p "$NIX_VAR/temproots" "$NIX_VAR/profiles" "$NIX_VAR/daemon-socket"
-
-            /usr/bin/env -i ${pkgs.bubblewrap}/bin/bwrap \
-              --unshare-all \
-              --as-pid-1 \
-              --tmpfs /tmp \
-              --proc /proc \
-              --dev /dev \
-              --dir /home/sprrw \
-              --bind "$STORE_MOUNT" "/nix/store" \
-              --bind "$NIX_VAR" "/nix/var/nix" \
-              ${if network then "--share-net" else ""} \
-              ${if shareCwd then "--chdir /pwd" else "--chdir /home/sprrw"} \
-              "''${hmmounts[@]}" \
-              ${backslashify (
-                map (
-                  {
-                    hostPath,
-                    boxPath,
-                    ro,
-                    ...
-                  }:
-                  "--${if ro then "ro-" else ""}bind \"${hostPath}\" \"${boxPath}\""
-                ) allSharedPaths
-              )}
-              /usr/bin/env ${builtins.concatStringsSep " " allEnvVars} \
-              ${prog} "$@"
-          ''
-        else if type == "docker" || type == "podman" then
-          assert insideBeforeScript == "";
-          ''
-            echo "WARNING: this is broken"
-
-            if ! podman image inspect usermapped-img &>/dev/null; then
-              podman build -t usermapped-img ${dockerFileDir}
-            fi
-
-            hmmounts=()
-            while IFS= read -r line; do
-              hmmounts+=(-v "$line":"/home/sprrw/''${line#/etc/hm-package/home-files/}":ro)
-            done < <(find /etc/hm-package/home-files/ -type l)
-
-            podman run \
-              --userns=keep-id \
-              --hostname sandbox \
-              -u 1000:100 \
-              --rm \
-              ${if stdin then "-i" else ""} ${if tty then "-t" else ""} \
-              ${if !network then "--network none" else ""} \
-              ${if hostNetwork then "--network host" else ""} \
-              ${if shareCwd then "-w /pwd" else "-w /home/sprrw"} \
-              "''${hmmounts[@]}" \
-              ${backslashify (map (e: "-e ${e}") allEnvVars)}
-              ${backslashify (
-                map (
-                  {
-                    hostPath,
-                    boxPath,
-                    ro,
-                    ...
-                  }:
-                  "-v \"${hostPath}\":\"${boxPath}\"${if ro then ":ro" else ""}"
-                ) allSharedPaths
-              )}
-              usermapped-img \
-              ${prog} "$@"
-          ''
-        else
-          assert type == "vm";
-          assert lib.all ({ type, ... }: type == "dir") qemuSharedPaths;
-          ''
-            open_port=$(comm -23 <(seq 49152 65535) <(ss -tan | awk '{print $4}' | cut -d':' -f2 | grep "[0-9]\{1,5\}" | sort | uniq) | shuf | head -n 1) || true
-            echo "Forwarding SSH to port $open_port"
-            pidfile=$(mktemp)
-            qemu-system-x86_64 \
-              -enable-kvm \
-              -m 16384 -smp 4 \
-              -cdrom ~/.local/vm.iso -boot d \
-              -nic user,hostfwd=tcp:127.0.0.1:"$open_port"-:22 \
-              -display none -daemonize \
-              ${backslashify (
-                lib.imap0 (
-                  i:
-                  { hostPath, ... }:
-                  "-virtfs local,path=\"${hostPath}\",mount_tag=sandboxshare${toString i},security_model=none,id=host${toString i}"
-                ) qemuSharedPaths
-              )}
-              -pidfile "$pidfile"
-
-            qemupid=$(cat "$pidfile")
-            rm "$pidfile"
-            echo "Process id $qemupid"
-
-            ${pkgs.sshpass}/bin/sshpass -p password ${pkgs.openssh}/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost -p "$open_port" bash -c 'cat > /tmp/startup.sh' <<"BIGEOFTHATWONTDUP" || true
-            ${builtins.concatStringsSep "\n" (
-              lib.imap0 (
-                i:
-                { boxPath, ... }:
-                ''
-                  sudo mkdir -p "${boxPath}"
-                  sudo mount -t 9p -o trans=virtio,version=9p2000.L sandboxshare${toString i} "${boxPath}"
-                ''
-              ) qemuSharedPaths
-            )}
-            ${if shareCwd then "cd /pwd" else ""}
-            ${insideBeforeScript}
-            ${prog} "$@"
-            BIGEOFTHATWONTDUP
-
-            ${pkgs.sshpass}/bin/sshpass -p password ${pkgs.openssh}/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost -p "$open_port" -t bash /tmp/startup.sh "$@" || true
-
-            echo "Terminating qemu..."
-            kill "$qemupid"
-
-            echo "Done!"
-          '';
     in
-    assert !hostNetwork || network; # Can't have hostNetwork = true and network = false
-    assert shareCwd || !roDotGit; # Can't have shareCwd = false and roDotGit = true
-    if roDotGit then
-      pkgs.writeShellApplication {
-        inherit name;
-        text = ''
-          if [[ -d .git ]]; then
-            ${
-              mkSandbox (
-                allArgs
-                // {
-                  name = "${name}-dotgit-wrapped";
-                  roDotGit = false;
-                  _roDotGit = true;
-                }
-              )
-            }/bin/${name}-dotgit-wrapped "$@"
-          else
-            ${
-              mkSandbox (
-                allArgs
-                // {
-                  name = "${name}-nodotgit-wrapped";
-                  roDotGit = false;
-                  _roDotGit = false;
-                }
-              )
-            }/bin/${name}-nodotgit-wrapped "$@"
-          fi
-        '';
-      }
-    else
-      pkgs.writeShellApplication {
-        inherit name;
-        text = ''
-          if [[ -f /.sprrw-sandbox ]] || [[ "$(hostname)" == sandbox ]]; then
-            ${prog} "$@"
-            exit 0
-          fi
+    assert type == "bwrap";
+    pkgs.writeShellApplication {
+      inherit name;
+      text = ''
+        ${outsideBeforeScript}
 
-          ${outsideBeforeScript}
-
-          # Create shared folders if they dont exist
-          ${builtins.concatStringsSep "\n" (
-            map
-              (
-                { hostPath, type, ... }:
-                if type == "dir" then
-                  ''
-                    if ! [[ -d "${hostPath}" ]]; then
-                      mkdir -p "${hostPath}"
-                    fi
-                  ''
-                else
-                  assert type == "file";
-                  ''
-                    if ! [[ -f "${hostPath}" ]]; then
-                      mkdir -p "$(dirname "${hostPath}")"
-                      touch "${hostPath}"
-                    fi
-                  ''
-              )
-              (
-                builtins.filter (
-                  {
-                    needsCreate,
-                    ...
-                  }:
-                  needsCreate
-                ) allSharedPaths
-              )
+        sandbox run \
+          ${backslashify (
+            (if shareCwd then [ "--cwd" ] else [ ])
+            ++ (builtins.concatMap (
+              {
+                hostPath,
+                boxPath,
+                ro ? false,
+                type,
+              }:
+              [
+                "-v"
+                "\"${hostPath}:${boxPath}:${if ro then "ro" else "rw"}:${type}\""
+              ]
+            ) sharedPaths)
+            ++ (if downgradeTerm then [ "--downgrade-term" ] else [ ])
+            ++ (if network then [ ] else [ "--no-network" ])
+            ++ (if wayland then [ "--wayland" ] else [ ])
+            ++ (if x11 then [ "--x11" ] else [ ])
+            ++ (if roDotGit then [ "--ro-git" ] else [ ])
           )}
-
-          ${finalCmd}
-        '';
-      };
+          -- ${prog} "$@"
+      '';
+    };
 in
 {
   options.sprrw.sandbox.enable = lib.mkEnableOption "sandboxing";
@@ -418,146 +65,45 @@ in
   config = {
     _module.args.mkSandbox = mkSandbox;
 
-    home.packages = lib.mkIf config.sprrw.sandbox.enable (
-      let
-        mkVariant =
-          type: args:
-          mkSandbox (
-            {
-              name = "box-internal";
-              inherit type;
-              network = true;
-              stdin = true;
-              tty = true;
-              prog = "bash";
-            }
-            // args
-          );
-        variantArgs = [
-          { }
-          { shareCwd = true; }
-          {
-            wayland = true;
-            x11 = true;
-          }
-          {
-            shareCwd = true;
-            wayland = true;
-            x11 = true;
-          }
-        ];
-        types = [
-          "bwrap"
-          "podman"
-          "vm"
-        ];
-        scriptEntries = builtins.concatMap (
-          type:
-          map (
-            args:
-            let
-              drv = mkVariant type args;
-              boolStr = b: if b then "True" else "False";
-              cwd = args.shareCwd or false;
-              gui = (args.wayland or false) || (args.x11 or false);
-            in
-            ''("${type}", ${boolStr cwd}, ${boolStr gui}): "${drv}/bin/box-internal",''
-          ) variantArgs
-        ) types;
-      in
-      [
-        (pkgs.writeScriptBin "box" ''
-          #!${pkgs.python3}/bin/python3
-          import argparse
-          import os
-          import sys
+    home.packages = lib.mkIf config.sprrw.sandbox.enable [
+      (import ../../pkgs/sandbox { inherit pkgs; })
+      (pkgs.writeShellApplication {
+        name = "build-vm";
+        text = ''
+          cd ~/${config.sprrw.nixosRepoPath}
+          git add .
 
-          SCRIPTS = {
-          ${builtins.concatStringsSep "\n" scriptEntries}
-          }
+          isopath=$(nixos-rebuild build-image --flake .#vm --image-variant iso --no-link)
+          echo "$isopath"
 
-          parser = argparse.ArgumentParser(description="Launch a sandboxed shell")
-          backend = parser.add_mutually_exclusive_group()
-          backend.add_argument("--bwrap", action="store_const", const="bwrap", dest="type",
-                              help="Use bwrap backend (default)")
-          backend.add_argument("--podman", action="store_const", const="podman", dest="type",
-                              help="Use podman backend")
-          backend.add_argument("--vm", action="store_const", const="vm", dest="type",
-                              help="Use VM backend")
-          parser.set_defaults(type="bwrap")
-          parser.add_argument("--cwd", action="store_true",
-                              help="Share the current working directory into the sandbox")
-          parser.add_argument("--gui", action="store_true",
-                              help="Enable Wayland and X11 passthrough")
+          mkdir -p ~/.local
 
-          args, remaining = parser.parse_known_args()
+          rm -f ~/.local/vm.iso
+          ln -s "$isopath" ~/.local/vm.iso
+        '';
+      })
+      (pkgs.writeShellApplication {
+        name = "vm-enter";
+        text = ''
+          ports=$(ss -tlpn | grep qemu-system | grep -oE '127\.0\.0\.1:[0-9]+' | cut -d: -f2)
 
-          script = SCRIPTS[(args.type, args.cwd, args.gui)]
-          os.execv(script, [script] + remaining)
-        '')
-      ]
-      ++ [
-        (pkgs.writeShellApplication {
-          name = "box-enter";
-          text = ''
-            targets=$(podman ps --format json | jq -r '.[] | select(.Image == "localhost/usermapped-img:latest") | .Id')
+          if [[ -z "$ports" ]]; then
+            echo "No valid vms found"
+            exit 1
+          fi
 
-            if [[ -z "$targets" ]]; then
-              echo "No valid sandboxes found"
-              exit 1
-            fi
+          target=$(echo "$ports" | while read -r line; do
+            echo "$line - $(sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$line" ps aux 2>/dev/null | grep pts | awk '{print $11}' | tr '\n' ' ')";
+          done | fzf | awk '{print $1}')
 
-            target=$(echo "$targets" | while read -r containerid; do
-              echo "''${containerid:0:10} - $(podman exec "$containerid" ps aux | tail -n +2 | head -n -1 | awk '{print $11}' | awk -F/ '{print $NF}' | tr '\n' ' ')";
-            done | fzf | awk '{print $1}')
+          if [[ -z "$target" ]]; then
+            echo "Cancelled."
+            exit 1
+          fi
 
-            if [[ -z "$target" ]]; then
-              echo "Cancelled."
-              exit 1
-            fi
-
-            podman exec -it "$target" bash
-          '';
-        })
-
-        (pkgs.writeShellApplication {
-          name = "build-vm";
-          text = ''
-            cd ~/${config.sprrw.nixosRepoPath}
-            git add .
-
-            isopath=$(nixos-rebuild build-image --flake .#vm --image-variant iso --no-link)
-            echo "$isopath"
-
-            mkdir -p ~/.local
-
-            rm -f ~/.local/vm.iso
-            ln -s "$isopath" ~/.local/vm.iso
-          '';
-        })
-        (pkgs.writeShellApplication {
-          name = "vm-enter";
-          text = ''
-            ports=$(ss -tlpn | grep qemu-system | grep -oE '127\.0\.0\.1:[0-9]+' | cut -d: -f2)
-
-            if [[ -z "$ports" ]]; then
-              echo "No valid vms found"
-              exit 1
-            fi
-
-            target=$(echo "$ports" | while read -r line; do
-              echo "$line - $(sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$line" ps aux 2>/dev/null | grep pts | awk '{print $11}' | tr '\n' ' ')";
-            done | fzf | awk '{print $1}')
-
-            if [[ -z "$target" ]]; then
-              echo "Cancelled."
-              exit 1
-            fi
-
-            sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$target"
-          '';
-        })
-      ]
-    );
+          sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$target"
+        '';
+      })
+    ];
   };
 }

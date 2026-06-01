@@ -28,8 +28,6 @@
           }
         ];
         downgradeTerm = true;
-        stdin = true;
-        tty = true;
         network = true;
         prog = "${pkgs.claude-code}/bin/claude --dangerously-skip-permissions";
       };

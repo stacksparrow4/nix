@@ -15,8 +15,6 @@
     home.packages = [
       (mkSandbox {
         name = "sage";
-        stdin = true;
-        tty = true;
         shareCwd = true;
         prog = "${pkgs.sage}/bin/sage";
       })

@@ -72,8 +72,6 @@
             }
           ];
           shareCwd = true;
-          stdin = true;
-          tty = true;
           prog = "${jwttool}/bin/jwt_tool";
         })
       ];

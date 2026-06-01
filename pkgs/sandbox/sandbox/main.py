@@ -183,11 +183,7 @@ def main():
             if args.cwd:
                 mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
 
-            if args.ro_git:
-                if not args.cwd:
-                    print("Cannot specify --rogit without --cwd")
-                    exit(1)
-
+            if args.ro_git and os.path.exists('./.git'):
                 mounts.append(
                     Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True)
                 )
@@ -347,7 +343,7 @@ def main():
             if args.cwd:
                 mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
 
-            if args.ro_git:
+            if args.ro_git and os.path.exists('./.git'):
                 mounts.append(
                     Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True)
                 )

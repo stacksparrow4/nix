@@ -136,10 +136,7 @@ mkSandbox {
     )
     ++ extraMounts;
   downgradeTerm = true;
-  stdin = true;
-  tty = true;
   inherit shareCwd network;
-  hostNetwork = network;
   outsideBeforeScript =
     if hostForward != null then
       ''
