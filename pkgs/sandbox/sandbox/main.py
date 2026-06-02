@@ -111,7 +111,7 @@ def main():
         help="Disable overlaying the nix store for performance reasons",
         dest="no_nix_store_overlay",
     )
-    parser.add_argument("exec", nargs="+")
+    parser.add_argument("exec", nargs="*")
     parser.set_defaults(type="bwrap", volumes=[], env_vars=[])
 
     args = parser.parse_args()
@@ -119,6 +119,9 @@ def main():
     if args.ro_git and not args.cwd:
         print("Cannot specify --ro-git without --cwd")
         exit(1)
+    
+    if len(args.exec) == 0:
+        args.exec = ["bash"]
 
     if os.getenv("IN_SPRRW_SANDBOX") is not None:
         exit(subprocess.run(args.exec).returncode)
@@ -337,10 +340,6 @@ def main():
                 exit(1)
 
         mounts = list(volume_mounts)
-
-        mounts.append(
-            Mount("/home/sprrw/nixos", "/home/sprrw/nixos", "dir", ro=True)
-        )
 
         if args.cwd:
             mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))

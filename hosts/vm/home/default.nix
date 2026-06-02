@@ -25,5 +25,7 @@
   home = {
     username = "sprrw";
     homeDirectory = "/home/sprrw";
+
+    file."nixos".source = ../../../.;
   };
 }
