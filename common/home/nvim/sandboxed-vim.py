@@ -3,8 +3,6 @@
 import sys
 import subprocess
 import os
-import shlex
-import tempfile
 
 end_bwrap_args_ind = sys.argv.index("ENDBWRAPARGS")
 
@@ -13,6 +11,18 @@ vim_path = sys.argv[end_bwrap_args_ind + 1]
 vim_args = sys.argv[end_bwrap_args_ind + 2 :]
 
 additional_vim_args = []
+
+
+if os.getenv("IN_SPRRW_SANDBOX") is not None:
+    exit(
+        subprocess.call(
+            [
+                vim_path,
+                *vim_args,
+            ]
+        )
+    )
+
 
 proc_args = None
 
