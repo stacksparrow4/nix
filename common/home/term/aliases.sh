@@ -19,6 +19,9 @@ alias grv='git remote -v'
 alias gbv='git branch -v'
 
 alias sbx='sandbox'
+alias box='sandbox'
+alias b='sandbox'
+alias bc='sandbox --cwd'
 
 alias p='pi'
 alias pc='pi-chat'

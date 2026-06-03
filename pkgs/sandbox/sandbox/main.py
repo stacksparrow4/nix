@@ -204,6 +204,7 @@ def main():
                 Mount("/bin", "/bin", "dir", ro=True),
                 Mount("/etc", "/etc", "dir", ro=True),
                 Mount("/usr", "/usr", "dir", ro=True),
+                Mount("/lib64", "/lib64", "dir", ro=True),
                 Mount(
                     "/run/current-system/sw",
                     "/run/current-system/sw",
