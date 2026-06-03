@@ -35,6 +35,7 @@
             ❌ Cross
             ❤️ Heart
             🥺 Pleading
+            🙏 Pray
             EOF
             )
 
