@@ -33,11 +33,14 @@ let
     ro = true;
     type = "file";
   };
+  braveSearchExtensions = if braveSearch then [ "brave-search.ts" ] else [ ];
+  allExtensions = extensions ++ braveSearchExtensions;
+  allTools = tools ++ (if braveSearch then [ "web_search" ] else [ ]);
 in
 mkSandbox {
   inherit name;
   sharedPaths =
-    (builtins.map createExtensionMount extensions)
+    (builtins.map createExtensionMount allExtensions)
     ++ [
       {
         hostPath = "$HOME/.pi/agent/settings.json";
@@ -162,7 +165,7 @@ mkSandbox {
 
         ${pi}/bin/pi \
           --no-tools ${
-            if (builtins.length tools) > 0 then "--tools ${builtins.concatStringsSep "," tools}" else ""
+            if (builtins.length allTools) > 0 then "--tools ${builtins.concatStringsSep "," allTools}" else ""
           } \
           ${
             if network then
