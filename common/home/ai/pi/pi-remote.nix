@@ -31,6 +31,7 @@ let
     system = "system-remote.md";
     tools = [ "command" ];
     extensions = defaultExtensions ++ [ "pi-remote.ts" ];
+    braveSearch = true;
     network = true;
     extraMounts = [
       {
