@@ -25,14 +25,14 @@
       cfg = config.sprrw.ai.llama-cpp;
       models = [
         {
-          name = "llama-cpp-qwen3.5";
+          name = "qwen3.5";
           model = pkgs.fetchurl {
             url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-Q4_K_M.gguf";
             hash = "sha256-A7dHJ6hgpWM44ELEQguz8Esv7Fc0F19MufqFPa9St+g=";
           };
         }
         {
-          name = "llama-cpp-qwen3.6";
+          name = "qwen3.6";
           model = pkgs.fetchurl {
             url = "https://huggingface.co/unsloth/Qwen3.6-27B-GGUF/resolve/main/Qwen3.6-27B-Q4_K_M.gguf";
             hash = "sha256-XtYNCvRlCoVLF1W9OS+a70hyZD3CWiVLxoBD+mODkqA=";

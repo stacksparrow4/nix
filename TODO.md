@@ -1,8 +1,6 @@
-- Fuse overlay in memory
-- Sandbox standalone in pkgs/ so that agent can modify it easily
+- BX tool rather than binary for Pi remote?
+- Fuse overlay optimisation (in memory? single mountpoint on host that everything shares?)
 - Podman runs inside box
 - Secure Pi session sharing
-- Shortcut to open tmux inside box in new Foot terminal
-- Fix terminfo inside every container (there was some edge case that doesn't work, don't really remember though)
 - Fix fonts in vesktop
 - Nvim prettier formatter for GraphQL
