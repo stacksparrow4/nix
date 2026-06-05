@@ -41,6 +41,8 @@
         install esp4 ${pkgs.coreutils}/bin/false
         install esp6 ${pkgs.coreutils}/bin/false
       '';
+
+      boot.tmp.cleanOnBoot = true;
     }
     (lib.mkIf (!config.sprrw.headless) {
       programs._1password.enable = true;
