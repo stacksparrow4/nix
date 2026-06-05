@@ -50,6 +50,7 @@ default_bwrap_args = [
     *["--ro-bind", "/etc", "/etc"],
     *["--ro-bind", "/usr", "/usr"],
     *["--ro-bind", "/run/current-system/sw", "/run/current-system/sw"],
+    *["--ro-bind", "/home/sprrw/nixos", "/home/sprrw/nixos"],
     *[y for x in SHARED_CONFIGS for y in ["--ro-bind", x, x]],
     *["--tmpfs", "/tmp"],
     *["--proc", "/proc"],

@@ -1,0 +1,3 @@
+[submodule "pkgs/nvim-http-client"]
+	path = pkgs/nvim-http-client
+	url = git@github.com:stacksparrow4/nvim-http-client.git
