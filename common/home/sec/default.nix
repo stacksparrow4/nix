@@ -9,6 +9,7 @@
     ./forensics.nix
     ./metasploit.nix
     ./mitmproxy.nix
+    ./pwnproxy.nix
     ./pwn.nix
     ./scanning.nix
     ./snmp.nix
@@ -31,6 +32,7 @@
       forensics.enable = true;
       metasploit.enable = true;
       mitmproxy.enable = true;
+      pwnproxy.enable = true;
       pwn.enable = true;
       scanning.enable = true;
       snmp.enable = true;
