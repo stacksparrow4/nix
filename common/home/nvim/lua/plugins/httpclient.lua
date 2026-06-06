@@ -1,5 +1,3 @@
 return {
-  {
-    "nvim-http-client"
-  }
+  { "nvim-http-client", dev = true }
 }
