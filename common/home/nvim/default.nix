@@ -2,6 +2,7 @@
   pkgs,
   config,
   lib,
+  mkSandbox,
   ...
 }:
 
@@ -136,16 +137,32 @@ in
             ln -s ${config.programs.neovim.finalPackage}/bin/nvim $out/bin/${pname}
           '';
         sandboxed =
-          pname:
+          name:
           pkgs.writeShellApplication {
-            name = pname;
+            inherit name;
             text =
               if cfg.sandboxed then
                 ''
-                  if [[ -f /.sprrw-sandbox ]] || [[ "$(hostname)" == sandbox ]]; then
+                  if [[ "''${IN_SPRRW_SANDBOX+x}" == 1 ]]; then
                     ${config.programs.neovim.finalPackage}/bin/nvim "$@"
                   else
-                    ${pkgs.python3}/bin/python ${./sandboxed-vim.py} ${cfg.additionalBwrapArgs} ENDBWRAPARGS ${config.programs.neovim.finalPackage}/bin/nvim "$@"
+                    share_dir="$(pwd)"
+                    vim_args=()
+                    if [[ $# -eq 1 ]] && [[ "$1" == /* ]]; then
+                      arg="$1"
+                      if [[ -d "$arg" ]]; then
+                        share_dir="$arg"
+                        share_file="."
+                      else
+                        share_dir=$(dirname "$arg")
+                        share_file=$(basename "$arg")
+                      fi
+                      vim_args+=("$share_file")
+                    else
+                      vim_args+=("$@")
+                    fi
+
+                    (cd "$share_dir" && sandbox --no-nix-store-overlay --cwd --wayland --ro-git ${config.programs.neovim.finalPackage}/bin/nvim "''${vim_args[@]}")
                   fi
                 ''
               else

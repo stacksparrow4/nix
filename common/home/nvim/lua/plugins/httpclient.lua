@@ -1,6 +1,6 @@
 return {
   {
-    dir = "/home/sprrw/nixos/pkgs/nvim-http-client",
+    dir = "/home/sprrw/.config/.sprrw-nixos/pkgs/nvim-http-client",
     name = "nvim-http-client"
   }
 }

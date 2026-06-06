@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 
 {
   imports = [
@@ -24,6 +24,8 @@
 
   config = {
     home.file.".config/nixpkgs/config.nix".source = ../../nixpkgs-config.nix;
+    home.file.".config/.sprrw-nixos".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}";
 
     news.display = "silent";
 

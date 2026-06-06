@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -24,9 +29,13 @@
       };
 
       # Place home-files in a place that can easily be mounted by containers
-      environment.etc."hm-package" = {
-        source = config.home-manager.users.sprrw.home.activationPackage;
-      };
+      environment.etc =
+        let
+          hmConfig = config.home-manager.users.sprrw;
+        in
+        {
+          "hm-package".source = hmConfig.home.activationPackage;
+        };
 
       systemd.coredump.enable = true;
       systemd.coredump.extraConfig = ''
@@ -36,7 +45,10 @@
 
       boot.kernelPackages = lib.mkIf (lib.versionOlder pkgs.linux.version "6.18.22") pkgs.linuxPackages_6_18;
 
-      boot.blacklistedKernelModules = [ "esp4" "esp6" ];
+      boot.blacklistedKernelModules = [
+        "esp4"
+        "esp6"
+      ];
       boot.extraModprobeConfig = ''
         install esp4 ${pkgs.coreutils}/bin/false
         install esp6 ${pkgs.coreutils}/bin/false
