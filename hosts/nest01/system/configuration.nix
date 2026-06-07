@@ -5,6 +5,11 @@
 { config, lib, ... }:
 
 {
+  services.zerotierone = {
+    enable = true;
+    joinNetworks = [ "83048a0632b9c48e" ];
+  };
+
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix

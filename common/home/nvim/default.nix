@@ -67,7 +67,7 @@ in
           yazi-nvim
           trouble-nvim
           conform-nvim
-          (import ../../../pkgs/nvim-http-client { inherit pkgs; })
+          (import ./nvim-http-client.nix { inherit pkgs; })
         ])
         ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
           lua
