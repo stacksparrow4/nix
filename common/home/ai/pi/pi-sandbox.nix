@@ -164,6 +164,7 @@ mkSandbox {
         }
 
         ${pi}/bin/pi \
+          --approve \
           --no-tools ${
             if (builtins.length allTools) > 0 then "--tools ${builtins.concatStringsSep "," allTools}" else ""
           } \
