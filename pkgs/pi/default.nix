@@ -4,13 +4,13 @@
 }:
 
 let
-  version = "0.79.0";
+  version = "0.79.1";
 
   src = pkgs.fetchFromGitHub {
     owner = "badlogic";
     repo = "pi-mono";
     tag = "v${version}";
-    hash = "sha256-mOgqwUdL6leyroHKfYHOEuEX+27pIZiaEvcGxlIj8NI=";
+    hash = "sha256-MvH8e21GVfzRQ9vsxFNC1GHJfB9GZpqY1Z2t8GCUaiQ=";
   };
 
   # Pi version 0.74.0 had a cooked package-lock.json. This can be removed when it is fixed upstream
@@ -26,7 +26,7 @@ pkgs.pi-coding-agent.overrideAttrs (
     npmDeps = pkgs.fetchNpmDeps {
       name = "pi-mono-${version}-npm-deps";
       inherit src;
-      hash = "sha256-H+F/qzXilTXDHneKT3vms0MHi/E7+ahGh6zupFtMptU=";
+      hash = "sha256-ZWdfDDs+Hv+GWTmsNmpWNlUDBOMALw7H4lwo7CJHVCM=";
     };
 
     postInstall = ''
