@@ -19,6 +19,7 @@ let
       wayland ? false,
       x11 ? false,
       roDotGit ? false,
+      nixOverlay ? false,
     }:
     let
       backslashify =
@@ -54,6 +55,7 @@ let
             ++ (if wayland then [ "--wayland" ] else [ ])
             ++ (if x11 then [ "--x11" ] else [ ])
             ++ (if roDotGit then [ "--ro-git" ] else [ ])
+            ++ (if nixOverlay then [ "--nix-overlay" ] else [ ])
           )}
           -- ${prog} "$@"
       '';

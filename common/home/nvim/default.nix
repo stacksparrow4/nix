@@ -163,7 +163,7 @@ in
                       vim_args+=("$@")
                     fi
 
-                    (cd "$share_dir" && sandbox --no-nix-store-overlay --cwd --wayland --ro-git ${config.programs.neovim.finalPackage}/bin/nvim "''${vim_args[@]}")
+                    (cd "$share_dir" && sandbox --cwd --wayland --ro-git -- ${config.programs.neovim.finalPackage}/bin/nvim "''${vim_args[@]}")
                   fi
                 ''
               else

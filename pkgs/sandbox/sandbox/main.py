@@ -106,10 +106,10 @@ def main():
         dest="reset_env",
     )
     parser.add_argument(
-        "--no-nix-store-overlay",
+        "--nix-overlay",
         action="store_true",
-        help="Disable overlaying the nix store for performance reasons",
-        dest="no_nix_store_overlay",
+        help="Enable Nix store overlay",
+        dest="nix_overlay",
     )
     parser.add_argument("exec", nargs="*")
     parser.set_defaults(type="bwrap", volumes=[], env_vars=[])
@@ -250,7 +250,7 @@ def main():
         store_upper = None
         store_mount = None
         store_var = None
-        if not args.no_nix_store_overlay:
+        if args.nix_overlay:
             store_upper = tempfile.mkdtemp(prefix="sprrw-sandbox-upper.")
             store_mount = tempfile.mkdtemp(prefix="sprrw-sandbox-fuse.")
             store_var = tempfile.mkdtemp(prefix="sprrw-sandbox-var.")
@@ -315,7 +315,7 @@ def main():
             subprocess_args, env=({} if args.reset_env else None)
         ).returncode
 
-        if not args.no_nix_store_overlay:
+        if args.nix_overlay:
             assert (
                 store_mount is not None
                 and store_upper is not None
