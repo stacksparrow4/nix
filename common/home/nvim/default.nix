@@ -18,9 +18,9 @@ in
       default = true;
     };
 
-    additionalBwrapArgs = lib.mkOption {
-      type = lib.types.str;
-      default = "";
+    additionalSharedFolders = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
     };
   };
 
@@ -163,7 +163,11 @@ in
                       vim_args+=("$@")
                     fi
 
-                    (cd "$share_dir" && sandbox --cwd --wayland --ro-git -- ${config.programs.neovim.finalPackage}/bin/nvim "''${vim_args[@]}")
+                    (cd "$share_dir" && sandbox --cwd --wayland --ro-git ${
+                      builtins.concatStringsSep " " (
+                        map (sharedFolder: "-v \"${sharedFolder}:${sharedFolder}:ro\"") cfg.additionalSharedFolders
+                      )
+                    } -- ${config.programs.neovim.finalPackage}/bin/nvim "''${vim_args[@]}")
                   fi
                 ''
               else
