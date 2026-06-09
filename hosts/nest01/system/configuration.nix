@@ -17,7 +17,7 @@
     ./gaming.nix
   ];
 
-  sprrw.wordlists.enable = true;
+  sprrw.payloads.enable = true;
 
   boot.loader.timeout = lib.mkForce 9999;
 
