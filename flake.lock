@@ -53,11 +53,55 @@
         "type": "github"
       }
     },
+    "nvim-http-client": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780964682,
+        "narHash": "sha256-G2xZasPB9X89mhM0mmJzEynjebR/hOgShooiVx00D88=",
+        "owner": "stacksparrow4",
+        "repo": "nvim-http-client",
+        "rev": "e4eae844f8c3f2474e1e3f5bfc3d093510b44d8a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "stacksparrow4",
+        "ref": "main",
+        "repo": "nvim-http-client",
+        "type": "github"
+      }
+    },
+    "pwnproxy": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780965289,
+        "narHash": "sha256-8YKmdXrz5s6eoTRbOmSMqljoF6M35mi8OJuNuyG56Uc=",
+        "owner": "stacksparrow4",
+        "repo": "pwnproxy",
+        "rev": "825439c523162cdcad9f1e423f046c3dac997124",
+        "type": "github"
+      },
+      "original": {
+        "owner": "stacksparrow4",
+        "ref": "main",
+        "repo": "pwnproxy",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-unstable": "nixpkgs-unstable"
+        "nixpkgs-unstable": "nixpkgs-unstable",
+        "nvim-http-client": "nvim-http-client",
+        "pwnproxy": "pwnproxy"
       }
     }
   },

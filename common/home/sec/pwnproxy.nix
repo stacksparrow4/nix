@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   mkSandbox,
   ...
 }:
@@ -14,7 +15,7 @@
   config = lib.mkIf config.sprrw.sec.pwnproxy.enable {
     home.packages =
       let
-        pwnproxy = import ../../../pkgs/pwnproxy { inherit pkgs; };
+        pwnproxy = inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".default;
       in
       [
         (mkSandbox {

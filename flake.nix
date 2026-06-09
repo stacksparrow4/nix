@@ -6,6 +6,10 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     home-manager.url = "github:nix-community/home-manager?ref=release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    nvim-http-client.url = "github:stacksparrow4/nvim-http-client?ref=main";
+    nvim-http-client.inputs.nixpkgs.follows = "nixpkgs";
+    pwnproxy.url = "github:stacksparrow4/pwnproxy?ref=main";
+    pwnproxy.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
