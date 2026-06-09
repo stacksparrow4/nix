@@ -14,6 +14,7 @@
     ./nix-config.nix
     ./virt.nix
     ./flatpak.nix
+    ./wordlists.nix
   ];
 
   # For now just putting all options in default.nix

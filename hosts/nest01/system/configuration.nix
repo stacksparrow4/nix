@@ -17,6 +17,8 @@
     ./gaming.nix
   ];
 
+  sprrw.wordlists.enable = true;
+
   boot.loader.timeout = lib.mkForce 9999;
 
   # Swap
