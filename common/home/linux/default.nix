@@ -23,6 +23,7 @@
       htop
       usbutils
       pciutils
+      openvpn
     ];
 
     sprrw.linux = {
