@@ -9,7 +9,7 @@
     ./forensics.nix
     ./metasploit.nix
     ./mitmproxy.nix
-    ./pwnproxy.nix
+    ./pwnproxy
     ./pwn.nix
     ./scanning.nix
     ./snmp.nix

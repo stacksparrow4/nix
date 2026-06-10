@@ -13,6 +13,8 @@
   };
 
   config = lib.mkIf config.sprrw.sec.pwnproxy.enable {
+    home.file.".config/pwnproxy/tools".source = ./tools;
+
     home.packages =
       let
         pwnproxy = inputs.pwnproxy.packages."${pkgs.stdenv.hostPlatform.system}".default;
