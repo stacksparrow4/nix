@@ -66,9 +66,7 @@ def main():
         help="Make /pwd/.git in the sandbox read only",
         dest="ro_git",
     )
-    parser.add_argument(
-        "-w", "--wayland", action="store_true", help="Share wayland"
-    )
+    parser.add_argument("-w", "--wayland", action="store_true", help="Share wayland")
     parser.add_argument("-x", "--x11", action="store_true", help="Share X11")
     parser.add_argument(
         "-v",
@@ -119,7 +117,7 @@ def main():
     if args.ro_git and not args.cwd:
         print("Cannot specify --ro-git without --cwd")
         exit(1)
-    
+
     if len(args.exec) == 0:
         args.exec = ["bash"]
 
@@ -180,16 +178,12 @@ def main():
             mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
 
         if args.ro_git and os.path.exists("./.git"):
-            mounts.append(
-                Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True)
-            )
+            mounts.append(Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True))
 
         if args.wayland:
             mounts.append(
                 Mount(
-                    ensure_env("XDG_RUNTIME_DIR")
-                    + "/"
-                    + ensure_env("WAYLAND_DISPLAY"),
+                    ensure_env("XDG_RUNTIME_DIR") + "/" + ensure_env("WAYLAND_DISPLAY"),
                     "/tmp/wayland-1",
                     "file",
                     ro=True,
@@ -292,6 +286,7 @@ def main():
             "bwrap",
             "--unshare-all",
             "--as-pid-1",
+            "--die-with-parent",
             "--tmpfs",
             "/tmp",
             "--proc",
@@ -313,7 +308,7 @@ def main():
 
         return_code = subprocess.run(
             subprocess_args, env=({} if args.reset_env else None)
-        ).returncode
+        )
 
         if args.nix_overlay:
             assert (
@@ -346,9 +341,7 @@ def main():
             mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
 
         if args.ro_git and os.path.exists("./.git"):
-            mounts.append(
-                Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True)
-            )
+            mounts.append(Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True))
 
         # Find an open port in the ephemeral range
         used_ports = set()
@@ -382,9 +375,7 @@ def main():
                 ]
             )
 
-        with tempfile.TemporaryDirectory(
-            prefix="sprrw-sandbox-qemu-pid."
-        ) as piddir:
+        with tempfile.TemporaryDirectory(prefix="sprrw-sandbox-qemu-pid.") as piddir:
             pidfile_path = os.path.join(piddir, "pid")
             qemu_args = [
                 "qemu-system-x86_64",
