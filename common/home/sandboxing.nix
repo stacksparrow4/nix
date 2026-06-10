@@ -20,6 +20,7 @@ let
       x11 ? false,
       roDotGit ? false,
       nixOverlay ? false,
+      resetOnDone ? false,
     }:
     let
       backslashify =
@@ -56,6 +57,7 @@ let
             ++ (if x11 then [ "--x11" ] else [ ])
             ++ (if roDotGit then [ "--ro-git" ] else [ ])
             ++ (if nixOverlay then [ "--nix-overlay" ] else [ ])
+            ++ (if resetOnDone then [ "--reset-on-done" ] else [ ])
           )}
           -- ${prog} "$@"
       '';

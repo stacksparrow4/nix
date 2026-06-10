@@ -108,6 +108,12 @@ def main():
         help="Enable Nix store overlay",
         dest="nix_overlay",
     )
+    parser.add_argument(
+        "--reset-on-done",
+        action="store_true",
+        help="Run the 'reset' command after the sandbox finishes",
+        dest="reset_on_done",
+    )
     parser.add_argument("exec", nargs="*")
     parser.set_defaults(type="bwrap", volumes=[], env_vars=[])
 
@@ -305,20 +311,29 @@ def main():
 
         # print(subprocess_args)
 
-        return_code = subprocess.run(
-            subprocess_args, env=({} if args.reset_env else None)
-        ).returncode
-
-        if args.nix_overlay:
-            assert (
-                store_mount is not None
-                and store_upper is not None
-                and store_var is not None
+        return_code = 1
+        proc = subprocess.Popen(
+                subprocess_args, env=({} if args.reset_env else None)
             )
-            subprocess.run(["fusermount", "-u", store_mount])
-            shutil.rmtree(store_upper)
-            shutil.rmtree(store_mount)
-            shutil.rmtree(store_var)
+        try:
+            return_code = proc.wait()
+        except Exception as e:
+            print(e)
+            proc.kill()
+        finally:
+            if args.nix_overlay:
+                assert (
+                    store_mount is not None
+                    and store_upper is not None
+                    and store_var is not None
+                )
+                subprocess.run(["fusermount", "-u", store_mount])
+                shutil.rmtree(store_upper)
+                shutil.rmtree(store_mount)
+                shutil.rmtree(store_var)
+
+            if args.reset_on_done:
+                subprocess.run(["reset"])
 
         exit(return_code)
 
