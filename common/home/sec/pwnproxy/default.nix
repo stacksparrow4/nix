@@ -34,7 +34,6 @@
           ];
           network = true;
           wayland = true; # nvim copy
-          resetOnDone = true;
         })
         inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".urlenc
       ];
