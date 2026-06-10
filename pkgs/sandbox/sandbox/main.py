@@ -6,7 +6,6 @@ import signal
 import subprocess
 import tempfile
 import shutil
-import time
 from pathlib import Path
 from dataclasses import dataclass
 from .nixstorefuse import start_overlay
@@ -308,7 +307,7 @@ def main():
 
         return_code = subprocess.run(
             subprocess_args, env=({} if args.reset_env else None)
-        )
+        ).returncode
 
         if args.nix_overlay:
             assert (
