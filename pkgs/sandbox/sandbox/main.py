@@ -4,6 +4,7 @@ import random
 import shlex
 import signal
 import subprocess
+import sys
 import tempfile
 import shutil
 from pathlib import Path
@@ -333,6 +334,15 @@ def main():
                 shutil.rmtree(store_var)
 
             if args.reset_on_done:
+                try:
+                    if sys.stdin.isatty():
+                        old = signal.signal(signal.SIGTTOU, signal.SIG_IGN)
+                        try:
+                            os.tcsetpgrp(sys.stdin.fileno(), os.getpgrp())
+                        finally:
+                            signal.signal(signal.SIGTTOU, old)
+                except (OSError, ValueError):
+                    pass
                 subprocess.run(["reset"])
 
         exit(return_code)
