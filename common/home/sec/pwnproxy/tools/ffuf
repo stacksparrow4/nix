@@ -19,15 +19,14 @@ if raw.startswith(b"---\n"):
 out_dir = Path("ffuf")
 out_dir.mkdir(parents=True, exist_ok=True)
 
-name = Path(req_path).stem  # e.g. "000001"
-raw_file = out_dir / f"{name}.http"
+name = info.get("name")
+raw_file = out_dir / f"{name}.req"
 raw_file.write_bytes(raw)
 
 script = out_dir / f"ffuf-{name}.sh"
 script.write_text(
     "#!/bin/sh\n"
-    f'ffuf -u {json.dumps(info["url"])} '
-    f"-request {json.dumps(str(raw_file))} \"$@\"\n"
+    f'ffuf -u {json.dumps(info["url"])} -request {json.dumps(str(raw_file))} "$@"\n'
 )
 script.chmod(script.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 

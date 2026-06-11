@@ -36,6 +36,11 @@ vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
   end,
 })
 
+-- Auto-resize splits when the window is resized
+vim.api.nvim_create_autocmd('VimResized', {
+  command = 'wincmd =',
+})
+
 -- Use system clipboard
 vim.opt.clipboard = "unnamedplus"
 
