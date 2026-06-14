@@ -27,7 +27,6 @@
         };
       in
       "${alternatingLayoutsDeriv}/bin/alternating-layouts";
-    home.file.".config/sway/screenshot.sh".source = ./sway/screenshot.sh;
 
     programs.waybar = {
       enable = true;
