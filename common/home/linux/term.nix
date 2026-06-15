@@ -21,7 +21,7 @@
       bubblewrap
 
       (pkgs.writeShellScriptBin "proxychains" ''
-        ${pkgs.proxychains}/bin/proxychains4 -q "$@"
+        ${pkgs.proxychains-ng}/bin/proxychains4 -q "$@"
       '')
     ];
   };

@@ -8,34 +8,48 @@
 }:
 
 {
-  options = {
-    sprrw.sec.pwnproxy.enable = lib.mkEnableOption "pwnproxy";
+  options.sprrw.sec.pwnproxy = {
+    enable = lib.mkEnableOption "pwnproxy";
+
+    config = lib.mkOption { default = { }; };
   };
 
-  config = lib.mkIf config.sprrw.sec.pwnproxy.enable {
-    home.file.".config/pwnproxy/tools".source = ./tools;
+  config =
+    let
+      cfg = config.sprrw.sec.pwnproxy;
+    in
+    lib.mkIf cfg.enable {
+      home.file.".config/pwnproxy/tools".source = ./tools;
+      home.file.".config/pwnproxy/config.json".text = builtins.toJSON (
+        {
+          ## TODO: figure out a safe way of using tmux while being sandboxed
+          ## Maybe make a wrapper around nsenter?
+          # request_edit_command = "tmux split-window -v nvim {file}";
+        }
+        // cfg.config
+      );
 
-    home.packages =
-      let
-        pwnproxy = inputs.pwnproxy.packages."${pkgs.stdenv.hostPlatform.system}".default;
-      in
-      [
-        (mkSandbox {
-          name = "pwnproxy";
-          prog = "${pwnproxy}/bin/mitmproxy";
-          shareCwd = true;
-          sharedPaths = [
-            {
-              hostPath = "$HOME/.mitmproxy";
-              boxPath = "/home/sprrw/.mitmproxy";
-              ro = false;
-              type = "dir";
-            }
-          ];
-          network = true;
-          wayland = true; # nvim copy
-        })
-        inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".urlenc
-      ];
-  };
+      home.packages =
+        let
+          pwnproxy = inputs.pwnproxy.packages."${pkgs.stdenv.hostPlatform.system}".default;
+        in
+        [
+          (mkSandbox {
+            name = "pwnproxy";
+            prog = "${pwnproxy}/bin/mitmproxy";
+            shareCwd = true;
+            sharedPaths = [
+              {
+                hostPath = "$HOME/.mitmproxy";
+                boxPath = "/home/sprrw/.mitmproxy";
+                ro = false;
+                type = "dir";
+              }
+            ];
+            network = true;
+            wayland = true; # nvim copy
+          })
+          inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".urlenc
+        ];
+    };
 }
