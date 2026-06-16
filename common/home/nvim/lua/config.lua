@@ -21,7 +21,7 @@ vim.opt.wrap = false
 -- But not for md or typst files!
 local wrap_augroup = vim.api.nvim_create_augroup("Wrap Settings", { clear = true })
 vim.api.nvim_create_autocmd('BufEnter', {
-  pattern = {'*.md', '*.typ'},
+  pattern = {'*.md', '*.typ', '*.req', '*.resp'},
   group = wrap_augroup,
   command = 'setlocal wrap'
 })
