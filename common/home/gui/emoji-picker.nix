@@ -21,7 +21,7 @@
           text = ''
             emojis=$(cat <<EOF
             👀 Eyes
-            🚫 Prohibited
+            🚫 No
             👍 Thumbs Up
             👎 Thumbs Down
             🔥 Fire
@@ -36,6 +36,8 @@
             ❤️ Heart
             🥺 Pleading
             🙏 Pray
+            🙂 Smile
+            🙁 Frown
             EOF
             )
 

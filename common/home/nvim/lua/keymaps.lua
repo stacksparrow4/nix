@@ -25,6 +25,38 @@ vim.keymap.set("n", "<S-TAB>", "<cmd>bprevious<cr>")
 vim.keymap.set("n", "<leader>d", "<cmd>bdelete<cr>")
 vim.keymap.set("n", "<leader>b", "<cmd>BufferLinePick<cr>")
 
+-- Tinymist pinning
+vim.api.nvim_create_user_command("PinMain", function()
+  local client = vim.lsp.get_clients({ name = "tinymist", bufnr = 0 })[1]
+  if not client then
+    return vim.notify("No tinymist client attached", vim.log.levels.ERROR)
+  end
+  client:exec_cmd({
+    title = "pin",
+    command = "tinymist.pinMain",
+    arguments = { vim.api.nvim_buf_get_name(0) },
+  }, { bufnr = 0 })
+  vim.notify("Pinned main: " .. vim.fn.expand("%:t"))
+end, { desc = "Pin current buffer as tinymist main file" })
+
+vim.api.nvim_create_user_command("UnpinMain", function()
+  local client = vim.lsp.get_clients({ name = "tinymist", bufnr = 0 })[1]
+  if not client then
+    return vim.notify("No tinymist client attached", vim.log.levels.ERROR)
+  end
+  client:exec_cmd({
+    title = "unpin",
+    command = "tinymist.pinMain",
+    arguments = { vim.v.null },
+  }, { bufnr = 0 })
+  vim.notify("Unpinned main")
+end, { desc = "Unpin tinymist main file" })
+
+vim.api.nvim_create_user_command("TypstStart", function()
+ vim.cmd("PinMain")
+ vim.cmd("TypstPreview")
+end, { desc = "Pin current buffer as main and start typst preview" })
+
 -- Misc
 local function positiontotyp(fname, row, col, code)
   return "`" .. fname .. ":" .. row .. ":" .. col .. "` ```" .. fname:match("^.+%.(.+)$") .. " " .. code:match("^%s*(.*)") .. "```"
