@@ -60,11 +60,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781581326,
-        "narHash": "sha256-fRNnqcW53XnH0iRyUQFYwtuVKNW13tFB5MiLxyWUFYg=",
+        "lastModified": 1781674115,
+        "narHash": "sha256-rEO9N6Ee8jiunGnQxKyKu9zBS7TMP9txHVGqtMzuUEs=",
         "owner": "stacksparrow4",
         "repo": "nvim-http-client",
-        "rev": "3bb53554f689e1fea4494af1ec964089f5977ded",
+        "rev": "863ba658b39dadb1c29db006cd579ea7a8463d9f",
         "type": "github"
       },
       "original": {
@@ -81,11 +81,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781649765,
-        "narHash": "sha256-XBz7BSfKFre3Hc2LXjNtafMFnSkeHXcdNMeDEWJj5dw=",
+        "lastModified": 1781674817,
+        "narHash": "sha256-Vo2apTMokoouzJc6D2+o5hAIkoXYxzrVrKbrJTQZBGw=",
         "owner": "stacksparrow4",
         "repo": "pwnproxy",
-        "rev": "352127c99ab3400d7018c3f389f601dce6373d88",
+        "rev": "487a397606f128e4796a217477160c2302dda905",
         "type": "github"
       },
       "original": {

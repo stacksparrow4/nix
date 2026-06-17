@@ -33,7 +33,12 @@
       vlc
       blender
       rofi
-      freerdp
+      (mkSandbox {
+        name = "wlfreerdp";
+        wayland = true;
+        network = true;
+        prog = "${pkgs.freerdp}/bin/wlfreerdp";
+      })
       xfce.thunar
       (mkSandbox {
         name = "grim";
