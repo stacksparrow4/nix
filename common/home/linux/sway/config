@@ -21,7 +21,8 @@ bindsym Mod1+F10 exec obs-cli-tool SaveReplayBuffer
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
-bindsym $mod+Return exec --no-startup-id "foot tmux"
+# Sleep for 0.03 seconds to allow terminal to resize before tmux is displayed
+bindsym $mod+Return exec --no-startup-id "foot bash -c 'sleep 0.03 && tmux'"
 bindsym $mod+b exec --no-startup-id "brave"
 bindsym $mod+p exec --no-startup-id "1password"
 
