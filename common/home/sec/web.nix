@@ -31,6 +31,7 @@
       (mkSandbox {
         name = "interactsh";
         prog = "${interactsh}/bin/interactsh-client";
+        shareCwd = true;
         network = true;
       })
     ];

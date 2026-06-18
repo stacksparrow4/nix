@@ -19,6 +19,7 @@ builtins.listToAttrs (
       "pi-coding-agent"
       "brave-search-cli"
       "lmms-full"
+      "interactsh"
     ]
 )
 // (
