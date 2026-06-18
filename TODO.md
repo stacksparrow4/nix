@@ -1,5 +1,7 @@
-- BX tool rather than binary for Pi remote?
-- Fuse overlay optimisation (in memory? single mountpoint on host that everything shares?)
+- More generalised method for IPC between sandbox and outside world
+- Pi takes arguments (rather than pi, pi-chat, pi-exec, etc)
+- Windows VMs generated automatically using unattend.xml
+- Use real overlayfs. The python one is just as buggy
 - Podman runs inside box
 - Secure Pi session sharing
 - Fix fonts in vesktop
