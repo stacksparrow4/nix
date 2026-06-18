@@ -10,6 +10,9 @@
     nvim-http-client.inputs.nixpkgs.follows = "nixpkgs";
     pwnproxy.url = "github:stacksparrow4/pwnproxy?ref=main";
     pwnproxy.inputs.nixpkgs.follows = "nixpkgs";
+    autorize.url = "github:stacksparrow4/autorize?ref=main";
+    autorize.inputs.nixpkgs.follows = "nixpkgs";
+    autorize.inputs.nvim-http-client.follows = "nvim-http-client";
   };
 
   outputs =

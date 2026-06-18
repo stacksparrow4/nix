@@ -52,7 +52,7 @@ vim.api.nvim_create_user_command("UnpinMain", function()
   vim.notify("Unpinned main")
 end, { desc = "Unpin tinymist main file" })
 
-vim.api.nvim_create_user_command("TypstStart", function()
+vim.api.nvim_create_user_command("TypstAAAStart", function()
  vim.cmd("PinMain")
  vim.cmd("TypstPreview")
 end, { desc = "Pin current buffer as main and start typst preview" })

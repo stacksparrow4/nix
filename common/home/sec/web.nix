@@ -8,10 +8,10 @@
 
 {
   options = {
-    sprrw.sec.mitmproxy.enable = lib.mkEnableOption "mitmproxy";
+    sprrw.sec.web.enable = lib.mkEnableOption "web";
   };
 
-  config = lib.mkIf config.sprrw.sec.mitmproxy.enable {
+  config = lib.mkIf config.sprrw.sec.web.enable {
     home.packages = with pkgs; [
       (mkSandbox {
         name = "mitmproxy";
@@ -25,6 +25,12 @@
             type = "dir";
           }
         ];
+        network = true;
+      })
+
+      (mkSandbox {
+        name = "interactsh";
+        prog = "${interactsh}/bin/interactsh-client";
         network = true;
       })
     ];

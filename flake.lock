@@ -1,5 +1,29 @@
 {
   "nodes": {
+    "autorize": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nvim-http-client": [
+          "nvim-http-client"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781747162,
+        "narHash": "sha256-fHgXgXz+WHt9BPUPuKIRfeWyw9WM6ru6TllMHLNM2Sg=",
+        "owner": "stacksparrow4",
+        "repo": "autorize",
+        "rev": "1adfb1028565a7dba138b03b6c0eb3bf0290a473",
+        "type": "github"
+      },
+      "original": {
+        "owner": "stacksparrow4",
+        "ref": "main",
+        "repo": "autorize",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -60,11 +84,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781674115,
-        "narHash": "sha256-rEO9N6Ee8jiunGnQxKyKu9zBS7TMP9txHVGqtMzuUEs=",
+        "lastModified": 1781744427,
+        "narHash": "sha256-M/6U8EorhdteEgcpG/HsGNVozZVCimBMxAg8qKK1G2U=",
         "owner": "stacksparrow4",
         "repo": "nvim-http-client",
-        "rev": "863ba658b39dadb1c29db006cd579ea7a8463d9f",
+        "rev": "33014f4c1a716759941cafcc3171cca1cc6b45d9",
         "type": "github"
       },
       "original": {
@@ -81,11 +105,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781674817,
-        "narHash": "sha256-Vo2apTMokoouzJc6D2+o5hAIkoXYxzrVrKbrJTQZBGw=",
+        "lastModified": 1781741516,
+        "narHash": "sha256-aO/+rqCsQmMWbjaIQySezQbwGTLNggJzeJUsNykbp8k=",
         "owner": "stacksparrow4",
         "repo": "pwnproxy",
-        "rev": "487a397606f128e4796a217477160c2302dda905",
+        "rev": "0e91315a4992b85d8894403e2d89ac40591c3e52",
         "type": "github"
       },
       "original": {
@@ -97,6 +121,7 @@
     },
     "root": {
       "inputs": {
+        "autorize": "autorize",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",

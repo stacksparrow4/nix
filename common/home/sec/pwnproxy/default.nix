@@ -32,6 +32,8 @@
       home.packages =
         let
           pwnproxy = inputs.pwnproxy.packages."${pkgs.stdenv.hostPlatform.system}".default;
+          autorize = inputs.autorize.packages."${pkgs.stdenv.hostPlatform.system}".default;
+          urlenc = inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".urlenc;
         in
         [
           (mkSandbox {
@@ -49,7 +51,13 @@
             network = true;
             wayland = true; # nvim copy
           })
-          inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".urlenc
+          urlenc
+          (mkSandbox {
+            name = "autorize";
+            prog = "${autorize}/bin/autorize";
+            shareCwd = true;
+            network = true;
+          })
         ];
     };
 }

@@ -8,7 +8,7 @@
     ./cracking.nix
     ./forensics.nix
     ./metasploit.nix
-    ./mitmproxy.nix
+    ./web.nix
     ./pwnproxy
     ./pwn.nix
     ./scanning.nix
@@ -31,7 +31,7 @@
       cracking.enable = true;
       forensics.enable = true;
       metasploit.enable = true;
-      mitmproxy.enable = true;
+      web.enable = true;
       pwnproxy.enable = true;
       pwn.enable = true;
       scanning.enable = true;
