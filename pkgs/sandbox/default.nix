@@ -11,9 +11,5 @@ pkgs.python3Packages.buildPythonApplication {
 
   build-system = with pkgs.python3Packages; [ setuptools ];
 
-  dependencies = with pkgs.python3Packages; [
-    fusepy
-  ];
-
   pythonImportsCheck = [ "sandbox" ];
 }

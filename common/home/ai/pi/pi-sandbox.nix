@@ -179,5 +179,4 @@ mkSandbox {
     }
   }/bin/pi";
   roDotGit = shareCwd;
-  nixOverlay = network;
 }

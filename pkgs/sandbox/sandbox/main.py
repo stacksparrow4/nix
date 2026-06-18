@@ -4,12 +4,9 @@ import random
 import shlex
 import signal
 import subprocess
-import sys
 import tempfile
-import shutil
 from pathlib import Path
 from dataclasses import dataclass
-from .nixstorefuse import start_overlay
 
 
 @dataclass
@@ -102,18 +99,6 @@ def main():
         action="store_true",
         help="Clear the environment variables before running",
         dest="reset_env",
-    )
-    parser.add_argument(
-        "--nix-overlay",
-        action="store_true",
-        help="Enable Nix store overlay",
-        dest="nix_overlay",
-    )
-    parser.add_argument(
-        "--reset-on-done",
-        action="store_true",
-        help="Run the 'reset' command after the sandbox finishes",
-        dest="reset_on_done",
     )
     parser.add_argument("exec", nargs="*")
     parser.set_defaults(type="bwrap", volumes=[], env_vars=[])
@@ -247,46 +232,46 @@ def main():
             "/nix/store",
             "/nix/store",
         ]
-        store_upper = None
-        store_mount = None
-        store_var = None
-        if args.nix_overlay:
-            store_upper = tempfile.mkdtemp(prefix="sprrw-sandbox-upper.")
-            store_mount = tempfile.mkdtemp(prefix="sprrw-sandbox-fuse.")
-            store_var = tempfile.mkdtemp(prefix="sprrw-sandbox-var.")
-            start_overlay("/nix/store", store_upper, store_mount)
+        # store_upper = None
+        # store_mount = None
+        # store_var = None
+        # if args.nix_overlay:
+        #     store_upper = tempfile.mkdtemp(prefix="sprrw-sandbox-upper.")
+        #     store_mount = tempfile.mkdtemp(prefix="sprrw-sandbox-fuse.")
+        #     store_var = tempfile.mkdtemp(prefix="sprrw-sandbox-var.")
+        #     start_overlay("/nix/store", store_upper, store_mount)
 
-            # Set up /nix/var/nix
-            try:
-                shutil.copytree(
-                    "/nix/var/nix/db",
-                    store_var + "/db",
-                    symlinks=True,
-                    dirs_exist_ok=True,
-                )
-            except shutil.Error:
-                pass
-            try:
-                shutil.copytree(
-                    "/nix/var/nix/gcroots",
-                    store_var + "/gcroots",
-                    symlinks=True,
-                    dirs_exist_ok=True,
-                )
-            except shutil.Error:
-                pass
-            os.mkdir(store_var + "/temproots")
-            os.mkdir(store_var + "/profiles")
-            os.mkdir(store_var + "/daemon-socket")
+        #     # Set up /nix/var/nix
+        #     try:
+        #         shutil.copytree(
+        #             "/nix/var/nix/db",
+        #             store_var + "/db",
+        #             symlinks=True,
+        #             dirs_exist_ok=True,
+        #         )
+        #     except shutil.Error:
+        #         pass
+        #     try:
+        #         shutil.copytree(
+        #             "/nix/var/nix/gcroots",
+        #             store_var + "/gcroots",
+        #             symlinks=True,
+        #             dirs_exist_ok=True,
+        #         )
+        #     except shutil.Error:
+        #         pass
+        #     os.mkdir(store_var + "/temproots")
+        #     os.mkdir(store_var + "/profiles")
+        #     os.mkdir(store_var + "/daemon-socket")
 
-            nix_store_args = [
-                "--bind",
-                store_mount,
-                "/nix/store",
-                "--bind",
-                store_var,
-                "/nix/var/nix",
-            ]
+        #     nix_store_args = [
+        #         "--bind",
+        #         store_mount,
+        #         "/nix/store",
+        #         "--bind",
+        #         store_var,
+        #         "/nix/var/nix",
+        #     ]
 
         subprocess_args = [
             "bwrap",
@@ -321,29 +306,6 @@ def main():
         except Exception as e:
             print(e)
             proc.kill()
-        finally:
-            if args.nix_overlay:
-                assert (
-                    store_mount is not None
-                    and store_upper is not None
-                    and store_var is not None
-                )
-                subprocess.run(["fusermount", "-u", store_mount])
-                shutil.rmtree(store_upper)
-                shutil.rmtree(store_mount)
-                shutil.rmtree(store_var)
-
-            if args.reset_on_done:
-                try:
-                    if sys.stdin.isatty():
-                        old = signal.signal(signal.SIGTTOU, signal.SIG_IGN)
-                        try:
-                            os.tcsetpgrp(sys.stdin.fileno(), os.getpgrp())
-                        finally:
-                            signal.signal(signal.SIGTTOU, old)
-                except (OSError, ValueError):
-                    pass
-                subprocess.run(["reset"])
 
         exit(return_code)
 
