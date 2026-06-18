@@ -1,5 +1,6 @@
-- More generalised method for IPC between sandbox and outside world
 - Pi takes arguments (rather than pi, pi-chat, pi-exec, etc)
+    - Write this tool and rewrite sandbox tool in Rust
+- More generalised method for IPC between sandbox and outside world
 - Windows VMs generated automatically using unattend.xml
 - Use real overlayfs. The python one is just as buggy
 - Podman runs inside box
