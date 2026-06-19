@@ -57,34 +57,28 @@ mkSandbox {
       {
         hostPath = pkgs.writeText "pi-models" (
           builtins.toJSON {
-            providers =
-              (
-                if config.sprrw.ai.llama-cpp.enable then
-                  {
-                    local-llama = {
-                      baseUrl = "http://localhost:8033/v1";
-                      api = "openai-completions";
-                      apiKey = "llama";
-                      models = [
-                        (
-                          if hostForward != null then
-                            {
-                              id = hostForward.model;
-                              contextWindow = hostForward.context;
-                            }
-                          else
-                            {
-                              id = localModelName;
-                              contextWindow = config.sprrw.ai.llama-cpp.context;
-                            }
-                        )
-                      ];
-                    };
-                  }
-                else
-                  { }
-              )
-              // extraModels;
+            providers = {
+              local-llama = {
+                baseUrl = "http://localhost:8033/v1";
+                api = "openai-completions";
+                apiKey = "llama";
+                models = [
+                  (
+                    if hostForward != null then
+                      {
+                        id = hostForward.model;
+                        contextWindow = hostForward.context;
+                      }
+                    else
+                      {
+                        id = localModelName;
+                        contextWindow = config.sprrw.ai.pi.localContext;
+                      }
+                  )
+                ];
+              };
+            }
+            // extraModels;
           }
         );
         boxPath = "/home/sprrw/.pi/agent/models.json";

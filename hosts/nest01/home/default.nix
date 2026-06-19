@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkLlama,
   ...
 }:
 
@@ -15,14 +16,10 @@
     sandbox.enable = true;
     ai = {
       enable = true;
-      llama-cpp = {
-        enable = true;
-        # context = 32768;
-        context = 65536;
-      };
       pi = {
         enable = true;
         execModel = "llama";
+        localContext = 32768;
       };
     };
     linux.enable = true;
@@ -44,6 +41,15 @@
       aseprite
       prismlauncher
       ares
+
+      (mkLlama {
+        name = "qwen3.5";
+        model = pkgs.fetchurl {
+          url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-UD-Q3_K_XL.gguf";
+          hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
+        };
+        context = 32768;
+      })
     ];
 
     username = "sprrw";

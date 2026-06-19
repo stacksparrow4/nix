@@ -30,6 +30,10 @@
       });
       default = [ ];
     };
+
+    localContext = lib.mkOption {
+      type = lib.types.int;
+    };
   };
 
   config =
