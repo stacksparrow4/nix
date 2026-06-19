@@ -29,7 +29,7 @@ struct Args {
     // Sandbox arguments
     /// Pass options directly to the sandbox
     #[arg(long)]
-    additional_sandbox_args: Vec<String>,
+    additional_sandbox_args: Option<String>,
 
     // TODO: add specific passthroughs for common options such as --cwd, --vm, --no-network
 
@@ -135,7 +135,7 @@ fn main() {
             // TODO: auth.json if network is enabled, unix socket mounting if network is disabled
             // TODO: share brave search config if brave search is enabled
         ])
-        .args(args.additional_sandbox_args)
+        .args(args.additional_sandbox_args) // TODO: FIX
         .args([
             "--downgrade-term",
             "--ro-git", // TODO: only use with --cwd
