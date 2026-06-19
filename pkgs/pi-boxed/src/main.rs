@@ -27,11 +27,21 @@ struct Args {
     print: bool,
 
     // Sandbox arguments
+    /// Share CWD
+    #[arg(short, long)]
+    cwd: bool,
+
+    /// Use VM
+    #[arg(short, long)]
+    vm: bool,
+
+    /// Disable network
+    #[arg(short, long)]
+    no_network: bool,
+
     /// Pass options directly to the sandbox
     #[arg(long)]
     additional_sandbox_args: Option<String>,
-
-    // TODO: add specific passthroughs for common options such as --cwd, --vm, --no-network
 
     // Specific args
     /// Extensions to enable
@@ -50,28 +60,18 @@ struct Args {
     args: Vec<String>,
 }
 
-fn get_pi_agent_dir() -> String {
-    format!(
-        "{}/.pi/agent",
-        env::home_dir()
-            .expect("Could not find home directory")
-            .to_string_lossy()
-    )
-}
-
-const BOX_PI_AGENT_DIR: &str = "/home/sprrw/.pi/agent";
-
 enum VolType {
     File,
     Dir,
 }
 
-fn generate_pi_volume(host_path: &str, box_path: &str, t: VolType) -> String {
+fn generate_home_volume(host_path: &str, box_path: &str, t: VolType) -> String {
     format!(
-        "{}/{}:{}/{}:ro:{}",
-        get_pi_agent_dir(),
+        "{}/{}:/home/sprrw/{}:ro:{}",
+        env::home_dir()
+            .expect("Could not find home directory")
+            .to_string_lossy(),
         host_path,
-        BOX_PI_AGENT_DIR,
         box_path,
         match t {
             VolType::File => "file",
@@ -80,12 +80,29 @@ fn generate_pi_volume(host_path: &str, box_path: &str, t: VolType) -> String {
     )
 }
 
-fn generate_mirror_volume(fname: &str, t: VolType) -> String {
+fn generate_pi_volume(host_path: &str, box_path: &str, t: VolType) -> String {
+    generate_home_volume(
+        &format!(".pi/agent/{}", host_path),
+        &format!(".pi/agent/{}", box_path),
+        t,
+    )
+}
+
+fn generate_home_mirror_volume(fname: &str, t: VolType) -> String {
+    generate_home_volume(fname, fname, t)
+}
+
+fn generate_pi_mirror_volume(fname: &str, t: VolType) -> String {
     generate_pi_volume(fname, fname, t)
 }
 
 fn main() {
     let args = Args::parse();
+
+    assert!(
+        !(args.brave_search && args.no_network),
+        "Cannot have --no-network and --brave-search"
+    );
 
     let all_extensions: Vec<String> = args
         .extensions
@@ -125,20 +142,36 @@ fn main() {
 
     let status = Command::new("sandbox")
         .args([
-            generate_mirror_volume("settings.json", VolType::File),
-            generate_mirror_volume("models.json", VolType::File),
-            generate_mirror_volume("sessions", VolType::Dir),
-            generate_mirror_volume("skills", VolType::Dir),
-            generate_mirror_volume("extensions", VolType::Dir),
+            generate_pi_mirror_volume("settings.json", VolType::File),
+            generate_pi_mirror_volume("models.json", VolType::File),
+            generate_pi_mirror_volume("sessions", VolType::Dir),
+            generate_pi_mirror_volume("skills", VolType::Dir),
+            generate_pi_mirror_volume("extensions", VolType::Dir),
             generate_pi_volume(&system, "SYSTEM.md", VolType::File),
-            generate_mirror_volume("auth.json", VolType::File),
-            // TODO: auth.json if network is enabled, unix socket mounting if network is disabled
-            // TODO: share brave search config if brave search is enabled
         ])
-        .args(args.additional_sandbox_args) // TODO: FIX
+        .args(if args.no_network {
+            vec![] // TODO: unix socket mounting if network is disabled
+        } else {
+            vec![generate_pi_mirror_volume("auth.json", VolType::File)]
+        })
+        .args(if args.brave_search {
+            vec![generate_home_mirror_volume(
+                ".config/brave-search",
+                VolType::Dir,
+            )]
+        } else {
+            vec![]
+        })
+        .args(if args.cwd {
+            vec!["--cwd", "--ro-git"]
+        } else {
+            vec![]
+        })
+        .args(args.additional_sandbox_args.map_or(vec![], |a| {
+            shlex::split(&a).expect("Invalid value for additional_sandbox_args")
+        }))
         .args([
             "--downgrade-term",
-            "--ro-git", // TODO: only use with --cwd
             "--",
             "pi",
             "--approve",
@@ -153,7 +186,7 @@ fn main() {
         .args(all_extensions.into_iter().flat_map(|e| {
             vec![
                 "-e".to_string(),
-                format!("{}/extensions/{}", BOX_PI_AGENT_DIR, e),
+                format!("/home/sprrw/.pi/agent/extensions/{}", e),
             ]
         }))
         .args(

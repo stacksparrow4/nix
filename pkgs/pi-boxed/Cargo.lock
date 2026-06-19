@@ -121,6 +121,7 @@ name = "pi-boxed"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "shlex",
 ]
 
 [[package]]
@@ -140,6 +141,12 @@ checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "shlex"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "strsim"
