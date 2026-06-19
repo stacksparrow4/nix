@@ -303,6 +303,14 @@ def main():
             )
         try:
             return_code = proc.wait()
+        except KeyboardInterrupt:
+            # SIGINT was already delivered to the child by the terminal;
+            # just wait for it to exit so we can report its return code.
+            try:
+                return_code = proc.wait()
+            except KeyboardInterrupt:
+                proc.kill()
+                return_code = proc.wait()
         except Exception as e:
             print(e)
             proc.kill()
