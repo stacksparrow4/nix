@@ -2,7 +2,6 @@
   pkgs,
   lib,
   config,
-  mkSandbox,
   ...
 }:
 
@@ -80,15 +79,7 @@
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/extensions";
 
       home.packages = [
-        (
-          let
-            pi-boxed = import ../../../../pkgs/pi-boxed { inherit pkgs; };
-          in
-          pkgs.runCommand "pi-boxed" { } ''
-            mkdir -p "$out/bin"
-            ln -s "${pi-boxed}/bin/pi-boxed" "$out/bin/pi"
-          ''
-        )
+        (import ../../../../pkgs/pi-boxed { inherit pkgs; })
         (
           let
             pi = import ../../../../pkgs/pi { inherit pkgs; };
