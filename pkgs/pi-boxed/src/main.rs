@@ -44,7 +44,11 @@ struct Args {
     additional_sandbox_args: Option<String>,
 
     // Specific args
-    /// Extensions to enable
+    /// Disable extensions by default
+    #[arg(long)]
+    no_extensions: bool,
+
+    /// Specify which extensions to use
     #[arg(short, long)]
     extensions: Option<String>,
 
@@ -106,9 +110,17 @@ fn main() {
 
     let all_extensions: Vec<String> = args
         .extensions
-        .map_or(vec![], |es| {
-            es.split(',').map(|e| e.trim().to_string()).collect()
-        })
+        .map_or(
+            if args.no_extensions {
+                vec![]
+            } else {
+                ["ask-mode.ts", "hide-bash-body.ts"]
+                    .into_iter()
+                    .map(|x| x.to_string())
+                    .collect()
+            },
+            |es| es.split(',').map(|e| e.trim().to_string()).collect(),
+        )
         .into_iter()
         .chain(if args.brave_search {
             Some("brave-search.ts".to_string())
@@ -138,27 +150,34 @@ fn main() {
         })
         .collect();
 
-    let system = args.system.unwrap_or("system-code.md".to_string());
+    let system = args.system.unwrap_or("code".to_string());
 
     let status = Command::new("sandbox")
-        .args([
-            generate_pi_mirror_volume("settings.json", VolType::File),
-            generate_pi_mirror_volume("models.json", VolType::File),
-            generate_pi_mirror_volume("sessions", VolType::Dir),
-            generate_pi_mirror_volume("skills", VolType::Dir),
-            generate_pi_mirror_volume("extensions", VolType::Dir),
-            generate_pi_volume(&system, "SYSTEM.md", VolType::File),
-        ])
+        .args(
+            [
+                generate_pi_mirror_volume("settings.json", VolType::File),
+                generate_pi_mirror_volume("models.json", VolType::File),
+                generate_pi_mirror_volume("sessions", VolType::Dir),
+                generate_pi_mirror_volume("skills", VolType::Dir),
+                generate_pi_mirror_volume("extensions", VolType::Dir),
+                generate_pi_volume(&format!("system/{}.md", system), "SYSTEM.md", VolType::File),
+            ]
+            .into_iter()
+            .flat_map(|x| vec!["-v".to_string(), x]),
+        )
         .args(if args.no_network {
             vec![] // TODO: unix socket mounting if network is disabled
         } else {
-            vec![generate_pi_mirror_volume("auth.json", VolType::File)]
+            vec![
+                "-v".to_string(),
+                generate_pi_mirror_volume("auth.json", VolType::File),
+            ]
         })
         .args(if args.brave_search {
-            vec![generate_home_mirror_volume(
-                ".config/brave-search",
-                VolType::Dir,
-            )]
+            vec![
+                "-v".to_string(),
+                generate_home_mirror_volume(".config/brave-search", VolType::Dir),
+            ]
         } else {
             vec![]
         })
@@ -173,7 +192,7 @@ fn main() {
         .args([
             "--downgrade-term",
             "--",
-            "pi",
+            "pi-unsandboxed",
             "--approve",
             "--no-tools",
             "--no-extensions",
