@@ -1,10 +1,7 @@
-use std::{
-    env,
-    process::{Command, exit},
-};
+use std::{env, process::Command};
 
 use clap::Parser;
-use tempfile::{TempDir, tempdir};
+use tempfile::tempdir;
 
 /// Pi sandbox wrapper. For Pi help, use pi -- --help
 #[derive(Parser, Debug)]
@@ -163,37 +160,36 @@ fn main() {
 
     let system = args.system.unwrap_or("code".to_string());
 
-    let (socat_info, in_sandbox_shell_prefix, network_args) =
-        if let Some(socat_arg) = args.local {
-            let socat_tmp_dir = tempdir().expect("Failed to create temporary socat dir");
+    let (socat_info, in_sandbox_shell_prefix, network_args) = if let Some(socat_arg) = args.local {
+        let socat_tmp_dir = tempdir().expect("Failed to create temporary socat dir");
 
-            let socat_tmp_dir_str = socat_tmp_dir.path().to_string_lossy().to_string();
+        let socat_tmp_dir_str = socat_tmp_dir.path().to_string_lossy().to_string();
 
-            let socat = Command::new("socat")
-                .arg(format!("UNIX-LISTEN:{}/llama.sock,fork", socat_tmp_dir_str))
-                .arg(socat_arg)
-                .spawn()
-                .expect("Failed to start socat");
+        let socat = Command::new("socat")
+            .arg(format!("UNIX-LISTEN:{}/llama.sock,fork", socat_tmp_dir_str))
+            .arg(socat_arg)
+            .spawn()
+            .expect("Failed to start socat");
 
-            (
-                Some((socat_tmp_dir, socat)),
-                "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock & ",
-                vec![
-                    "--no-network".to_string(),
-                    "-v".to_string(),
-                    format!("{}:/tmp/llama:ro:dir", socat_tmp_dir_str),
-                ],
-            )
-        } else {
-            (
-                None,
-                "",
-                vec![
-                    "-v".to_string(),
-                    generate_pi_mirror_volume("auth.json", VolAccess::RW, VolType::File),
-                ],
-            )
-        };
+        (
+            Some((socat_tmp_dir, socat)),
+            "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock & ",
+            vec![
+                "--no-network".to_string(),
+                "-v".to_string(),
+                format!("{}:/tmp/llama:ro:dir", socat_tmp_dir_str),
+            ],
+        )
+    } else {
+        (
+            None,
+            "",
+            vec![
+                "-v".to_string(),
+                generate_pi_mirror_volume("auth.json", VolAccess::RW, VolType::File),
+            ],
+        )
+    };
 
     let pi_cmd: Vec<String> = [
         "pi-unsandboxed",
