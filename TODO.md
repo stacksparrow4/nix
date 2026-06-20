@@ -1,7 +1,6 @@
+- Split out aliases into nix code rather than all in one file
 - More generalised method for IPC between sandbox and outside world
     - Figure out how to make pi -p work inside of Vim
-- Pi takes arguments (rather than pi, pi-chat, pi-exec, etc)
-    - Write this tool and rewrite sandbox tool in Rust
 - Use real overlayfs. The python one is just as buggy
 - Windows VMs generated automatically using unattend.xml
 - Podman runs inside box

@@ -8,5 +8,5 @@ pkgs.rustPlatform.buildRustPackage (finalAttrs: {
 
   src = ./.;
 
-  cargoHash = "sha256-A6Kbsze8cTzVoqX1jdO0jmW2tBN5qlurhgDS1lX599M=";
+  cargoHash = "sha256-DSAts9YU047FobitsDcHvbQ9cy00n/DTedZmduRRxEs=";
 })

@@ -23,8 +23,8 @@ alias box='sandbox'
 alias b='sandbox'
 alias bc='sandbox --cwd'
 
-alias pi='pi-boxed --cwd --brave-search'
-alias pi-chat='pi-boxed --brave-search'
+alias pi='pi-boxed --brave-search'
+alias pi-local='pi-boxed --local TCP:localhost:8033'
 
 function take() {
   if [[ $# -ne 1 ]]; then
