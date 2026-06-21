@@ -11,6 +11,7 @@ vim.lsp.enable("ts_ls")
 vim.lsp.config.rust_analyzer = {
   settings = {
     ['rust-analyzer'] = {
+      -- TODO: why does formatting seem to break
       check = {
         command = "clippy",
       },

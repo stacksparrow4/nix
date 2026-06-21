@@ -87,6 +87,7 @@
             Provide only PowerShell commands in plain text, without any markdown formatting. If there is a lack of details, provide most logical solution.
           '';
         })
+        (import ./pi-remote.nix { inherit pkgs; })
       ];
 
       # home.packages =

@@ -1,9 +1,9 @@
 {
   pkgs,
-  config,
-  mkSandbox,
-  extraModels,
-  defaultExtensions,
+  # config,
+  # mkSandbox,
+  # extraModels,
+  # defaultExtensions,
 }:
 
 let
@@ -20,32 +20,33 @@ let
       install -D $src $out/bin/pi-remote
     '';
   };
-  pi-remote-sandbox = import ./pi-sandbox.nix {
-    inherit
-      pkgs
-      config
-      mkSandbox
-      extraModels
-      ;
-    name = "pi-remote-sandbox";
-    system = "system-remote.md";
-    tools = [ "command" ];
-    extensions = defaultExtensions ++ [ "pi-remote.ts" ];
-    braveSearch = true;
-    network = true;
-    extraMounts = [
-      {
-        hostPath = "$PIPEDIR";
-        boxPath = "/tmp/pi-remote";
-        type = "dir";
-        ro = true;
-      }
-    ];
-  };
+  # pi-remote-sandbox = import ./pi-sandbox.nix {
+  #   inherit
+  #     pkgs
+  #     config
+  #     mkSandbox
+  #     extraModels
+  #     ;
+  #   name = "pi-remote-sandbox";
+  #   system = "system-remote.md";
+  #   tools = [ "command" ];
+  #   extensions = defaultExtensions ++ [ "pi-remote.ts" ];
+  #   braveSearch = true;
+  #   network = true;
+  #   extraMounts = [
+  #     {
+  #       hostPath = "$PIPEDIR";
+  #       boxPath = "/tmp/pi-remote";
+  #       type = "dir";
+  #       ro = true;
+  #     }
+  #   ];
+  # };
 in
-pkgs.writeShellApplication {
-  name = "pi-remote";
-  text = ''
-    ${pi-remote-script}/bin/pi-remote ${pi-remote-sandbox}/bin/pi-remote-sandbox "$@"
-  '';
-}
+  pi-remote-script
+# pkgs.writeShellApplication {
+#   name = "pi-remote";
+#   text = ''
+#     ${pi-remote-script}/bin/pi-remote ${pi-remote-sandbox}/bin/pi-remote-sandbox "$@"
+#   '';
+# }

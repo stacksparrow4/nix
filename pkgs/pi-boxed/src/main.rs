@@ -112,11 +112,14 @@ const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash"];
 fn main() {
     let args = Args::parse();
 
-    let brave_search = args.no_brave_search || args.local.is_some();
+    let brave_search = !(args.no_brave_search || args.local.is_some());
 
-    let all_extensions: Vec<String> = args
-        .extensions
-        .map_or(
+    let all_extensions: Vec<String> = args.extensions.map_or(
+                vec![],
+                |es| es.split(',').map(|e| e.trim().to_string()).collect(),
+            )
+        .into_iter()
+        .chain(
             if args.no_extensions {
                 vec![]
             } else {
@@ -124,10 +127,8 @@ fn main() {
                     .iter()
                     .map(|x| x.to_string())
                     .collect()
-            },
-            |es| es.split(',').map(|e| e.trim().to_string()).collect(),
+            }
         )
-        .into_iter()
         .chain(if brave_search {
             Some("brave-search.ts".to_string())
         } else {
@@ -135,17 +136,18 @@ fn main() {
         })
         .collect();
 
-    let all_tools: Vec<String> = args
-        .tools
-        .map_or(
+    let all_tools: Vec<String> = args.tools.map_or(
+                vec![],
+                |ts| ts.split(',').map(|t| t.trim().to_string()).collect()
+            )
+        .into_iter()
+        .chain(
             if args.no_tools {
                 vec![]
             } else {
-                DEFAULT_TOOLS.iter().map(|x| x.to_string()).collect()
-            },
-            |ts| ts.split(',').map(|t| t.trim().to_string()).collect(),
+                    DEFAULT_TOOLS.iter().map(|x| x.to_string()).collect()
+            }
         )
-        .into_iter()
         .chain(if brave_search {
             Some("web_search".to_string())
         } else {

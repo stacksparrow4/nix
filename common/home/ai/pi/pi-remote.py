@@ -14,6 +14,14 @@ import threading
 import traceback
 
 CMD_PLACEHOLDER = "<CMD>"
+SYSTEM_PROMPT = """
+You are an expert coding assistant operating inside a coding agent harness.
+
+Guidelines:
+- The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell
+- Be concise in your responses
+- Show file paths clearly when working with files
+""".strip()
 
 
 def send(conn, obj):
@@ -119,7 +127,7 @@ def serve(socket_path, template):
         try:
             handle_connection(conn, template)
         except Exception as e:
-            print(''.join(traceback.format_exception(type(e), e, e.__traceback__)))
+            print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
             try:
                 conn.close()
             except:
@@ -127,15 +135,18 @@ def serve(socket_path, template):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 2:
         # Note: the second argument is internal with nix and not shown to the user
-        print(f"Docker example: pi-remote 'docker exec container sh -c {CMD_PLACEHOLDER}'")
+        print(
+            f"Docker example: pi-remote 'docker exec container sh -c {CMD_PLACEHOLDER}'"
+        )
         print(f"SSH example: pi-remote 'echo {CMD_PLACEHOLDER} | ssh user@target'")
-        print(f"Box SSH example: pi-remote 'echo {CMD_PLACEHOLDER} | sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost -p port'")
+        print(
+            f"Box SSH example: pi-remote 'echo {CMD_PLACEHOLDER} | sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost -p port'"
+        )
         exit(1)
 
-    sandbox_path = sys.argv[1]
-    template = sys.argv[2]
+    template = sys.argv[1]
 
     if CMD_PLACEHOLDER not in template:
         print(f"error: template must contain {CMD_PLACEHOLDER}", file=sys.stderr)
@@ -149,6 +160,17 @@ if __name__ == "__main__":
         )
         server_thread.start()
 
-        env = os.environ.copy()
-        env["PIPEDIR"] = sock_dir
-        subprocess.run([sandbox_path], env=env)
+        _ = subprocess.run(
+            [
+                "pi",
+                "--system",
+                SYSTEM_PROMPT,
+                "--no-tools",
+                "--tools",
+                "command",
+                "--extensions",
+                "pi-remote.ts",
+                "--additional-sandbox-args",
+                ' ' + shlex.join(["-v", f"{sock_dir}:/tmp/pi-remote:ro:dir"]),
+            ]
+        )
