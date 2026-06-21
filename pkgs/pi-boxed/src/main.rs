@@ -54,9 +54,13 @@ struct Args {
     #[arg(short, long)]
     system: Option<String>,
 
-    /// Enable brave search tool and extension
+    /// Disable brave search tool and extension
     #[arg(short, long)]
-    brave_search: bool,
+    no_brave_search: bool,
+
+    /// Real pi location, used internally by Nix. You shouldn't need to supply this option, it will
+    /// be added automatically
+    internal_real_pi_location: String,
 
     /// Positional arguments for Pi
     args: Vec<String>,
@@ -108,13 +112,13 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
     generate_pi_volume(fname, fname, a, t)
 }
 
+const DEFAULT_EXTENSIONS: &[&'static str] = &["ask-mode.ts", "hide-bash-body.ts"];
+const DEFAULT_TOOLS: &[&'static str] = &["read", "write", "edit", "bash"];
+
 fn main() {
     let args = Args::parse();
 
-    assert!(
-        !(args.brave_search && args.local.is_some()),
-        "Cannot have --no-network and --brave-search"
-    );
+    let brave_search = args.no_brave_search || args.local.is_some();
 
     let all_extensions: Vec<String> = args
         .extensions
@@ -122,7 +126,7 @@ fn main() {
             if args.no_extensions {
                 vec![]
             } else {
-                ["ask-mode.ts", "hide-bash-body.ts"]
+                DEFAULT_EXTENSIONS
                     .into_iter()
                     .map(|x| x.to_string())
                     .collect()
@@ -130,7 +134,7 @@ fn main() {
             |es| es.split(',').map(|e| e.trim().to_string()).collect(),
         )
         .into_iter()
-        .chain(if args.brave_search {
+        .chain(if brave_search {
             Some("brave-search.ts".to_string())
         } else {
             None
@@ -143,15 +147,12 @@ fn main() {
             if args.no_tools {
                 vec![]
             } else {
-                ["read", "write", "edit", "bash"]
-                    .into_iter()
-                    .map(|x| x.to_string())
-                    .collect()
+                DEFAULT_TOOLS.into_iter().map(|x| x.to_string()).collect()
             },
             |ts| ts.split(',').map(|t| t.trim().to_string()).collect(),
         )
         .into_iter()
-        .chain(if args.brave_search {
+        .chain(if brave_search {
             Some("web_search".to_string())
         } else {
             None
@@ -192,7 +193,7 @@ fn main() {
     };
 
     let pi_cmd: Vec<String> = [
-        "pi-unsandboxed",
+        &args.internal_real_pi_location,
         "--approve",
         "--no-tools",
         "--no-extensions",
@@ -239,7 +240,7 @@ fn main() {
             .flat_map(|x| vec!["-v".to_string(), x]),
         )
         .args(network_args)
-        .args(if args.brave_search {
+        .args(if brave_search {
             vec![
                 "-v".to_string(),
                 generate_home_mirror_volume(".config/brave-search", VolAccess::RO, VolType::Dir),

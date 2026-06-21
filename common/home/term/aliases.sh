@@ -23,7 +23,6 @@ alias box='sandbox'
 alias b='sandbox'
 alias bc='sandbox --cwd'
 
-alias pi='pi-boxed --brave-search'
 alias pi-local='pi-boxed --local TCP:localhost:8033'
 
 function take() {

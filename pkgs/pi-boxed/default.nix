@@ -2,11 +2,20 @@
   pkgs ? import <nixpkgs-unstable> { },
 }:
 
-pkgs.rustPlatform.buildRustPackage (finalAttrs: {
-  pname = "pi-boxed";
-  version = "0.1.0";
+let
+  pi-unsandboxed = import ../pi { inherit pkgs; };
+  pi-boxed = pkgs.rustPlatform.buildRustPackage (finalAttrs: {
+    pname = "pi";
+    version = "0.1.0";
 
-  src = ./.;
+    src = ./.;
 
-  cargoHash = "sha256-DSAts9YU047FobitsDcHvbQ9cy00n/DTedZmduRRxEs=";
-})
+    cargoHash = "sha256-+OhzqbPF1slD5SO92WQ1LZYbQ0Hc9qVLlp8d1xnIiSU=";
+  });
+in
+pkgs.writeShellApplication {
+  name = "pi";
+  text = ''
+    ${pi-boxed}/bin/pi ${pi-unsandboxed}/bin/pi "$@"
+  '';
+}

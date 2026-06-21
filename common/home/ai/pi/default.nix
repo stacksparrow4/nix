@@ -40,16 +40,6 @@
   config =
     let
       cfg = config.sprrw.ai.pi;
-      # defaultExtensions = [
-      #   "ask-mode.ts"
-      #   "hide-bash-body.ts"
-      # ];
-      # defaultSandboxOptions = {
-      #   inherit pkgs config mkSandbox;
-      #   extraModels = cfg.extraModels;
-      #   extensions = defaultExtensions;
-      # };
-      # createPiSandbox = import ./pi-sandbox.nix;
     in
     lib.mkIf cfg.enable {
       home.file.".pi/agent/models.json".text = builtins.toJSON {
@@ -80,15 +70,6 @@
 
       home.packages = [
         (import ../../../../pkgs/pi-boxed { inherit pkgs; })
-        (
-          let
-            pi = import ../../../../pkgs/pi { inherit pkgs; };
-          in
-          pkgs.runCommand "pi-unsandboxed" { } ''
-            mkdir -p "$out/bin"
-            ln -s "${pi}/bin/pi" "$out/bin/pi-unsandboxed"
-          ''
-        )
       ];
 
       # home.packages =
