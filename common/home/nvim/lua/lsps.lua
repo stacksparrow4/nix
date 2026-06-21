@@ -11,6 +11,9 @@ vim.lsp.enable("ts_ls")
 vim.lsp.config.rust_analyzer = {
   settings = {
     ['rust-analyzer'] = {
+      check = {
+        command = "clippy",
+      },
       cargo = {
         allFeatures = true,
       },
