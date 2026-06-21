@@ -67,7 +67,26 @@
 
       home.packages = [
         (import ../../../../pkgs/pi-boxed { inherit pkgs; })
-        (import ./pi-convert.nix { inherit pkgs; model = cfg.execModel; })
+        (import ./pi-convert.nix {
+          inherit pkgs;
+          model = cfg.execModel;
+        })
+        (import ./pi-exec.nix {
+          inherit pkgs;
+          name = "pi-exec";
+          model = cfg.execModel;
+          system = ''
+            Provide only bash commands in plain text, without any markdown formatting. If there is a lack of details, provide most logical solution.
+          '';
+        })
+        (import ./pi-exec.nix {
+          inherit pkgs;
+          name = "pi-exec-pwsh";
+          model = cfg.execModel;
+          system = ''
+            Provide only PowerShell commands in plain text, without any markdown formatting. If there is a lack of details, provide most logical solution.
+          '';
+        })
       ];
 
       # home.packages =

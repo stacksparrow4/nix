@@ -1,32 +1,17 @@
 {
   pkgs,
-  config,
-  mkSandbox,
-  extraModels,
   model,
   system,
   name,
 }:
 
 let
-  pi-exec-sandbox = import ./pi-sandbox.nix {
-    inherit
-      pkgs
-      config
-      mkSandbox
-      extraModels
-      system
-      ;
-    name = "pi-exec-sandbox";
-    extensions = [ ];
-    tools = [ ];
-    network = true;
-  };
+  systemFile = pkgs.writeText "exec-system" system;
 in
 pkgs.writeShellApplication {
   inherit name;
   text = ''
-    output=$(${pi-exec-sandbox}/bin/pi-exec-sandbox --model ${model} -p "$@")
+    output=$(pi --system "$(cat ${systemFile})" -p --no-tools --no-extensions -- --model ${model} "$@")
     echo "$output"
     printf "\n\e[33m[e]\e[0m exec  \e[33m[c]\e[0m copy: "
     read -r choice
