@@ -108,8 +108,8 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
     generate_pi_volume(fname, fname, a, t)
 }
 
-const DEFAULT_EXTENSIONS: &[&'static str] = &["ask-mode.ts", "hide-bash-body.ts"];
-const DEFAULT_TOOLS: &[&'static str] = &["read", "write", "edit", "bash"];
+const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "hide-bash-body.ts"];
+const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash"];
 
 fn main() {
     let args = Args::parse();
@@ -123,7 +123,7 @@ fn main() {
                 vec![]
             } else {
                 DEFAULT_EXTENSIONS
-                    .into_iter()
+                    .iter()
                     .map(|x| x.to_string())
                     .collect()
             },
@@ -143,7 +143,7 @@ fn main() {
             if args.no_tools {
                 vec![]
             } else {
-                DEFAULT_TOOLS.into_iter().map(|x| x.to_string()).collect()
+                DEFAULT_TOOLS.iter().map(|x| x.to_string()).collect()
             },
             |ts| ts.split(',').map(|t| t.trim().to_string()).collect(),
         )
@@ -186,7 +186,7 @@ fn main() {
         guidelines.push("Be concise in your responses");
         guidelines.push("Show file paths clearly when working with files");
 
-        s.extend(guidelines.into_iter().map(|g| format!("- {}", g)).collect::<Vec<String>>().join("\n").chars());
+        s.push_str(&guidelines.into_iter().map(|g| format!("- {}", g)).collect::<Vec<String>>().join("\n"));
 
         s
     });
@@ -230,7 +230,7 @@ fn main() {
     ]
     .into_iter()
     .map(|s| s.to_string())
-    .chain(if all_tools.len() == 0 {
+    .chain(if all_tools.is_empty() {
         vec![]
     } else {
         vec!["--tools".to_string(), all_tools.join(",")]
