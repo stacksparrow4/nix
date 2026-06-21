@@ -114,21 +114,17 @@ fn main() {
 
     let brave_search = !(args.no_brave_search || args.local.is_some());
 
-    let all_extensions: Vec<String> = args.extensions.map_or(
-                vec![],
-                |es| es.split(',').map(|e| e.trim().to_string()).collect(),
-            )
+    let all_extensions: Vec<String> = args
+        .extensions
+        .map_or(vec![], |es| {
+            es.split(',').map(|e| e.trim().to_string()).collect()
+        })
         .into_iter()
-        .chain(
-            if args.no_extensions {
-                vec![]
-            } else {
-                DEFAULT_EXTENSIONS
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect()
-            }
-        )
+        .chain(if args.no_extensions {
+            vec![]
+        } else {
+            DEFAULT_EXTENSIONS.iter().map(|x| x.to_string()).collect()
+        })
         .chain(if brave_search {
             Some("brave-search.ts".to_string())
         } else {
@@ -136,18 +132,17 @@ fn main() {
         })
         .collect();
 
-    let all_tools: Vec<String> = args.tools.map_or(
-                vec![],
-                |ts| ts.split(',').map(|t| t.trim().to_string()).collect()
-            )
+    let all_tools: Vec<String> = args
+        .tools
+        .map_or(vec![], |ts| {
+            ts.split(',').map(|t| t.trim().to_string()).collect()
+        })
         .into_iter()
-        .chain(
-            if args.no_tools {
-                vec![]
-            } else {
-                    DEFAULT_TOOLS.iter().map(|x| x.to_string()).collect()
-            }
-        )
+        .chain(if args.no_tools {
+            vec![]
+        } else {
+            DEFAULT_TOOLS.iter().map(|x| x.to_string()).collect()
+        })
         .chain(if brave_search {
             Some("web_search".to_string())
         } else {
@@ -178,7 +173,7 @@ fn main() {
         if all_tools.contains(&"write".to_string()) {
             guidelines.push("Use write only for new files or complete rewrites");
         }
-        
+
         if brave_search {
             guidelines.push("Perform web searches when you are unsure of current information");
         }
