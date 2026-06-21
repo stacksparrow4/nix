@@ -41,7 +41,7 @@ export default function (pi: ExtensionAPI) {
     async execute(_toolCallId, params, signal, _onUpdate, _ctx) {
       let output: string;
       try {
-        const { stdout } = await execFileAsync("bx", ["context", params.query], {
+        const { stdout } = await execFileAsync("bx", ["context", params.query, "--max-tokens", "2048"], {
           signal,
           encoding: "utf-8",
           maxBuffer: 100 * 1024 * 1024,
