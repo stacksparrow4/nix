@@ -18,7 +18,7 @@
       enable = true;
       pi = {
         enable = true;
-        execModel = "llama";
+        execModel = "local";
         localContext = 32768;
       };
     };

@@ -67,6 +67,7 @@
 
       home.packages = [
         (import ../../../../pkgs/pi-boxed { inherit pkgs; })
+        (import ./pi-convert.nix { inherit pkgs; model = cfg.execModel; })
       ];
 
       # home.packages =

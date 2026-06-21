@@ -16,11 +16,9 @@ struct Args {
     #[arg(short, long)]
     tools: Option<String>,
 
-    /// Specify models enabled for Ctrl+P cycling
-    #[arg(short, long)]
-    models: Option<String>,
-
     /// Print mode
+    // This technically does not need pass through however keeping it here for backwards
+    // compatability
     #[arg(short, long)]
     print: bool,
 
@@ -230,6 +228,11 @@ fn main() {
     ]
     .into_iter()
     .map(|s| s.to_string())
+    .chain(if args.print {
+        vec!["-p".to_string()]
+    } else {
+        vec![]
+    })
     .chain(if all_tools.is_empty() {
         vec![]
     } else {
@@ -241,10 +244,6 @@ fn main() {
             format!("/home/sprrw/.pi/agent/extensions/{}", e),
         ]
     }))
-    .chain(
-        args.models
-            .map_or(vec![], |m| vec!["--models".to_string(), m]),
-    )
     .chain(vec!["--system-prompt".to_string(), system])
     .chain(args.args)
     .collect();
