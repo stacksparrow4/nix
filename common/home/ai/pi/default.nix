@@ -59,9 +59,6 @@
         // cfg.extraModels;
       };
 
-      home.file.".pi/agent/system".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/system";
-
       home.file.".pi/agent/skills".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/skills";
 

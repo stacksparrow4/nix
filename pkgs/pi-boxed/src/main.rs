@@ -29,10 +29,6 @@ struct Args {
     #[arg(short, long)]
     cwd: bool,
 
-    /// Use VM
-    #[arg(short, long)]
-    vm: bool,
-
     /// Disable network, and specify a SOCAT target for the LLM connection
     #[arg(short, long)]
     local: Option<String>,
@@ -50,7 +46,7 @@ struct Args {
     #[arg(short, long)]
     extensions: Option<String>,
 
-    /// System prompt file name to use
+    /// Custom system prompt
     #[arg(short, long)]
     system: Option<String>,
 
@@ -159,7 +155,41 @@ fn main() {
         })
         .collect();
 
-    let system = args.system.unwrap_or("code".to_string());
+    let system = args.system.unwrap_or_else(|| {
+        let mut s = "You are a helpful coding assistant.\n\nGuidelines:\n".to_string();
+
+        let mut guidelines = vec![];
+
+        if all_tools.contains(&"bash".to_string()) {
+            guidelines.push("Use bash for file operations like ls, rg, find");
+        }
+
+        if all_tools.contains(&"read".to_string()) {
+            guidelines.push("Use read to examine files instead of cat or sed.");
+        }
+
+        if all_tools.contains(&"edit".to_string()) {
+            guidelines.push("Use edit for precise changes (edits[].oldText must match exactly)");
+            guidelines.push("When changing multiple separate locations in one file, use one edit call with multiple entries in edits[] instead of multiple edit calls");
+            guidelines.push("Each edits[].oldText is matched against the original file, not after earlier edits are applied. Do not emit overlapping or nested edits. Merge nearby changes into one edit");
+            guidelines.push("Keep edits[].oldText as small as possible while still being unique in the file. Do not pad with large unchanged regions");
+        }
+
+        if all_tools.contains(&"write".to_string()) {
+            guidelines.push("Use write only for new files or complete rewrites");
+        }
+        
+        if brave_search {
+            guidelines.push("Perform web searches when you are unsure of current information");
+        }
+
+        guidelines.push("Be concise in your responses");
+        guidelines.push("Show file paths clearly when working with files");
+
+        s.extend(guidelines.into_iter().map(|g| format!("- {}", g)).collect::<Vec<String>>().join("\n").chars());
+
+        s
+    });
 
     let (socat_info, in_sandbox_shell_prefix, network_args) = if let Some(socat_arg) = args.local {
         let socat_tmp_dir = tempdir().expect("Failed to create temporary socat dir");
@@ -215,6 +245,7 @@ fn main() {
         args.models
             .map_or(vec![], |m| vec!["--models".to_string(), m]),
     )
+    .chain(vec!["--system-prompt".to_string(), system])
     .chain(args.args)
     .collect();
 
@@ -229,12 +260,6 @@ fn main() {
                 generate_pi_mirror_volume("sessions", VolAccess::RW, VolType::Dir),
                 generate_pi_mirror_volume("skills", VolAccess::RO, VolType::Dir),
                 generate_pi_mirror_volume("extensions", VolAccess::RO, VolType::Dir),
-                generate_pi_volume(
-                    &format!("system/{}.md", system),
-                    "SYSTEM.md",
-                    VolAccess::RO,
-                    VolType::File,
-                ),
             ]
             .into_iter()
             .flat_map(|x| vec!["-v".to_string(), x]),
