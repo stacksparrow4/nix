@@ -1,4 +1,4 @@
-use std::{env, process::Command};
+use std::{env, process::{Command, Stdio}};
 
 use clap::Parser;
 use tempfile::tempdir;
@@ -199,12 +199,14 @@ fn main() {
             let socat = Command::new("socat")
                 .arg(format!("UNIX-LISTEN:{}/llama.sock,fork", socat_tmp_dir_str))
                 .arg(socat_arg)
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
                 .spawn()
                 .expect("Failed to start socat");
 
             (
                 Some((socat_tmp_dir, socat)),
-                "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock & ",
+                "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock &>/dev/null & ",
                 vec![
                     "--no-network".to_string(),
                     "-v".to_string(),
