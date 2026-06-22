@@ -18,20 +18,6 @@
       type = lib.types.str;
     };
 
-    networkLocalModels = lib.mkOption {
-      type = lib.types.listOf (
-        lib.types.submodule {
-          options = {
-            pname = lib.mkOption { type = lib.types.str; };
-            host = lib.mkOption { type = lib.types.str; };
-            model = lib.mkOption { type = lib.types.str; };
-            context = lib.mkOption { type = lib.types.int; };
-          };
-        }
-      );
-      default = [ ];
-    };
-
     localContext = lib.mkOption {
       type = lib.types.int;
     };

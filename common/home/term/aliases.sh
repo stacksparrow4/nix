@@ -23,7 +23,7 @@ alias box='sandbox'
 alias b='sandbox'
 alias bc='sandbox --cwd'
 
-alias pi-local='pi --local TCP:localhost:8033'
+alias pi-local='pi --local TCP:localhost:8033 --models local'
 
 function take() {
   if [[ $# -ne 1 ]]; then
