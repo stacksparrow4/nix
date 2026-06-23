@@ -41,7 +41,10 @@ struct Interaction {
     raw_request: Option<String>,
     #[serde(default)]
     timestamp: Option<String>,
-    // Note: `raw-response`, `remote-address`, etc. are intentionally ignored.
+    #[serde(default)]
+    #[serde(rename = "remote-address")]
+    remote_address: Option<String>,
+    // Note: `raw-response` etc. are intentionally ignored.
 }
 
 /// The interactsh binary. Always called `interactsh` and resolved via PATH.
@@ -204,6 +207,13 @@ fn print_interaction(i: &Interaction, domain_suffix: Option<&str>) {
     let when = fmt_time(&i.timestamp);
     let stamp = colorize_timestamp(&when);
 
+    // Source IP (the "from" address shown by the normal interactsh client).
+    let src = i
+        .remote_address
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .unwrap_or("<unknown>");
+
     let is_http = i.protocol.eq_ignore_ascii_case("http")
         || i.protocol.eq_ignore_ascii_case("https");
 
@@ -215,14 +225,14 @@ fn print_interaction(i: &Interaction, domain_suffix: Option<&str>) {
     // Header line: time, type (with DNS query type inline), generated URL.
     if !is_http {
         if let Some(qt) = i.q_type.as_deref().filter(|q| !q.is_empty()) {
-            println!("{stamp} {GREY}{proto} ({qt}) {host}{RESET}");
+            println!("{stamp} {GREY}{proto} ({qt}) (from {src}) {host}{RESET}");
             return;
         }
         // Non-HTTP, non-DNS (or DNS without a query type): grey the rest too.
-        println!("{stamp} {GREY}{proto} {host}{RESET}");
+        println!("{stamp} {GREY}{proto} (from {src}) {host}{RESET}");
         return;
     }
-    println!("{stamp} {ORANGE}{proto}{RESET} {host}");
+    println!("{stamp} {ORANGE}{proto}{RESET} (from {src}) {host}");
 
     // For HTTP/HTTPS interactions, show the full raw request (never response).
     if is_http {
