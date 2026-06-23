@@ -41,6 +41,20 @@
         ];
         network = true;
       })
+
+      (mkSandbox {
+        name = "oob";
+        prog = "${import ../../../pkgs/oob { inherit pkgs; }}/bin/oob";
+        sharedPaths = [
+          {
+            hostPath = "$HOME/.config/interactsh-client/config.yaml";
+            boxPath = "/home/sprrw/.config/interactsh-client/config.yaml";
+            ro = true;
+            type = "file";
+          }
+        ];
+        network = true;
+      })
     ];
   };
 }
