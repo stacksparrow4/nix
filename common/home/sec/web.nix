@@ -31,7 +31,14 @@
       (mkSandbox {
         name = "interactsh";
         prog = "${interactsh}/bin/interactsh-client";
-        shareCwd = true;
+        sharedPaths = [
+          {
+            hostPath = "$HOME/.config/interactsh-client/config.yaml";
+            boxPath = "/home/sprrw/.config/interactsh-client/config.yaml";
+            ro = true;
+            type = "file";
+          }
+        ];
         network = true;
       })
     ];

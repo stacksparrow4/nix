@@ -19,9 +19,11 @@ builtins.listToAttrs (
       "pi-coding-agent"
       "brave-search-cli"
       "lmms-full"
-      "interactsh"
     ]
 )
+// {
+  interactsh = import ./pkgs/interactsh { pkgs = pkgsUnstable; };
+}
 // (
   let
     asepritePkgs =
