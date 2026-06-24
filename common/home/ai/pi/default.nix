@@ -62,13 +62,14 @@
           name = "pi-exec";
           model = cfg.execModel;
           system = ''
-            Provide a bash command in plain text, without any markdown formatting. Do not provide any description, only the command. If there is a lack of details, provide most logical solution.
+            Provide a bash command in plain text. Do not provide any description. Do not provide code block formatting. Only output the command. If there is a lack of details, provide most logical solution.
           '';
         })
         (import ./pi-exec.nix {
           inherit pkgs;
           name = "pi-exec-pwsh";
           model = cfg.execModel;
+          # TODO: fix
           system = ''
             Provide a PowerShell command in plain text, without any markdown formatting. Do not provide any description, only the command. If there is a lack of details, provide most logical solution.
           '';
