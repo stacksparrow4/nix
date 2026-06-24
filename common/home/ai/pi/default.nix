@@ -62,7 +62,7 @@
           name = "pi-exec";
           model = cfg.execModel;
           system = ''
-            Provide only bash commands in plain text, without any markdown formatting. If there is a lack of details, provide most logical solution.
+            Provide a bash command in plain text, without any markdown formatting. Do not provide any description, only the command. If there is a lack of details, provide most logical solution.
           '';
         })
         (import ./pi-exec.nix {
@@ -70,91 +70,10 @@
           name = "pi-exec-pwsh";
           model = cfg.execModel;
           system = ''
-            Provide only PowerShell commands in plain text, without any markdown formatting. If there is a lack of details, provide most logical solution.
+            Provide a PowerShell command in plain text, without any markdown formatting. Do not provide any description, only the command. If there is a lack of details, provide most logical solution.
           '';
         })
         (import ./pi-remote.nix { inherit pkgs; })
       ];
-
-      # home.packages =
-      #   (builtins.map (opts: createPiSandbox (defaultSandboxOptions // opts)) (
-      #     [
-      #       {
-      #         name = "pi";
-      #         system = "system-code.md";
-      #         braveSearch = true;
-      #         shareCwd = true;
-      #         network = true;
-      #       }
-      #       {
-      #         name = "pi-chat";
-      #         system = "system-chat.md";
-      #         braveSearch = true;
-      #         network = true;
-      #       }
-      #       {
-      #         name = "pi-tmp";
-      #         system = "system-code.md";
-      #         braveSearch = true;
-      #         network = true;
-      #       }
-      #       {
-      #         name = "pi-local";
-      #         system = "system-local.md";
-      #         shareCwd = true;
-      #         network = false;
-      #       }
-      #     ]
-      #     ++ (builtins.map (hostForward: {
-      #       name = hostForward.pname;
-      #       system = "system-local.md";
-      #       shareCwd = true;
-      #       network = false;
-      #       inherit hostForward;
-      #     }) cfg.networkLocalModels)
-      #   ))
-      #   ++ [
-      #     (import ./pi-remote.nix {
-      #       inherit
-      #         pkgs
-      #         config
-      #         mkSandbox
-      #         defaultExtensions
-      #         ;
-      #       extraModels = cfg.extraModels;
-      #     })
-      #     (import ./pi-exec.nix {
-      #       inherit
-      #         pkgs
-      #         config
-      #         mkSandbox
-      #         ;
-      #       name = "pi-exec";
-      #       extraModels = cfg.extraModels;
-      #       model = cfg.execModel;
-      #       system = "system-exec.md";
-      #     })
-      #     (import ./pi-exec.nix {
-      #       inherit
-      #         pkgs
-      #         config
-      #         mkSandbox
-      #         ;
-      #       name = "pi-exec-pwsh";
-      #       extraModels = cfg.extraModels;
-      #       model = cfg.execModel;
-      #       system = "system-exec-pwsh.md";
-      #     })
-      #     (import ./pi-convert.nix {
-      #       inherit
-      #         pkgs
-      #         config
-      #         mkSandbox
-      #         ;
-      #       name = "pi-convert";
-      #       extraModels = cfg.extraModels;
-      #       model = cfg.execModel;
-      #     })
-      #   ];
     };
 }

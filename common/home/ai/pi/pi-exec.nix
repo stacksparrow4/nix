@@ -11,7 +11,7 @@ in
 pkgs.writeShellApplication {
   inherit name;
   text = ''
-    output=$(pi --system "$(cat ${systemFile})" -p --no-tools --no-extensions -- --model ${model} "$@")
+    output=$(pi --system "$(cat ${systemFile})" -p --no-tools --no-extensions -- --model ${model} --thinking off "$@" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     echo "$output"
     printf "\n\e[33m[e]\e[0m exec  \e[33m[c]\e[0m copy: "
     read -r choice

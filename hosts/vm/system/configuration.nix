@@ -7,6 +7,8 @@
 {
   imports = [ ../../../common/system ];
 
+  image.modules.iso.isoImage.squashfsCompression = null;
+
   sprrw.headless = true;
   boot.loader.timeout = lib.mkForce 1;
 
