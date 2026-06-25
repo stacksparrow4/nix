@@ -105,11 +105,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781741516,
-        "narHash": "sha256-aO/+rqCsQmMWbjaIQySezQbwGTLNggJzeJUsNykbp8k=",
+        "lastModified": 1782349033,
+        "narHash": "sha256-El8C+iwcDCZ02QN8237z+AdDg2QGoG5JXa6B1cAHPxo=",
         "owner": "stacksparrow4",
         "repo": "pwnproxy",
-        "rev": "0e91315a4992b85d8894403e2d89ac40591c3e52",
+        "rev": "ef07636e4f117382c2492db356b5f66748a8b6b1",
         "type": "github"
       },
       "original": {
