@@ -9,6 +9,7 @@
       name,
       model,
       context,
+      reasoning ? true,
     }:
     pkgs.writeShellApplication {
       inherit name;
@@ -31,6 +32,7 @@
           -m /model.gguf \
           --no-warmup -ngld all \
           --host /tmp/llama-cpp/llama.sock \
+          --reasoning ${if reasoning then "on" else "off"} \
           -c ${builtins.toString context} \
           "$@"
       '';
