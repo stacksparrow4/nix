@@ -58,7 +58,6 @@ in
           tokyonight-nvim
           nvim-lspconfig
           nvim-treesitter
-          nvim-treesitter-textobjects
           nvim-web-devicons
           plenary-nvim
           snacks-nvim
