@@ -13,6 +13,7 @@
     ./sandboxing.nix
     ./general.nix
     ./misc.nix
+    ./payloads.nix
   ];
 
   options = {
