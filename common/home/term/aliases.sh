@@ -85,7 +85,7 @@ function ns-unstable() {
 
 function pkgsrc() { pos=$(nix-instantiate --json --eval -E '(import <nixpkgs> {}).'"$1"'.meta.position' | jq -r .); fname=$(echo "$pos" | cut -d: -f1); fpos=$(echo "$pos" | cut -d: -f2); vim +"$fpos" "$fname"; }
 
-alias nss='nix-search --channel=25.11 -d -m 3'
+alias nss='nix-search --channel=26.05 -d -m 3'
 alias nss-unstable='nix-search --channel=unstable -d -m 3'
 
 export UV_LINK_MODE=symlink

@@ -15,53 +15,54 @@
     home.packages = with pkgs; [
       (rizin.withPlugins (plugins: with plugins; [ rz-ghidra ]))
 
-      (
-        let
-          webcrack = stdenv.mkDerivation (finalAttrs: {
-            pname = "webcrack";
-            version = "2.15.1";
+      # TODO: Fix for latest nixpkgs
+      # (
+      #   let
+      #     webcrack = stdenv.mkDerivation (finalAttrs: {
+      #       pname = "webcrack";
+      #       version = "2.15.1";
 
-            src = fetchFromGitHub {
-              owner = "j4k0xb";
-              repo = "webcrack";
-              rev = "32cbd0604af9ba4930f4594cdcfea799d6cf1e81";
-              hash = "sha256-1tsVu/uXtX6p+ZhwKiJoa6AoXIBdeK0XcMYcHGaScRU=";
-            };
+      #       src = fetchFromGitHub {
+      #         owner = "j4k0xb";
+      #         repo = "webcrack";
+      #         rev = "32cbd0604af9ba4930f4594cdcfea799d6cf1e81";
+      #         hash = "sha256-1tsVu/uXtX6p+ZhwKiJoa6AoXIBdeK0XcMYcHGaScRU=";
+      #       };
 
-            buildPhase = ''
-              (cd packages/webcrack && pnpm run build)
-              mv packages/webcrack/dist/cli.js packages/webcrack/dist/webcrack.js
-            '';
+      #       buildPhase = ''
+      #         (cd packages/webcrack && pnpm run build)
+      #         mv packages/webcrack/dist/cli.js packages/webcrack/dist/webcrack.js
+      #       '';
 
-            installPhase = ''
-              mkdir -p "$out/bin"
+      #       installPhase = ''
+      #         mkdir -p "$out/bin"
 
-              cp -r . "$out/src"
+      #         cp -r . "$out/src"
 
-              echo '#!${stdenv.shell}' > "$out/bin/webcrack"
-              echo "${nodejs}/bin/node '$out/src/packages/webcrack/dist/webcrack.js'"' "$@"' >> "$out/bin/webcrack"
-              chmod +x "$out/bin/webcrack"
-            '';
+      #         echo '#!${stdenv.shell}' > "$out/bin/webcrack"
+      #         echo "${nodejs}/bin/node '$out/src/packages/webcrack/dist/webcrack.js'"' "$@"' >> "$out/bin/webcrack"
+      #         chmod +x "$out/bin/webcrack"
+      #       '';
 
-            nativeBuildInputs = [
-              nodejs
-              pnpmConfigHook
-              pnpm
-            ];
+      #       nativeBuildInputs = [
+      #         nodejs
+      #         pnpmConfigHook
+      #         pnpm
+      #       ];
 
-            pnpmDeps = fetchPnpmDeps {
-              inherit (finalAttrs) pname version src;
-              fetcherVersion = 3;
-              hash = "sha256-y/WcTs5zChyGTQaSqzvGwBXPr5TOoLQwmY4Ge/gCW6g=";
-            };
-          });
-        in
-        mkSandbox {
-          name = "webcrack";
-          shareCwd = true;
-          prog = "${webcrack}/bin/webcrack";
-        }
-      )
+      #       pnpmDeps = fetchPnpmDeps {
+      #         inherit (finalAttrs) pname version src;
+      #         fetcherVersion = 3;
+      #         hash = "sha256-y/WcTs5zChyGTQaSqzvGwBXPr5TOoLQwmY4Ge/gCW6g=";
+      #       };
+      #     });
+      #   in
+      #   mkSandbox {
+      #     name = "webcrack";
+      #     shareCwd = true;
+      #     prog = "${webcrack}/bin/webcrack";
+      #   }
+      # )
     ];
   };
 }

@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }:
 
@@ -16,10 +17,13 @@
       man-pages-posix
       netcat-openbsd
       lsof
-      neofetch
       traceroute
       bubblewrap
 
+      (mkSandbox {
+        name = "neofetch";
+        prog = "${fastfetch}/bin/fastfetch";
+      })
       (pkgs.writeShellScriptBin "proxychains" ''
         ${pkgs.proxychains-ng}/bin/proxychains4 -q "$@"
       '')
