@@ -98,7 +98,7 @@ in
           ruby
         ]);
 
-      extraLuaConfig = ''
+      initLua = ''
         require("config")
 
         require("lazy").setup({
