@@ -39,7 +39,6 @@
         network = true;
         prog = "${pkgs.freerdp}/bin/wlfreerdp";
       })
-      xfce.thunar
       (mkSandbox {
         name = "grim";
         wayland = true;

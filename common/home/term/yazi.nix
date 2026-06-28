@@ -10,6 +10,8 @@
   config = lib.mkIf config.sprrw.term.yazi.enable {
     programs.yazi = {
       enable = true;
+      shellWrapperName = "y";
+
       settings = {
         opener = {
           viewimg = [
@@ -47,11 +49,11 @@
             use = "viewvid";
           }
           {
-            name = "*.docx";
+            url = "*.docx";
             use = "xdgopen";
           }
           {
-            name = "*.odt";
+            url = "*.odt";
             use = "xdgopen";
           }
         ];

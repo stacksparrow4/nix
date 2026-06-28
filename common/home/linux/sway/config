@@ -34,7 +34,7 @@ bindsym $mod+Shift+e exec grim -g "$(slurp)" - | swappy -f -
 bindsym $mod+Shift+s exec grim -g "$(slurp)" - | wl-copy
 bindsym Print exec grim -o "$(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .name')" - | swappy -f -
 
-bindsym $mod+Shift+f exec thunar
+bindsym $mod+Shift+f exec foot yazi
 
 bindsym $mod+d exec "rofi -modi drun,run -show drun -show-icons"
 bindsym $mod+e exec "emoji-picker"
