@@ -6,7 +6,7 @@
     "disk",
     "cpu",
     "memory",
-    "pulseaudio",
+    "wireplumber",
     "battery",
     "clock"
   ],
@@ -18,12 +18,10 @@
     "format-icons": ["", "", "", "", ""]
   },
 
-  "pulseaudio": {
+  "wireplumber": {
     "format": "{icon}  {volume}%",
     "format-muted": "󰝟  muted",
-    "format-icons": {
-      "default": ["󰕿", "󰖀", "󰕾"]
-    }
+    "format-icons": ["󰕿", "󰖀", "󰕾"]
   },
 
   "clock": {
