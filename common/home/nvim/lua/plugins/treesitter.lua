@@ -5,6 +5,11 @@ return {
     config = function()
       vim.o.foldlevelstart = 99
 
+      local runtime = vim.api.nvim_get_runtime_file("runtime/queries", false)[1]
+      if runtime then
+        vim.opt.runtimepath:prepend(vim.fn.fnamemodify(runtime, ":h"))
+      end
+
       vim.api.nvim_create_autocmd("FileType", {
         callback = function(args)
           local buf = args.buf
