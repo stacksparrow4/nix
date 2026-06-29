@@ -8,8 +8,10 @@
 {
   config = lib.mkMerge [
     {
-      # virtualisation.docker.enable = true;
-      environment.systemPackages = with pkgs; [ slirp4netns podman-compose ];
+      environment.systemPackages = with pkgs; [
+        slirp4netns
+        podman-compose
+      ];
 
       virtualisation = {
         containers = {

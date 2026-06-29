@@ -14,6 +14,7 @@
     ./nix-config.nix
     ./virt.nix
     ./flatpak.nix
+    ./vms.nix
   ];
 
   # For now just putting all options in default.nix

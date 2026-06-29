@@ -4,15 +4,30 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    home-manager.url = "github:nix-community/home-manager?ref=release-26.05";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    nvim-http-client.url = "github:stacksparrow4/nvim-http-client?ref=main";
-    nvim-http-client.inputs.nixpkgs.follows = "nixpkgs";
-    pwnproxy.url = "github:stacksparrow4/pwnproxy?ref=main";
-    pwnproxy.inputs.nixpkgs.follows = "nixpkgs";
-    autorize.url = "github:stacksparrow4/autorize?ref=main";
-    autorize.inputs.nixpkgs.follows = "nixpkgs";
-    autorize.inputs.nvim-http-client.follows = "nvim-http-client";
+    home-manager = {
+      url = "github:nix-community/home-manager?ref=release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixvirt = {
+      url = "https://flakehub.com/f/AshleyYakeley/NixVirt/0.6.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nvim-http-client = {
+      url = "github:stacksparrow4/nvim-http-client?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    pwnproxy = {
+      url = "github:stacksparrow4/pwnproxy?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    autorize = {
+      url = "github:stacksparrow4/autorize?ref=main";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        nvim-http-client.follows = "nvim-http-client";
+      };
+    };
   };
 
   outputs =
