@@ -33,6 +33,7 @@
       signal.enable = true;
       lmms.enable = true;
     };
+    payloads.enable = true;
   };
 
   home = {
