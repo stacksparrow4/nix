@@ -295,7 +295,13 @@ fn main() {
 
         let ssh_port = &re.captures(first_line.trim()).expect("Failed to extract SSH port")[1];
 
-        Some(format!("echo <CMD> | sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost"))
+        let starter = if args.cwd {
+            "'cd /pwd &&' "
+        } else {
+            ""
+        };
+
+        Some(format!("echo {starter}<CMD> | sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost"))
     } else {
         args.remote
     })
