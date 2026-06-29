@@ -1,7 +1,15 @@
-use std::{env, process::{Command, Stdio}};
+use std::{
+    env,
+    process::{Command, Stdio},
+};
 
 use clap::Parser;
 use tempfile::tempdir;
+
+use crate::remote::{start_remote_server, validate_remote_arg};
+
+mod remote;
+
 
 /// Pi sandbox wrapper. For Pi help, use pi -- --help
 #[derive(Parser, Debug)]
@@ -55,6 +63,10 @@ struct Args {
     /// Disable brave search tool and extension
     #[arg(short, long)]
     no_brave_search: bool,
+
+    /// Execute commands on a remote host instead of inside the sandbox. Use the template <CMD>.
+    #[arg(long)]
+    remote: Option<String>,
 
     /// Real pi location, used internally by Nix. You shouldn't need to supply this option, it will
     /// be added automatically
@@ -116,6 +128,12 @@ const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash"];
 fn main() {
     let args = Args::parse();
 
+    let remote = args.remote.is_some();
+
+    if let Some(template) = args.remote.as_ref() {
+        validate_remote_arg(template);
+    }
+
     let brave_search = !(args.no_brave_search || args.local.is_some());
 
     let all_extensions: Vec<String> = args
@@ -134,6 +152,11 @@ fn main() {
         } else {
             None
         })
+        .chain(if remote {
+            Some("pi-remote.ts".to_string())
+        } else {
+            None
+        })
         .collect();
 
     let all_tools: Vec<String> = args
@@ -144,6 +167,8 @@ fn main() {
         .into_iter()
         .chain(if args.no_tools {
             vec![]
+        } else if remote {
+            vec!["command".to_string()]
         } else {
             DEFAULT_TOOLS.iter().map(|x| x.to_string()).collect()
         })
@@ -178,6 +203,10 @@ fn main() {
             guidelines.push("Use write only for new files or complete rewrites");
         }
 
+        if all_tools.contains(&"command".to_string()) {
+            guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell");
+        }
+
         if brave_search {
             guidelines.push("Perform web searches when you are unsure of current information");
         }
@@ -190,39 +219,53 @@ fn main() {
         s
     });
 
-    let (socat_info, in_sandbox_shell_prefix, network_args) =
-        if let Some(socat_arg) = args.local.as_ref() {
-            let socat_tmp_dir = tempdir().expect("Failed to create temporary socat dir");
+    let (socat_info, in_sandbox_shell_prefix, network_args) = if let Some(socat_arg) =
+        args.local.as_ref()
+    {
+        let socat_tmp_dir = tempdir().expect("Failed to create temporary socat dir");
 
-            let socat_tmp_dir_str = socat_tmp_dir.path().to_string_lossy().to_string();
+        let socat_tmp_dir_str = socat_tmp_dir.path().to_string_lossy().to_string();
 
-            let socat = Command::new("socat")
-                .arg(format!("UNIX-LISTEN:{}/llama.sock,fork", socat_tmp_dir_str))
-                .arg(socat_arg)
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .spawn()
-                .expect("Failed to start socat");
+        let socat = Command::new("socat")
+            .arg(format!("UNIX-LISTEN:{}/llama.sock,fork", socat_tmp_dir_str))
+            .arg(socat_arg)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("Failed to start socat");
 
-            (
-                Some((socat_tmp_dir, socat)),
-                "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock &>/dev/null & ",
-                vec![
-                    "--no-network".to_string(),
-                    "-v".to_string(),
-                    format!("{}:/tmp/llama:ro:dir", socat_tmp_dir_str),
-                ],
-            )
-        } else {
-            (
-                None,
-                "",
-                vec![
-                    "-v".to_string(),
-                    generate_pi_mirror_volume("auth.json", VolAccess::RW, VolType::File),
-                ],
-            )
-        };
+        (
+            Some((socat_tmp_dir, socat)),
+            "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock &>/dev/null & ",
+            vec![
+                "--no-network".to_string(),
+                "-v".to_string(),
+                format!("{}:/tmp/llama:ro:dir", socat_tmp_dir_str),
+            ],
+        )
+    } else {
+        (
+            None,
+            "",
+            vec![
+                "-v".to_string(),
+                generate_pi_mirror_volume("auth.json", VolAccess::RW, VolType::File),
+            ],
+        )
+    };
+
+    let remote_dir = args.remote.as_ref().map(|template| {
+        start_remote_server(template)
+    });
+
+    let remote_args = if let Some(dir) = remote_dir.as_ref() {
+        vec![
+            "-v".to_string(),
+            format!("{}:/tmp/pi-remote:ro:dir", dir.path().to_string_lossy()),
+        ]
+    } else {
+        vec![]
+    };
 
     let pi_cmd: Vec<String> = [
         &args.internal_real_pi_location,
@@ -273,6 +316,7 @@ fn main() {
             .flat_map(|x| vec!["-v".to_string(), x]),
         )
         .args(network_args)
+        .args(remote_args)
         .args(if brave_search {
             vec![
                 "-v".to_string(),
