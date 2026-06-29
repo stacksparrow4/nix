@@ -21,7 +21,7 @@
           cat <<EOF > $out/share/applications/signal.desktop
           [Desktop Entry]
           Name=Signal
-          Exec=${signal-desktop-bin}/bin/signal-desktop --disable-gpu %U
+          Exec=${signal-desktop}/bin/signal-desktop --disable-gpu %U
           Terminal=false
           Type=Application
           Icon=signal-desktop
@@ -30,7 +30,7 @@
           MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
           Categories=Network;InstantMessaging;Chat;
           EOF
-          ln -s ${signal-desktop-bin}/share/icons $out/share/icons
+          ln -s ${signal-desktop}/share/icons $out/share/icons
         '')
       ];
     };
