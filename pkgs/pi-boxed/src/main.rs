@@ -197,6 +197,7 @@ fn main() {
         if all_tools.contains(&"bash".to_string()) {
             guidelines.push("Use bash for file operations like ls, rg, find");
             guidelines.push("Do NOT use `find /` to search for files (it takes too long). Instead use `find .` or `find /specific/path`");
+            guidelines.push("When asked for information about open source software, download the code to the /tmp directory and refer to it in your answers.");
         }
 
         if all_tools.contains(&"read".to_string()) {
