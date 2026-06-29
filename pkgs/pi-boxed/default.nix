@@ -10,7 +10,7 @@ let
 
     src = ./.;
 
-    cargoHash = "sha256-28BXMloTzYlhwwfTkDCKvbVrRS8Q16xeHlqczqpc2ng=";
+    cargoHash = "sha256-iYxoidXdWkHJnW0bQ1Nwq6TZ6pP40oeKRh7jCDsIzU0=";
   });
 in
 pkgs.writeShellApplication {

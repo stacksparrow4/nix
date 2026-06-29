@@ -1,15 +1,16 @@
 use std::{
     env,
+    io::{BufRead, BufReader, Write},
     process::{Command, Stdio},
 };
 
 use clap::Parser;
+use regex::Regex;
 use tempfile::tempdir;
 
 use crate::remote::{start_remote_server, validate_remote_arg};
 
 mod remote;
-
 
 /// Pi sandbox wrapper. For Pi help, use pi -- --help
 #[derive(Parser, Debug)]
@@ -67,6 +68,10 @@ struct Args {
     /// Execute commands on a remote host instead of inside the sandbox. Use the template <CMD>.
     #[arg(long)]
     remote: Option<String>,
+
+    /// Execute commands inside a VM
+    #[arg(short, long)]
+    vm: bool,
 
     /// Real pi location, used internally by Nix. You shouldn't need to supply this option, it will
     /// be added automatically
@@ -134,6 +139,11 @@ fn main() {
         validate_remote_arg(template);
     }
 
+    if args.vm && remote {
+        eprintln!("Cannot specify both --vm and --remote.");
+        std::process::exit(2);
+    }
+
     let brave_search = !(args.no_brave_search || args.local.is_some());
 
     let all_extensions: Vec<String> = args
@@ -152,7 +162,7 @@ fn main() {
         } else {
             None
         })
-        .chain(if remote {
+        .chain(if remote || args.vm {
             Some("pi-remote.ts".to_string())
         } else {
             None
@@ -167,7 +177,7 @@ fn main() {
         .into_iter()
         .chain(if args.no_tools {
             vec![]
-        } else if remote {
+        } else if remote || args.vm {
             vec!["command".to_string()]
         } else {
             DEFAULT_TOOLS.iter().map(|x| x.to_string()).collect()
@@ -254,9 +264,43 @@ fn main() {
         )
     };
 
-    let remote_dir = args.remote.as_ref().map(|template| {
-        start_remote_server(template)
-    });
+    let mut vm_proc = if args.vm {
+        Some(
+            Command::new("sandbox")
+                .arg("--vm")
+                .args(if args.cwd {
+                    vec!["--cwd", "--ro-git"]
+                } else {
+                    vec![]
+                })
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null())
+                .env("PYTHONUNBUFFERED", "1")
+                .spawn()
+                .expect("Failed to start VM box"),
+        )
+    } else {
+        None
+    };
+
+    let remote_dir = (if args.vm {
+        let vm_proc = vm_proc.as_mut().unwrap();
+        let mut stdout_reader = BufReader::new(vm_proc.stdout.as_mut().unwrap());
+
+        let mut first_line = String::new();
+        let _ = stdout_reader.read_line(&mut first_line).expect("Failed to read first line of VM process");
+
+        let re = Regex::new(r"^Forwarding SSH to port (\d+)$").unwrap();
+
+        let ssh_port = &re.captures(first_line.trim()).expect("Failed to extract SSH port")[1];
+
+        Some(format!("echo <CMD> | sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost"))
+    } else {
+        args.remote
+    })
+    .as_ref()
+    .map(|template| start_remote_server(template));
 
     let remote_args = if let Some(dir) = remote_dir.as_ref() {
         vec![
@@ -337,6 +381,17 @@ fn main() {
         .arg(format!("{}{}", in_sandbox_shell_prefix, joined_pi_cmd))
         .status()
         .expect("Failed to launch sandboxed pi");
+
+    if let Some(mut vm_proc) = vm_proc {
+        let _ = vm_proc
+            .stdin
+            .as_ref()
+            .expect("Failed to obtain stdin of vm process")
+            .write("exit\n".as_bytes())
+            .expect("Failed to send exit message");
+
+        let _ = vm_proc.wait().expect("Failed to wait for vm process");
+    }
 
     if let Some((_, mut socat_proc)) = socat_info {
         socat_proc.kill().expect("Socat could not be killed");
