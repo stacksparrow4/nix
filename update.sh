@@ -6,6 +6,3 @@ cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null
 (cd ./pkgs && ./update.sh)
 
 nix flake update
-./build.sh
-
-nix store diff-closures $(echo /nix/var/nix/profiles/system-*-link | grep -oE '[0-9]+' | sort -n | tail -n 2 | while read line; do echo /nix/var/nix/profiles/system-$line-link; done)
