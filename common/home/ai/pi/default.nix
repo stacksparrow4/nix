@@ -74,7 +74,6 @@
             Provide a PowerShell command in plain text, without any markdown formatting. Do not provide any description, only the command. If there is a lack of details, provide most logical solution.
           '';
         })
-        (import ./pi-remote.nix { inherit pkgs; })
       ];
     };
 }
