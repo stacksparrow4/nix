@@ -78,6 +78,45 @@
               "notepadplusplus"
             ];
           }
+          {
+            name = "ad-client";
+            uuid = "621ca18f-9cfc-4b95-84b5-f294f2cf0841";
+            ram = 12;
+            cpu = 4;
+            disk = 100;
+            hostname = "CLIENT01";
+            chocoPkgs = [
+              "vim"
+              "Firefox"
+              "notepadplusplus"
+            ];
+          }
+          {
+            name = "ad-server";
+            uuid = "d76b1393-b374-4972-b7cd-4e2a2f3ef967";
+            ram = 12;
+            cpu = 4;
+            disk = 64;
+            hostname = "SRV01";
+            chocoPkgs = [
+              "vim"
+              "Firefox"
+              "notepadplusplus"
+            ];
+          }
+          {
+            name = "ad-dc";
+            uuid = "e0c0506d-a656-4dd8-9aca-f98c9bd5b719";
+            ram = 12;
+            cpu = 4;
+            disk = 64;
+            hostname = "DC01";
+            chocoPkgs = [
+              "vim"
+              "Firefox"
+              "notepadplusplus"
+            ];
+          }
         ];
       in
       {
