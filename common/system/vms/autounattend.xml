@@ -274,6 +274,12 @@ $scripts = @(
 		} else {
 			Write-Warning "VirtIO guest tools installer not found at $installer.";
 		}
+
+    Start-Process -FilePath msiexec.exe -ArgumentList '/i', 'F:\winfsp.msi', '/qn', '/norestart' -Wait;
+
+    Get-Service -Name 'VirtioFsSvc' -ErrorAction 'SilentlyContinue' |
+      Set-Service -StartupType 'Automatic' -PassThru |
+      Start-Service;
 	};
 	{
 		Remove-Item -LiteralPath @(

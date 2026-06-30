@@ -14,6 +14,8 @@
   options.sprrw.vms.enable = lib.mkEnableOption "vms";
 
   config = lib.mkIf config.sprrw.vms.enable {
+    virtualisation.libvirtd.qemu.vhostUserPackages = [ pkgs.virtiofsd ];
+
     virtualisation.libvirt =
       let
         nixvirtlib = inputs.nixvirt.lib;
@@ -93,10 +95,15 @@
                     virtio_drive = true;
                     virtio_video = false; # Don't use GPU
                   };
-                  unattendIso = pkgs.runCommand "autounattend.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
+                  winFsp = pkgs.fetchurl {
+                    url = "https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-2.1.25156.msi";
+                    hash = "sha256-Bzpw4A93Qj40vtmLhuYA3vkzk7pYIiBPrFeikyTbn3o=";
+                  };
+                  sprrwIso = pkgs.runCommand "sprrw-vm.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
                     mkdir -p root
                     cp ${./autounattend.xml} root/autounattend.xml
-                    genisoimage -o "$out" -V UNATTEND -r -J root
+                    cp ${winFsp} root/winfsp.msi
+                    genisoimage -o "$out" -V SPRRW -r -J root
                   '';
                 in
                 templateConfig
@@ -111,7 +118,7 @@
                           type = "raw";
                         };
                         source = {
-                          file = "${unattendIso}";
+                          file = "${sprrwIso}";
                         };
                         target = {
                           bus = "sata";
@@ -120,6 +127,31 @@
                         readonly = true;
                       }
                     ];
+
+                    filesystem = [
+                      {
+                        type = "mount";
+                        accessmode = "passthrough";
+                        driver = {
+                          type = "virtiofs";
+                        };
+                        source = {
+                          dir = "/home/sprrw/shared";
+                        };
+                        target = {
+                          dir = "shared";
+                        };
+                      }
+                    ];
+                  };
+
+                  memoryBacking = {
+                    source = {
+                      type = "memfd";
+                    };
+                    access = {
+                      mode = "shared";
+                    };
                   };
                 }
               );
