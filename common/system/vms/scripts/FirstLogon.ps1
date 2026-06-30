@@ -25,9 +25,12 @@ $scripts = @(
   {
     # OpenSSH
     Add-WindowsCapability -Online -Name OpenSSH.Server
+    Set-Service -Name sshd -StartupType Automatic
+    Start-Service sshd
   };
   {
     # Powershell modules
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
     Install-Module OleViewDotNet -Force
     Install-Module NtObjectManager -Force
   };
