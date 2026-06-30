@@ -193,10 +193,7 @@
                       count = cpu;
                     };
 
-                    storage_vol = {
-                      pool = "default";
-                      volume = "${name}.qcow2";
-                    };
+                    storage_vol = "/var/lib/libvirt/images/${name}.qcow2";
 
                     nvram_path = "/var/lib/libvirt/qemu/nvram/${name}.nvram";
 
