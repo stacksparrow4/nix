@@ -3,14 +3,10 @@ $scripts = @(
 		Set-ItemProperty -LiteralPath 'Registry::HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AutoLogonCount' -Type 'DWord' -Force -Value 0;
 	};
 	{
-		$installer = 'E:\virtio-win-guest-tools.exe';
-		if( Test-Path -LiteralPath $installer ) {
-			Start-Process -FilePath $installer -ArgumentList '/install', '/quiet', '/norestart' -Wait -Verbose;
-		} else {
-			Write-Warning "VirtIO guest tools installer not found at $installer.";
-		}
-
-    Start-Process -FilePath msiexec.exe -ArgumentList '/i', 'F:\winfsp.msi', '/qn', '/norestart' -Wait;
+    Start-Process -FilePath 'E:\virtio_win_guest_tools.exe' -ArgumentList '/install', '/quiet', '/norestart' -Wait -Verbose;
+  };
+  {
+    Start-Process -FilePath msiexec.exe -ArgumentList '/i', 'G:\winfsp.msi', '/qn', '/norestart' -Wait -Verbose;
 
     Get-Service -Name 'VirtioFsSvc' -ErrorAction 'SilentlyContinue' |
       Set-Service -StartupType 'Automatic' -PassThru |

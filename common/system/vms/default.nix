@@ -19,6 +19,15 @@
     virtualisation.libvirt =
       let
         nixvirtlib = inputs.nixvirt.lib;
+        windowsMachines = [
+          {
+            name = "windows";
+            uuid = "e9646d6b-9d04-4d73-ba93-81f2ae2c7c21";
+            ram = 16;
+            cpu = 8;
+            disk = 100;
+          }
+        ];
       in
       {
         enable = true;
@@ -114,11 +123,15 @@
                   autounattendXml = pkgs.writeText "autounattend.xml" (
                     builtins.replaceStrings [ "@FILES@" ] [ filesXml ] (builtins.readFile ./autounattend.xml)
                   );
-                  sprrwIso = pkgs.runCommand "sprrw-vm.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
+                  unattendIso = pkgs.runCommand "unattend.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
                     mkdir -p root
                     cp ${autounattendXml} root/autounattend.xml
+                    genisoimage -o "$out" -V UNATTEND -r -J root
+                  '';
+                  installersIso = pkgs.runCommand "installers.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
+                    mkdir -p root
                     cp ${winFsp} root/winfsp.msi
-                    genisoimage -o "$out" -V SPRRW -r -J root
+                    genisoimage -o "$out" -V INSTALLERS -r -J root
                   '';
                 in
                 templateConfig
@@ -133,11 +146,27 @@
                           type = "raw";
                         };
                         source = {
-                          file = "${sprrwIso}";
+                          file = "${unattendIso}";
                         };
                         target = {
                           bus = "sata";
                           dev = "hde";
+                        };
+                        readonly = true;
+                      }
+                      {
+                        type = "file";
+                        device = "cdrom";
+                        driver = {
+                          name = "qemu";
+                          type = "raw";
+                        };
+                        source = {
+                          file = "${installersIso}";
+                        };
+                        target = {
+                          bus = "sata";
+                          dev = "hdf";
                         };
                         readonly = true;
                       }
