@@ -29,7 +29,12 @@
           genisoimage -o "$out" -V INSTALLERS -r -J root
         '';
         generateUnattendISO =
-          { hostname, chocoPkgs }:
+          {
+            hostname,
+            chocoPkgs,
+            localIp,
+            additionalScripts,
+          }:
           let
             unattendFiles = {
               "C:\\Windows\\Setup\\Scripts\\Specialize.ps1" = builtins.readFile ./scripts/Specialize.ps1;
@@ -37,9 +42,11 @@
               "C:\\Windows\\Setup\\Scripts\\DefaultUser.ps1" = builtins.readFile ./scripts/DefaultUser.ps1;
               "C:\\Windows\\Setup\\Scripts\\FirstLogon.ps1" =
                 builtins.replaceStrings
-                  [ "@CHOCOPKGS@" ]
+                  [ "@CHOCOPKGS@" "@IPADDRESS@" "@ADDITIONALSCRIPTS@" ]
                   [
                     (lib.concatStringsSep " " chocoPkgs)
+                    localIp
+                    additionalScripts
                   ]
                   (builtins.readFile ./scripts/FirstLogon.ps1);
             };
@@ -67,6 +74,7 @@
             cpu = 8;
             disk = 100;
             hostname = "WIN-PERSONAL";
+            localIp = "192.168.122.9";
             chocoPkgs = [
               "vim"
               "Firefox"
@@ -85,11 +93,17 @@
             cpu = 4;
             disk = 100;
             hostname = "CLIENT01";
+            localIp = "192.168.122.12";
             chocoPkgs = [
               "vim"
               "Firefox"
               "notepadplusplus"
             ];
+            additionalScripts = ''
+              {
+                Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses "192.168.122.10"
+              };
+            '';
           }
           {
             name = "ad-server";
@@ -98,11 +112,17 @@
             cpu = 4;
             disk = 64;
             hostname = "SRV01";
+            localIp = "192.168.122.11";
             chocoPkgs = [
               "vim"
               "Firefox"
               "notepadplusplus"
             ];
+            additionalScripts = ''
+              {
+                Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses "192.168.122.10"
+              };
+            '';
           }
           {
             name = "ad-dc";
@@ -111,6 +131,7 @@
             cpu = 4;
             disk = 64;
             hostname = "DC01";
+            localIp = "192.168.122.10";
             chocoPkgs = [
               "vim"
               "Firefox"
@@ -176,6 +197,8 @@
               cpu,
               hostname,
               chocoPkgs,
+              localIp,
+              additionalScripts ? "",
               ...
             }:
             {
@@ -228,8 +251,12 @@
                         [
                           {
                             file = "${generateUnattendISO {
-                              inherit hostname;
-                              inherit chocoPkgs;
+                              inherit
+                                hostname
+                                chocoPkgs
+                                localIp
+                                additionalScripts
+                                ;
                             }}";
                             dev = "hde";
                           }

@@ -3,9 +3,11 @@ $scripts = @(
     Set-ItemProperty -LiteralPath 'Registry::HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AutoLogonCount' -Type 'DWord' -Force -Value 0;
   };
   {
+    # Virtion Guest Tools
     Start-Process -FilePath 'E:\virtio_win_guest_tools.exe' -ArgumentList '/install', '/quiet', '/norestart' -Wait -Verbose;
   };
   {
+    # VirtioFsSvc
     Start-Process -FilePath msiexec.exe -ArgumentList '/i', 'G:\winfsp.msi', '/qn', '/norestart' -Wait -Verbose;
 
     Get-Service -Name 'VirtioFsSvc' -ErrorAction 'SilentlyContinue' |
@@ -20,6 +22,34 @@ $scripts = @(
     choco feature enable -n allowGlobalConfirmation
     choco install -y @CHOCOPKGS@
   };
+  {
+    # OpenSSH
+    Add-WindowsCapability -Online -Name OpenSSH.Server
+  };
+  {
+    # Powershell AD module
+    # TODO: should this be disabled on non AD machines?
+    if ((Get-CimInstance Win32_OperatingSystem).ProductType -eq 1) {
+      Add-WindowsCapability -Online -Name "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+    } else {
+      Import-Module ServerManager;
+      Install-WindowsFeature RSAT-AD-PowerShell;
+    }
+  };
+  {
+    # Powershell modules
+    Install-Module OleViewDotNet -Force
+    Install-Module NtObjectManager -Force
+  };
+  {
+    # Update powershell help
+    Update-Help -ErrorAction SilentlyContinue
+  };
+  {
+    # Assign static IP address
+    New-NetIPAddress -InterfaceAlias "Ethernet" -IPAddress @IPADDRESS@ -PrefixLength 24 -DefaultGateway 192.168.122.1
+  };
+  @ADDITIONALSCRIPTS@
   {
     Remove-Item -LiteralPath @(
       'C:\Windows\Panther\unattend.xml';
