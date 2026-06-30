@@ -1,8 +1,8 @@
 $scripts = @(
-	{
-		Set-ItemProperty -LiteralPath 'Registry::HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AutoLogonCount' -Type 'DWord' -Force -Value 0;
-	};
-	{
+  {
+    Set-ItemProperty -LiteralPath 'Registry::HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AutoLogonCount' -Type 'DWord' -Force -Value 0;
+  };
+  {
     Start-Process -FilePath 'E:\virtio_win_guest_tools.exe' -ArgumentList '/install', '/quiet', '/norestart' -Wait -Verbose;
   };
   {
@@ -11,14 +11,22 @@ $scripts = @(
     Get-Service -Name 'VirtioFsSvc' -ErrorAction 'SilentlyContinue' |
       Set-Service -StartupType 'Automatic' -PassThru |
       Start-Service;
-	};
-	{
-		Remove-Item -LiteralPath @(
-		  'C:\Windows\Panther\unattend.xml';
-		  'C:\Windows\Panther\unattend-original.xml';
-		  'C:\Windows\Setup\Scripts\Wifi.xml';
-		) -Force -ErrorAction 'SilentlyContinue' -Verbose;
-	};
+  };
+  {
+    # Install choco
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;
+    iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'));
+
+    choco feature enable -n allowGlobalConfirmation
+    choco install -y @CHOCOPKGS@
+  };
+  {
+    Remove-Item -LiteralPath @(
+      'C:\Windows\Panther\unattend.xml';
+      'C:\Windows\Panther\unattend-original.xml';
+      'C:\Windows\Setup\Scripts\Wifi.xml';
+    ) -Force -ErrorAction 'SilentlyContinue' -Verbose;
+  };
 );
 
 & {

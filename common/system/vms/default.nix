@@ -19,6 +19,46 @@
     virtualisation.libvirt =
       let
         nixvirtlib = inputs.nixvirt.lib;
+        winFsp = pkgs.fetchurl {
+          url = "https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-2.1.25156.msi";
+          hash = "sha256-Bzpw4A93Qj40vtmLhuYA3vkzk7pYIiBPrFeikyTbn3o=";
+        };
+        installersIso = pkgs.runCommand "installers.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
+          mkdir -p root
+          cp ${winFsp} root/winfsp.msi
+          genisoimage -o "$out" -V INSTALLERS -r -J root
+        '';
+        generateUnattendISO =
+          { hostname, chocoPkgs }:
+          let
+            unattendFiles = {
+              "C:\\Windows\\Setup\\Scripts\\Specialize.ps1" = builtins.readFile ./scripts/Specialize.ps1;
+              "C:\\Windows\\Setup\\Scripts\\UserOnce.ps1" = builtins.readFile ./scripts/UserOnce.ps1;
+              "C:\\Windows\\Setup\\Scripts\\DefaultUser.ps1" = builtins.readFile ./scripts/DefaultUser.ps1;
+              "C:\\Windows\\Setup\\Scripts\\FirstLogon.ps1" =
+                builtins.replaceStrings
+                  [ "@CHOCOPKGS@" ]
+                  [
+                    (lib.concatStringsSep " " chocoPkgs)
+                  ]
+                  (builtins.readFile ./scripts/FirstLogon.ps1);
+            };
+            filesXml = lib.concatStringsSep "\n" (
+              lib.mapAttrsToList (
+                path: src: "\t\t<File path=\"${lib.escapeXML path}\">\n${lib.escapeXML src}\t\t</File>"
+              ) unattendFiles
+            );
+            autounattendXml = pkgs.writeText "autounattend.xml" (
+              builtins.replaceStrings [ "@FILES@" "@COMPUTERNAME@" ] [ filesXml hostname ] (
+                builtins.readFile ./autounattend.xml
+              )
+            );
+          in
+          pkgs.runCommand "unattend.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
+            mkdir -p root
+            cp ${autounattendXml} root/autounattend.xml
+            genisoimage -o "$out" -V UNATTEND -r -J root
+          '';
         windowsMachines = [
           {
             name = "windows";
@@ -26,6 +66,17 @@
             ram = 16;
             cpu = 8;
             disk = 100;
+            hostname = "WIN-PERSONAL";
+            chocoPkgs = [
+              "vim"
+              "Firefox"
+              "dnspyex"
+              "procexp"
+              "x64dbg.portable"
+              "visualstudio2022community"
+              "windows-sdk-10-version-2004-windbg"
+              "notepadplusplus"
+            ];
           }
         ];
       in
@@ -61,116 +112,97 @@
 
               active = true;
 
-              volumes = [
+              volumes = map (
+                { name, disk, ... }:
                 {
                   present = true;
                   definition = nixvirtlib.volume.writeXML {
-                    name = "windows.qcow2";
+                    name = "${name}.qcow2";
                     capacity = {
-                      count = 100;
+                      count = disk;
                       unit = "GiB";
                     };
                     target.format.type = "qcow2";
                   };
                 }
-              ];
+              ) windowsMachines;
             }
           ];
 
-          domains = [
+          domains = map (
+            {
+              name,
+              uuid,
+              ram,
+              cpu,
+              hostname,
+              chocoPkgs,
+              ...
+            }:
             {
               definition = nixvirtlib.domain.writeXML (
                 let
                   templateConfig = nixvirtlib.domain.templates.windows {
-                    name = "windows";
-                    uuid = "e9646d6b-9d04-4d73-ba93-81f2ae2c7c21";
+                    inherit name;
+                    inherit uuid;
+
                     memory = {
-                      count = 16;
+                      count = ram;
                       unit = "GiB";
                     };
                     vcpu = {
-                      count = 8;
+                      count = cpu;
                     };
 
                     storage_vol = {
                       pool = "default";
-                      volume = "windows.qcow2";
+                      volume = "${name}.qcow2";
                     };
 
-                    nvram_path = "/var/lib/libvirt/qemu/nvram/windows.nvram";
+                    nvram_path = "/var/lib/libvirt/qemu/nvram/${name}.nvram";
 
                     install_virtio = true;
                     virtio_net = true;
                     virtio_drive = true;
                     virtio_video = false; # Don't use GPU
                   };
-                  winFsp = pkgs.fetchurl {
-                    url = "https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-2.1.25156.msi";
-                    hash = "sha256-Bzpw4A93Qj40vtmLhuYA3vkzk7pYIiBPrFeikyTbn3o=";
-                  };
-                  unattendFiles = {
-                    "C:\\Windows\\Setup\\Scripts\\Specialize.ps1" = ./scripts/Specialize.ps1;
-                    "C:\\Windows\\Setup\\Scripts\\UserOnce.ps1" = ./scripts/UserOnce.ps1;
-                    "C:\\Windows\\Setup\\Scripts\\DefaultUser.ps1" = ./scripts/DefaultUser.ps1;
-                    "C:\\Windows\\Setup\\Scripts\\FirstLogon.ps1" = ./scripts/FirstLogon.ps1;
-                  };
-                  filesXml = lib.concatStringsSep "\n" (
-                    lib.mapAttrsToList (
-                      path: src:
-                      "\t\t<File path=\"${lib.escapeXML path}\">\n${lib.escapeXML (builtins.readFile src)}\t\t</File>"
-                    ) unattendFiles
-                  );
-                  autounattendXml = pkgs.writeText "autounattend.xml" (
-                    builtins.replaceStrings [ "@FILES@" ] [ filesXml ] (builtins.readFile ./autounattend.xml)
-                  );
-                  unattendIso = pkgs.runCommand "unattend.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
-                    mkdir -p root
-                    cp ${autounattendXml} root/autounattend.xml
-                    genisoimage -o "$out" -V UNATTEND -r -J root
-                  '';
-                  installersIso = pkgs.runCommand "installers.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
-                    mkdir -p root
-                    cp ${winFsp} root/winfsp.msi
-                    genisoimage -o "$out" -V INSTALLERS -r -J root
-                  '';
                 in
                 templateConfig
                 // {
                   devices = templateConfig.devices // {
-                    disk = templateConfig.devices.disk ++ [
-                      {
-                        type = "file";
-                        device = "cdrom";
-                        driver = {
-                          name = "qemu";
-                          type = "raw";
-                        };
-                        source = {
-                          file = "${unattendIso}";
-                        };
-                        target = {
-                          bus = "sata";
-                          dev = "hde";
-                        };
-                        readonly = true;
-                      }
-                      {
-                        type = "file";
-                        device = "cdrom";
-                        driver = {
-                          name = "qemu";
-                          type = "raw";
-                        };
-                        source = {
-                          file = "${installersIso}";
-                        };
-                        target = {
-                          bus = "sata";
-                          dev = "hdf";
-                        };
-                        readonly = true;
-                      }
-                    ];
+                    disk =
+                      templateConfig.devices.disk
+                      ++ (map
+                        ({ file, dev }: {
+                          type = "file";
+                          device = "cdrom";
+                          driver = {
+                            name = "qemu";
+                            type = "raw";
+                          };
+                          source = {
+                            inherit file;
+                          };
+                          target = {
+                            bus = "sata";
+                            inherit dev;
+                          };
+                          readonly = true;
+                        })
+                        [
+                          {
+                            file = "${generateUnattendISO {
+                              inherit hostname;
+                              inherit chocoPkgs;
+                            }}";
+                            dev = "hde";
+                          }
+                          {
+                            file = "${installersIso}";
+                            dev = "hdf";
+                          }
+                        ]
+                      );
 
                     filesystem = [
                       {
@@ -200,7 +232,7 @@
                 }
               );
             }
-          ];
+          ) windowsMachines;
         };
       };
   };
