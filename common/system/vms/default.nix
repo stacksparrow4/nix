@@ -99,9 +99,24 @@
                     url = "https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-2.1.25156.msi";
                     hash = "sha256-Bzpw4A93Qj40vtmLhuYA3vkzk7pYIiBPrFeikyTbn3o=";
                   };
+                  unattendFiles = {
+                    "C:\\Windows\\Setup\\Scripts\\Specialize.ps1" = ./scripts/Specialize.ps1;
+                    "C:\\Windows\\Setup\\Scripts\\UserOnce.ps1" = ./scripts/UserOnce.ps1;
+                    "C:\\Windows\\Setup\\Scripts\\DefaultUser.ps1" = ./scripts/DefaultUser.ps1;
+                    "C:\\Windows\\Setup\\Scripts\\FirstLogon.ps1" = ./scripts/FirstLogon.ps1;
+                  };
+                  filesXml = lib.concatStringsSep "\n" (
+                    lib.mapAttrsToList (
+                      path: src:
+                      "\t\t<File path=\"${lib.escapeXML path}\">\n${lib.escapeXML (builtins.readFile src)}\t\t</File>"
+                    ) unattendFiles
+                  );
+                  autounattendXml = pkgs.writeText "autounattend.xml" (
+                    builtins.replaceStrings [ "@FILES@" ] [ filesXml ] (builtins.readFile ./autounattend.xml)
+                  );
                   sprrwIso = pkgs.runCommand "sprrw-vm.iso" { nativeBuildInputs = [ pkgs.cdrkit ]; } ''
                     mkdir -p root
-                    cp ${./autounattend.xml} root/autounattend.xml
+                    cp ${autounattendXml} root/autounattend.xml
                     cp ${winFsp} root/winfsp.msi
                     genisoimage -o "$out" -V SPRRW -r -J root
                   '';
