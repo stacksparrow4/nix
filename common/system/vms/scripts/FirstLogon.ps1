@@ -27,16 +27,6 @@ $scripts = @(
     Add-WindowsCapability -Online -Name OpenSSH.Server
   };
   {
-    # Powershell AD module
-    # TODO: should this be disabled on non AD machines?
-    if ((Get-CimInstance Win32_OperatingSystem).ProductType -eq 1) {
-      Add-WindowsCapability -Online -Name "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
-    } else {
-      Import-Module ServerManager;
-      Install-WindowsFeature RSAT-AD-PowerShell;
-    }
-  };
-  {
     # Powershell modules
     Install-Module OleViewDotNet -Force
     Install-Module NtObjectManager -Force

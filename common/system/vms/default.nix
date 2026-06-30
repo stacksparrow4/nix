@@ -103,6 +103,9 @@
               {
                 Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses "192.168.122.10"
               };
+              {
+                Add-WindowsCapability -Online -Name "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+              };
             '';
           }
           {
@@ -121,6 +124,10 @@
             additionalScripts = ''
               {
                 Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses "192.168.122.10"
+              };
+              {
+                Import-Module ServerManager;
+                Install-WindowsFeature RSAT-AD-PowerShell;
               };
             '';
           }
