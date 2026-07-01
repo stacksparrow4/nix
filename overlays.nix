@@ -24,6 +24,16 @@ builtins.listToAttrs (
 )
 // {
   interactsh = import ./pkgs/interactsh { pkgs = pkgsUnstable; };
+
+  # Fix for Vesktop screen share: can remove when patch lands upstream
+  xdg-desktop-portal-wlr = prev.xdg-desktop-portal-wlr.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [
+      (prev.fetchpatch {
+        url = "https://github.com/emersion/xdg-desktop-portal-wlr/commit/c613a8bc7cfbcf5615b59906e247b30b190c8662.patch";
+        hash = "sha256-JgxCK6ItToU7UXoLP84JFtsXQDjDErz6Ri4VNpxtMOM=";
+      })
+    ];
+  });
 }
 // (
   let
