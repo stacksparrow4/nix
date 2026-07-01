@@ -4,7 +4,7 @@
   config,
   mkSandbox,
   ...
-}@inputs:
+}:
 
 {
   imports = [
@@ -23,38 +23,38 @@
     sprrw.sec.windows.enable = lib.mkEnableOption "windows";
   };
 
-  config =
-    let
-      pkgs = import ./pinned-pkgs.nix { system = inputs.pkgs.stdenv.hostPlatform.system; };
-    in
-    lib.mkIf config.sprrw.sec.windows.enable {
-      sprrw.sec.windows = {
-        bloodhoundpy.enable = true;
-        gcc.enable = true;
-        impacket.enable = true;
-        kerbrute.enable = true;
-        krbrelayx.enable = true;
-        netexec.enable = true;
-        pygpoabuse.enable = true;
-        responder-docker.enable = true;
-        rusthound.enable = true;
-      };
-
-      home.packages = with pkgs; [
-        rlwrap
-        (mkSandbox {
-          name = "evil-winrm";
-          prog = "${evil-winrm}/bin/evil-winrm";
-          network = true;
-        })
-        samba # rpcclient
-        certipy
-        python312Packages.bloodyad
-        (mkSandbox {
-          name = "pwsh";
-          prog = "${powershell}/bin/pwsh";
-          network = true;
-        })
-      ];
+  config = lib.mkIf config.sprrw.sec.windows.enable {
+    sprrw.sec.windows = {
+      bloodhoundpy.enable = true;
+      gcc.enable = true;
+      impacket.enable = true;
+      kerbrute.enable = true;
+      krbrelayx.enable = true;
+      netexec.enable = true;
+      pygpoabuse.enable = true;
+      responder-docker.enable = true;
+      rusthound.enable = true;
     };
+
+    home.packages = with pkgs; [
+      rlwrap
+      (mkSandbox {
+        name = "evil-winrm";
+        prog = "${evil-winrm}/bin/evil-winrm";
+        network = true;
+      })
+      samba # rpcclient
+      (mkSandbox {
+        name = "certipy";
+        prog = "${certipy}/bin/certipy";
+        shareCwd = true;
+      })
+      python312Packages.bloodyad
+      (mkSandbox {
+        name = "pwsh";
+        prog = "${powershell}/bin/pwsh";
+        network = true;
+      })
+    ];
+  };
 }
