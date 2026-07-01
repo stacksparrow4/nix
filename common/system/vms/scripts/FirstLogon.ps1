@@ -29,6 +29,11 @@ $scripts = @(
     Start-Service sshd
   };
   {
+    # Disable Firewall
+    Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+    New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
+  };
+  {
     # Powershell modules
     Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
     Install-Module OleViewDotNet -Force

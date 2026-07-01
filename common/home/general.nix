@@ -32,6 +32,12 @@
       fd
       ripgrep
       sshpass
+      (pkgs.writeShellApplication {
+        name = "sshp";
+        text = ''
+          sshpass -p "$2" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$1" "''${@:3}"
+        '';
+      })
       nix-search-cli
       sqlite
       whois
