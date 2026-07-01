@@ -232,46 +232,6 @@ def main():
             "/nix/store",
             "/nix/store",
         ]
-        # store_upper = None
-        # store_mount = None
-        # store_var = None
-        # if args.nix_overlay:
-        #     store_upper = tempfile.mkdtemp(prefix="sprrw-sandbox-upper.")
-        #     store_mount = tempfile.mkdtemp(prefix="sprrw-sandbox-fuse.")
-        #     store_var = tempfile.mkdtemp(prefix="sprrw-sandbox-var.")
-        #     start_overlay("/nix/store", store_upper, store_mount)
-
-        #     # Set up /nix/var/nix
-        #     try:
-        #         shutil.copytree(
-        #             "/nix/var/nix/db",
-        #             store_var + "/db",
-        #             symlinks=True,
-        #             dirs_exist_ok=True,
-        #         )
-        #     except shutil.Error:
-        #         pass
-        #     try:
-        #         shutil.copytree(
-        #             "/nix/var/nix/gcroots",
-        #             store_var + "/gcroots",
-        #             symlinks=True,
-        #             dirs_exist_ok=True,
-        #         )
-        #     except shutil.Error:
-        #         pass
-        #     os.mkdir(store_var + "/temproots")
-        #     os.mkdir(store_var + "/profiles")
-        #     os.mkdir(store_var + "/daemon-socket")
-
-        #     nix_store_args = [
-        #         "--bind",
-        #         store_mount,
-        #         "/nix/store",
-        #         "--bind",
-        #         store_var,
-        #         "/nix/var/nix",
-        #     ]
 
         subprocess_args = [
             "bwrap",
