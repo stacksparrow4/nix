@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }:
 
@@ -12,27 +13,11 @@
 
   config = lib.mkIf config.sprrw.sec.windows.bloodhoundpy.enable {
     home.packages = [
-      (pkgs.python3Packages.buildPythonPackage rec {
-        pname = "bloodhound-py";
-        version = "1.8.0";
-        pyproject = true;
-
-        src = pkgs.fetchPypi {
-          inherit version;
-          pname = "bloodhound_ce";
-          hash = "sha256-9mPWGB4qGrjenVeUgBFmLipHiA2MrKm4U2mn767ROnA=";
-        };
-
-        nativeBuildInputs = with pkgs.python3Packages; [ setuptools ];
-
-        propagatedBuildInputs = with pkgs.python3Packages; [
-          dnspython
-          impacket
-          ldap3
-          pycryptodome
-        ];
-
-        doCheck = false;
+      (mkSandbox {
+        name = "bloodhound-ce";
+        shareCwd = true;
+        network = true;
+        prog = "${import ../../../../pkgs/bloodhound-ce { inherit pkgs; }}/bin/bloodhound-ce-python";
       })
     ];
   };

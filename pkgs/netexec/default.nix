@@ -1,6 +1,6 @@
 {
   nixpkgs-inputs ? { },
-  pkgs ? import <nixpkgs-unstable> nixpkgs-inputs,
+  pkgs ? import <nixpkgs> nixpkgs-inputs,
 }:
 
 let
@@ -13,6 +13,10 @@ let
       certipy-ad = super.certipy-ad.overridePythonAttrs (old: {
         pythonRelaxDeps = (old.pythonRelaxDeps or [ ]) ++ [ "impacket" ];
       });
+      bloodhound-ce = import ../bloodhound-ce {
+        inherit pkgs;
+        impacket = self.impacket;
+      };
     };
   };
 in
@@ -33,11 +37,9 @@ python.pkgs.buildPythonApplication {
   pythonRemoveDeps = [
     # Fail to detect dev version requirement
     "neo4j"
-    # No python package in nixpkgs; use bloodhound-py instead.
-    "bloodhound-ce"
   ];
 
-postPatch = ''
+  postPatch = ''
     substituteInPlace nxc/first_run.py \
       --replace-fail "from os import mkdir" "from os import mkdir, chmod" \
       --replace-fail "shutil.copy(default_path, NXC_PATH)" $'shutil.copy(default_path, CONFIG_PATH)\n        chmod(CONFIG_PATH, 0o600)'
@@ -61,7 +63,7 @@ postPatch = ''
     argcomplete
     asyauth
     beautifulsoup4
-    bloodhound-py
+    bloodhound-ce
     certipy-ad
     certihound
     dploot
