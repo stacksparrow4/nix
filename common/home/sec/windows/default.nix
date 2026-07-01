@@ -48,8 +48,14 @@
         name = "certipy";
         prog = "${certipy}/bin/certipy";
         shareCwd = true;
+        network = true;
       })
-      python312Packages.bloodyad
+      (mkSandbox {
+        name = "bloodyAD";
+        prog = "${python312Packages.bloodyad}/bloodyAD";
+        shareCwd = true;
+        network = true;
+      })
       (mkSandbox {
         name = "pwsh";
         prog = "${powershell}/bin/pwsh";
