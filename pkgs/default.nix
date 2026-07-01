@@ -5,4 +5,6 @@ nixpkgs-inputs:
 
 {
   pi = import ./pi { inherit nixpkgs-inputs; };
+  netexec = import ./netexec { inherit nixpkgs-inputs; };
+  netexec-impacket = import ./netexec-impacket { inherit nixpkgs-inputs; };
 }
