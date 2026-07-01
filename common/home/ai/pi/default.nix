@@ -51,6 +51,25 @@
       home.file.".pi/agent/extensions".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/ai/pi/extensions";
 
+      systemd.user = lib.mkIf pkgs.stdenv.isLinux {
+        services.pi-clean-sessions = {
+          Unit.Description = "Clear pi session logs older than 1 week";
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.findutils}/bin/find ${config.home.homeDirectory}/.pi/agent/sessions -mindepth 2 -maxdepth 2 -type f -name '*.jsonl' -mtime +7 -delete";
+          };
+        };
+
+        timers.pi-clean-sessions = {
+          Unit.Description = "Clear pi session logs older than 1 week";
+          Timer = {
+            OnCalendar = "daily";
+            Persistent = true;
+          };
+          Install.WantedBy = [ "timers.target" ];
+        };
+      };
+
       home.packages = [
         (import ../../../../pkgs/pi-boxed { inherit pkgs; })
         (import ./pi-convert.nix {
