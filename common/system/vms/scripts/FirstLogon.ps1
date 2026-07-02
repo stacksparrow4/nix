@@ -5,6 +5,8 @@ $scripts = @(
   {
     # Virtion Guest Tools
     Start-Process -FilePath 'E:\virtio_win_guest_tools.exe' -ArgumentList '/install', '/quiet', '/norestart' -Wait -Verbose;
+    # Idk why but sometimes it has a different name
+    Start-Process -FilePath 'E:\virtio-win-guest-tools.exe' -ArgumentList '/install', '/quiet', '/norestart' -Wait -Verbose;
   };
   {
     # VirtioFsSvc
@@ -27,9 +29,6 @@ $scripts = @(
     Add-WindowsCapability -Online -Name OpenSSH.Server
     Set-Service -Name sshd -StartupType Automatic
     Start-Service sshd
-  };
-  {
-    # Disable Firewall
     Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
     New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -PropertyType String -Force
   };

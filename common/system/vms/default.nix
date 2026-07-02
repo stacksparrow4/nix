@@ -19,6 +19,10 @@
     virtualisation.libvirt =
       let
         nixvirtlib = inputs.nixvirt.lib;
+
+        # Mount read only ISOs
+        installMode = false;
+
         winFsp = pkgs.fetchurl {
           url = "https://github.com/winfsp/winfsp/releases/download/v2.1/winfsp-2.1.25156.msi";
           hash = "sha256-Bzpw4A93Qj40vtmLhuYA3vkzk7pYIiBPrFeikyTbn3o=";
@@ -227,7 +231,7 @@
 
                     nvram_path = "/var/lib/libvirt/qemu/nvram/${name}.nvram";
 
-                    install_virtio = true;
+                    install_virtio = false; # Done manually below so that it creates an empty disk if installMode is false
                     virtio_net = true;
                     virtio_drive = true;
                     virtio_video = false; # Don't use GPU
@@ -246,9 +250,7 @@
                             name = "qemu";
                             type = "raw";
                           };
-                          source = {
-                            inherit file;
-                          };
+                          source = if installMode then { inherit file; } else null;
                           target = {
                             bus = "sata";
                             inherit dev;
@@ -256,6 +258,10 @@
                           readonly = true;
                         })
                         [
+                          {
+                            file = "${nixvirtlib.guest-install.virtio-win.iso}";
+                            dev = "hdd";
+                          }
                           {
                             file = "${generateUnattendISO {
                               inherit
