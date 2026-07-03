@@ -127,7 +127,7 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
     generate_pi_volume(fname, fname, a, t)
 }
 
-const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "bash-tool.ts"];
+const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "bash-tool.ts", "save.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash"];
 
 fn main() {
