@@ -25,6 +25,8 @@ alias bc='sandbox --cwd'
 
 alias pi-local='pi --local TCP:localhost:8033 --models local'
 
+alias cdtmp='cd "$(mktemp -d)"'
+
 function take() {
   if [[ $# -ne 1 ]]; then
     echo "Usage: take <dir>"

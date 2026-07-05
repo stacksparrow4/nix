@@ -24,6 +24,8 @@ vim.lsp.config.rust_analyzer = {
   },
 }
 vim.lsp.enable("rust_analyzer")
+vim.lsp.config.zls = {}
+vim.lsp.enable("zls")
 vim.lsp.config.gopls = {}
 vim.lsp.enable("gopls")
 vim.lsp.config.tinymist = {

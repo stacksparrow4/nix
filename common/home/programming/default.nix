@@ -17,6 +17,7 @@
     ./typst.nix
     ./xml.nix
     ./java.nix
+    ./zig.nix
   ];
 
   options = {
@@ -40,6 +41,7 @@
       typst.enable = true;
       xml.enable = true;
       java.enable = true;
+      zig.enable = true;
     };
   };
 }
