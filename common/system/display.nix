@@ -47,6 +47,7 @@
             chooser_cmd = "${pkgs.slurp}/bin/slurp -f %o -or";
           };
         };
+        # TODO: is there a way to make window screenshare work
         extraPortals = with pkgs; [
           xdg-desktop-portal-gtk
           xdg-desktop-portal-wlr
