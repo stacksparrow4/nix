@@ -76,23 +76,41 @@
           inherit pkgs;
           model = cfg.execModel;
         })
-        (import ./pi-exec.nix {
-          inherit pkgs;
-          name = "pi-exec";
-          model = cfg.execModel;
-          system = ''
-            Provide a bash command in plain text. Do not provide any description. Do not provide code block formatting. Only output the command. If there is a lack of details, provide most logical solution.
+      ]
+      ++ (
+        let
+          execSystemPrompt = { shell, example }: ''
+            Provide a ${shell} command in plain text. Do not provide any description. Do not provide code block formatting. Only output the command. If there is a lack of details, provide most logical solution. For example:
+
+            ${example}
           '';
-        })
-        (import ./pi-exec.nix {
-          inherit pkgs;
-          name = "pi-exec-pwsh";
-          model = cfg.execModel;
-          # TODO: fix
-          system = ''
-            Provide a PowerShell command in plain text, without any markdown formatting. Do not provide any description, only the command. If there is a lack of details, provide most logical solution.
-          '';
-        })
-      ];
+        in
+        [
+          (import ./pi-exec.nix {
+            inherit pkgs;
+            name = "pi-exec";
+            model = cfg.execModel;
+            system = execSystemPrompt {
+              shell = "bash";
+              example = ''
+                User: add new user with default password
+                Response: sudo useradd -m newuser && echo "newuser:password | sudo chpasswd
+              '';
+            };
+          })
+          (import ./pi-exec.nix {
+            inherit pkgs;
+            name = "pi-exec-pwsh";
+            model = cfg.execModel;
+            system = execSystemPrompt {
+              shell = "PowerShell";
+              example = ''
+                User: add new user with default password
+                Response: New-LocalUser -Name "NewUser" -Password (ConvertTo-SecureString "P@ssw0rd" -AsPlainText -Force) -FullName "New User" -Description "New local user account"
+              '';
+            };
+          })
+        ]
+      );
     };
 }
