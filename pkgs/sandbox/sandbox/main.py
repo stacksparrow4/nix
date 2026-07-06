@@ -57,6 +57,9 @@ def main():
         "-c", "--cwd", action="store_true", help="Share the current working directory"
     )
     parser.add_argument(
+        "--ro-cwd", action="store_true", help="Share the current working directory read only", dest="ro_cwd"
+    )
+    parser.add_argument(
         "-g",
         "--ro-git",
         action="store_true",
@@ -107,6 +110,10 @@ def main():
 
     if args.ro_git and not args.cwd:
         print("Cannot specify --ro-git without --cwd")
+        exit(1)
+
+    if args.cwd and args.ro_cwd:
+        print("Cannot specify --ro-cwd with --cwd")
         exit(1)
 
     if len(args.exec) == 0:
@@ -167,6 +174,9 @@ def main():
 
         if args.cwd:
             mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
+
+        if args.ro_cwd:
+            mounts.append(Mount(str(Path.cwd()), "/pwd", "dir", ro=True))
 
         if args.ro_git and os.path.exists("./.git"):
             mounts.append(Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True))
@@ -248,7 +258,7 @@ def main():
             "/home/sprrw",
             *nix_store_args,
             *([] if args.no_network else ["--share-net"]),
-            *(["--chdir", "/pwd"] if args.cwd else ["--chdir", "/home/sprrw"]),
+            *(["--chdir", "/pwd"] if args.cwd or args.ro_cwd else ["--chdir", "/home/sprrw"]),
             *[a for m in mounts for a in m.to_bwrap_args()],
             "/usr/bin/env",
             *envvars,
@@ -293,6 +303,9 @@ def main():
 
         if args.cwd:
             mounts.append(Mount(str(Path.cwd()), "/pwd", "dir"))
+
+        if args.ro_cwd:
+            mounts.append(Mount(str(Path.cwd()), "/pwd", "dir", ro=True))
 
         if args.ro_git and os.path.exists("./.git"):
             mounts.append(Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True))
@@ -384,7 +397,7 @@ def main():
                 startup_lines.append(
                     f'sudo mount -t 9p -o trans=virtio,version=9p2000.L sandboxshare{i} "{m.box_path}"'
                 )
-            if args.cwd:
+            if args.cwd or args.ro_cwd:
                 startup_lines.append("cd /pwd")
             startup_lines.append(" ".join(shlex.quote(a) for a in args.exec))
             startup_script = "\n".join(startup_lines) + "\n"

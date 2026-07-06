@@ -36,6 +36,10 @@ struct Args {
     #[arg(short, long)]
     cwd: bool,
 
+    /// Share CWD read-only
+    #[arg(long)]
+    ro_cwd: bool,
+
     /// Comma seperated list of allowed models
     #[arg(short, long)]
     models: Option<String>,
@@ -271,6 +275,8 @@ fn main() {
                 .arg("--vm")
                 .args(if args.cwd {
                     vec!["--cwd", "--ro-git"]
+                } else if args.ro_cwd {
+                    vec!["--ro-cwd"]
                 } else {
                     vec![]
                 })
@@ -299,7 +305,7 @@ fn main() {
 
         let ssh_port = &re.captures(first_line.trim()).expect("Failed to extract SSH port")[1];
 
-        let starter = if args.cwd {
+        let starter = if args.cwd || args.ro_cwd {
             "'cd /pwd &&' "
         } else {
             ""
@@ -381,6 +387,8 @@ fn main() {
         })
         .args(if args.cwd {
             vec!["--cwd", "--ro-git"]
+        } else if args.ro_cwd {
+            vec!["--ro-cwd"]
         } else {
             vec![]
         })
