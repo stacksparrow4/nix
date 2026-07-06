@@ -274,6 +274,9 @@ fn main() {
                 } else {
                     vec![]
                 })
+                .args(args.additional_sandbox_args.as_ref().map_or(vec![], |a| {
+                    shlex::split(a).expect("Invalid value for additional_sandbox_args")
+                }))
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::null())
