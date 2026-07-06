@@ -43,6 +43,7 @@
       whois
       curl # technically already exists in system package, but putting it here allows it to show inside docker which only uses home manager
       gnupg
+      awscli
 
       (pkgs.writeShellApplication {
         name = "ssh";
