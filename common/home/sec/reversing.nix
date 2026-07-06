@@ -15,54 +15,61 @@
     home.packages = with pkgs; [
       (rizin.withPlugins (plugins: with plugins; [ rz-ghidra ]))
 
-      # TODO: Fix for latest nixpkgs
-      # (
-      #   let
-      #     webcrack = stdenv.mkDerivation (finalAttrs: {
-      #       pname = "webcrack";
-      #       version = "2.15.1";
+      (
+        let
+          nodejs = pkgs.nodejs_22;
+          webcrack = stdenv.mkDerivation (finalAttrs: {
+            pname = "webcrack";
+            version = "2.16.0";
 
-      #       src = fetchFromGitHub {
-      #         owner = "j4k0xb";
-      #         repo = "webcrack";
-      #         rev = "32cbd0604af9ba4930f4594cdcfea799d6cf1e81";
-      #         hash = "sha256-1tsVu/uXtX6p+ZhwKiJoa6AoXIBdeK0XcMYcHGaScRU=";
-      #       };
+            src = pkgs.fetchFromGitHub {
+              owner = "j4k0xb";
+              repo = "webcrack";
+              rev = "f5262d28de8f8ca97b3a3da9681269889b89685f";
+              hash = "sha256-DeT89F/eyIF3lXp75gBvZLcFGyO1KzzKTnugZW4X6PU=";
+            };
 
-      #       buildPhase = ''
-      #         (cd packages/webcrack && pnpm run build)
-      #         mv packages/webcrack/dist/cli.js packages/webcrack/dist/webcrack.js
-      #       '';
+            pnpmDeps = pkgs.fetchPnpmDeps {
+              inherit (finalAttrs) pname version src;
+              fetcherVersion = 3;
+              hash = "sha256-n+lnj5r6LsxN60mG/KhK6oBx8FXVCGTjnGcQU92nAcE=";
+            };
 
-      #       installPhase = ''
-      #         mkdir -p "$out/bin"
+            nativeBuildInputs = [
+              nodejs
+              pkgs.pnpm
+              pkgs.pnpmConfigHook
+              pkgs.makeWrapper
+            ];
 
-      #         cp -r . "$out/src"
+            buildPhase = ''
+              runHook preBuild
+              ( cd packages/webcrack && pnpm run build )
+              runHook postBuild
+            '';
 
-      #         echo '#!${stdenv.shell}' > "$out/bin/webcrack"
-      #         echo "${nodejs}/bin/node '$out/src/packages/webcrack/dist/webcrack.js'"' "$@"' >> "$out/bin/webcrack"
-      #         chmod +x "$out/bin/webcrack"
-      #       '';
+            installPhase = ''
+              runHook preInstall
 
-      #       nativeBuildInputs = [
-      #         nodejs
-      #         pnpmConfigHook
-      #         pnpm
-      #       ];
+              # Preserve the full workspace layout so pnpm's relative symlinks
+              # (package node_modules -> ../../node_modules/.pnpm/...) keep resolving.
+              mkdir -p $out/lib/webcrack
+              cp -r . $out/lib/webcrack/
 
-      #       pnpmDeps = fetchPnpmDeps {
-      #         inherit (finalAttrs) pname version src;
-      #         fetcherVersion = 3;
-      #         hash = "sha256-y/WcTs5zChyGTQaSqzvGwBXPr5TOoLQwmY4Ge/gCW6g=";
-      #       };
-      #     });
-      #   in
-      #   mkSandbox {
-      #     name = "webcrack";
-      #     shareCwd = true;
-      #     prog = "${webcrack}/bin/webcrack";
-      #   }
-      # )
+              mkdir -p $out/bin
+              makeWrapper ${lib.getExe nodejs} $out/bin/webcrack \
+                --add-flags "$out/lib/webcrack/packages/webcrack/dist/cli.js"
+
+              runHook postInstall
+            '';
+          });
+        in
+        mkSandbox {
+          name = "webcrack";
+          shareCwd = true;
+          prog = "${webcrack}/bin/webcrack";
+        }
+      )
     ];
   };
 }
