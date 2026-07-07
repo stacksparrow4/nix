@@ -26,7 +26,7 @@ export default function(pi: ExtensionAPI) {
       }
 
       const choice = await ctx.ui.select(
-        `Run the following command? ${command}`,
+        `Run the following command?\n\n${command}`,
         ["Yes", "No"],
       );
 
