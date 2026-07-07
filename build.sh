@@ -14,6 +14,7 @@ case "$(uname -s)" in
       nix run home-manager/master -- switch --show-trace --flake . -b bak
     else
       sudo nixos-rebuild switch --flake . --show-trace
+      nix store diff-closures $(echo /nix/var/nix/profiles/system-*-link | grep -oE '[0-9]+' | sort -n | tail -n 2 | while read line; do echo /nix/var/nix/profiles/system-$line-link; done)
     fi
     ;;
   *)
