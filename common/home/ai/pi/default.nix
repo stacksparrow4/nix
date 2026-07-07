@@ -80,7 +80,7 @@
       ++ (
         let
           execSystemPrompt = { shell, example }: ''
-            Provide a ${shell} command in plain text. Do not provide any description. Do not provide code block formatting. Only output the command. If there is a lack of details, provide most logical solution. For example:
+            Provide a ${shell} command in plain text. Do not provide a description. Do not provide code block formatting. Only output the command. If there is a lack of details, provide most logical solution. For example:
 
             ${example}
           '';

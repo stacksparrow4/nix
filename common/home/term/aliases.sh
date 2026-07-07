@@ -24,6 +24,8 @@ alias b='sandbox'
 alias bc='sandbox --cwd'
 
 alias pi-local='pi --local TCP:localhost:8033 --models local'
+alias pc='pi --cwd'
+alias pe='pi-exec'
 
 alias cdtmp='cd "$(mktemp -d)"'
 
