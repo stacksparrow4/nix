@@ -5,11 +5,13 @@ import {
   createBashTool,
   createBashToolDefinition,
   type ExtensionAPI,
-} from "@mariozechner/pi-coding-agent";
+  isToolCallEventType,
+} from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
 
 const SOCKET_PATH = "/tmp/pi-remote/pi.sock";
+const DEFAULT_TIMEOUT_SECONDS = 10;
 
 interface ExecOptions {
   timeout?: number; // seconds
@@ -172,16 +174,23 @@ function createBridgeBashOps(): BashOperations {
 }
 
 export default function(pi: ExtensionAPI) {
+  pi.on("tool_call", async (event) => {
+    if (isToolCallEventType("command", event) && event.input.timeout === undefined) {
+      event.input.timeout = DEFAULT_TIMEOUT_SECONDS;
+    }
+    return undefined;
+  });
+
   pi.registerTool({
     ...createBashToolDefinition("/"),
     // Avoid using the name "bash" because it could technically be a non bash command interface (eg powershell)
     name: "command",
     label: "command",
-    description: "Execute a command. Returns stdout and stderr. Output may be truncated if it is too long. Optionally provide a timeout in seconds.",
+    description: `Execute a command. Returns stdout and stderr. Output may be truncated if it is too long. If no timeout is given, a default of ${DEFAULT_TIMEOUT_SECONDS} seconds is applied.`,
     promptSnippet: "Execute commands",
     parameters: Type.Object({
       command: Type.String({ description: "Command to execute" }),
-      timeout: Type.Optional(Type.Number({ description: "Timeout in seconds (optional, no default timeout)" })),
+      timeout: Type.Optional(Type.Number({ description: `Timeout in seconds (optional, defaults to ${DEFAULT_TIMEOUT_SECONDS}s if omitted)` })),
     }),
     async execute(id, params, signal, onUpdate, _ctx) {
       const tool = createBashTool("/", { operations: createBridgeBashOps() });
