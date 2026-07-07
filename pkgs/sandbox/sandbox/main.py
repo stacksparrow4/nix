@@ -211,7 +211,7 @@ def main():
         )
 
         envvars = args.env_vars + [
-            "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
+            "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin" + ("" if args.reset_env else ":" + ensure_env("PATH")),
             "__ETC_PROFILE_SOURCED=1",
             "IN_SPRRW_SANDBOX=1",
             "HOME=/home/sprrw",
