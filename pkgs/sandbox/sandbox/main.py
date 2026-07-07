@@ -57,7 +57,10 @@ def main():
         "-c", "--cwd", action="store_true", help="Share the current working directory"
     )
     parser.add_argument(
-        "--ro-cwd", action="store_true", help="Share the current working directory read only", dest="ro_cwd"
+        "--ro-cwd",
+        action="store_true",
+        help="Share the current working directory read only",
+        dest="ro_cwd",
     )
     parser.add_argument(
         "-g",
@@ -211,13 +214,19 @@ def main():
         )
 
         envvars = args.env_vars + [
-            "PATH=/etc/hm-package/home-path/bin:/run/current-system/sw/bin" + ("" if args.reset_env else ":" + ensure_env("PATH")),
+            "PATH="
+            + ("" if args.reset_env else ensure_env("PATH") + ":")
+            + "/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
             "__ETC_PROFILE_SOURCED=1",
             "IN_SPRRW_SANDBOX=1",
             "HOME=/home/sprrw",
             "EDITOR=" + ensure_env("EDITOR"),
             "NIX_PATH=" + ensure_env("NIX_PATH"),
             "COLORTERM=truecolor",
+            "TEMPDIR=/tmp",
+            "TMPDIR=/tmp",
+            "TEMP=/tmp",
+            "TMP=/tmp"
         ]
 
         if args.downgrade_term:
@@ -258,7 +267,11 @@ def main():
             "/home/sprrw",
             *nix_store_args,
             *([] if args.no_network else ["--share-net"]),
-            *(["--chdir", "/pwd"] if args.cwd or args.ro_cwd else ["--chdir", "/home/sprrw"]),
+            *(
+                ["--chdir", "/pwd"]
+                if args.cwd or args.ro_cwd
+                else ["--chdir", "/home/sprrw"]
+            ),
             *[a for m in mounts for a in m.to_bwrap_args()],
             "/usr/bin/env",
             *envvars,
@@ -268,9 +281,7 @@ def main():
         # print(subprocess_args)
 
         return_code = 1
-        proc = subprocess.Popen(
-                subprocess_args, env=({} if args.reset_env else None)
-            )
+        proc = subprocess.Popen(subprocess_args, env=({} if args.reset_env else None))
         try:
             return_code = proc.wait()
         except KeyboardInterrupt:
