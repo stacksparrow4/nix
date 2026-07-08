@@ -63,8 +63,22 @@ export default function goalExtension(pi: ExtensionAPI) {
 		},
 	});
 
-	pi.on("agent_end", (_event, ctx) => {
-		if (!goal || goal.status !== "active" || ctx.hasPendingMessages()) return;
+	pi.on("agent_end", (event, ctx) => {
+		if (!goal || goal.status !== "active") return;
+
+		// If the agent loop was aborted (e.g. the user pressed escape), cancel the
+		// goal instead of automatically re-queuing the continuation prompt.
+		const wasAborted = event.messages.some(
+			(message) => message.role === "assistant" && message.stopReason === "aborted",
+		);
+		if (wasAborted) {
+			goal = null;
+			continuationQueued = false;
+			ctx.ui.notify("Goal cancelled.", "info");
+			return;
+		}
+
+		if (ctx.hasPendingMessages()) return;
 		if (continuationQueued) return;
 		continuationQueued = true;
 		queueMicrotask(() => {
