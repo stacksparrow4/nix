@@ -8,6 +8,7 @@ type Goal = {
 
 let goal: Goal | null = null;
 let continuationQueued = false;
+let toolRegistered = false;
 
 function continuationPrompt(objective: string): string {
 	return `Continue working toward the active goal.
@@ -20,26 +21,32 @@ Before deciding the goal is achieved, verify against real evidence (files, comma
 }
 
 export default function goalExtension(pi: ExtensionAPI) {
-	pi.registerTool({
-		name: "complete_goal",
-		label: "Complete Goal",
-		description:
-			"Mark the current active goal complete. Call this only once the goal's objective is fully achieved and verified.",
-		promptSnippet: "Mark the current goal complete after verifying the objective is fully achieved",
-		promptGuidelines: [
-			"Use complete_goal only when the current goal objective is fully achieved and verified against concrete evidence.",
-			"Do not call complete_goal to pause, abandon, or stop a goal for any other reason.",
-		],
-		parameters: Type.Object({}),
-		async execute() {
-			if (!goal) {
-				return { content: [{ type: "text", text: "No goal is set." }], isError: true };
-			}
-			goal = { ...goal, status: "complete" };
-			continuationQueued = false;
-			return { content: [{ type: "text", text: "Goal marked complete." }] };
-		},
-	});
+  // Only load complete_goal tool when /goal is used to avoid polluting context
+  // This causes a cache invalidation (increasing token cost), however as i use goal early on its fine.
+	function ensureToolRegistered() {
+		if (toolRegistered) return;
+		toolRegistered = true;
+		pi.registerTool({
+			name: "complete_goal",
+			label: "Complete Goal",
+			description:
+				"Mark the current active goal complete. Call this only once the goal's objective is fully achieved and verified.",
+			promptSnippet: "Mark the current goal complete after verifying the objective is fully achieved",
+			promptGuidelines: [
+				"Use complete_goal only when the current goal objective is fully achieved and verified against concrete evidence.",
+				"Do not call complete_goal to pause, abandon, or stop a goal for any other reason.",
+			],
+			parameters: Type.Object({}),
+			async execute() {
+				if (!goal) {
+					return { content: [{ type: "text", text: "No goal is set." }], isError: true };
+				}
+				goal = { ...goal, status: "complete" };
+				continuationQueued = false;
+				return { content: [{ type: "text", text: "Goal marked complete." }] };
+			},
+		});
+	}
 
 	pi.registerCommand("goal", {
 		description: "Set a long-running goal the agent pursues until complete",
@@ -49,6 +56,7 @@ export default function goalExtension(pi: ExtensionAPI) {
 				ctx.ui.notify("Usage: /goal <objective>", "info");
 				return;
 			}
+			ensureToolRegistered();
 			goal = { objective, status: "active" };
 			continuationQueued = false;
 			ctx.ui.notify(`Goal set: ${objective}`, "info");
@@ -66,8 +74,7 @@ export default function goalExtension(pi: ExtensionAPI) {
 	pi.on("agent_end", (event, ctx) => {
 		if (!goal || goal.status !== "active") return;
 
-		// If the agent loop was aborted (e.g. the user pressed escape), cancel the
-		// goal instead of automatically re-queuing the continuation prompt.
+		// Abort if user presses escape
 		const wasAborted = event.messages.some(
 			(message) => message.role === "assistant" && message.stopReason === "aborted",
 		);
