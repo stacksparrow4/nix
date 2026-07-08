@@ -28,7 +28,7 @@ interface SearchDetails {
   error?: string;
 }
 
-export default function (pi: ExtensionAPI) {
+export default function(pi: ExtensionAPI) {
   pi.registerTool({
     name: "web_search",
     label: "Brave Search",

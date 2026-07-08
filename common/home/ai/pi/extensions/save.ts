@@ -63,7 +63,7 @@ function writeHtmlFromJsonl(jsonlPath: string, htmlPath: string): Promise<void> 
   });
 }
 
-export default function (pi: ExtensionAPI) {
+export default function(pi: ExtensionAPI) {
   pi.registerCommand("save", {
     description: "Export session to both <name>.html and <name>.jsonl",
     handler: async (args: string, ctx: ExtensionCommandContext) => {
