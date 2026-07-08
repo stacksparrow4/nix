@@ -40,6 +40,10 @@ struct Args {
     #[arg(long)]
     ro_cwd: bool,
 
+    /// Share a volume with the sandbox. Format: <host>:<box>:<ro|rw>:<dir|file>. Can be repeated.
+    #[arg(short, long)]
+    volume: Vec<String>,
+
     /// Comma seperated list of allowed models
     #[arg(short, long)]
     models: Option<String>,
@@ -74,7 +78,7 @@ struct Args {
     remote: Option<String>,
 
     /// Execute commands inside a VM
-    #[arg(short, long)]
+    #[arg(long)]
     vm: bool,
 
     /// Real pi location, used internally by Nix. You shouldn't need to supply this option, it will
@@ -280,6 +284,7 @@ fn main() {
                 } else {
                     vec![]
                 })
+                .args(args.volume.iter().flat_map(|v| vec!["-v", v]))
                 .args(args.additional_sandbox_args.as_ref().map_or(vec![], |a| {
                     shlex::split(a).expect("Invalid value for additional_sandbox_args")
                 }))
@@ -392,6 +397,7 @@ fn main() {
         } else {
             vec![]
         })
+        .args(args.volume.iter().flat_map(|v| vec!["-v", v.as_str()]))
         .args(args.additional_sandbox_args.map_or(vec![], |a| {
             shlex::split(&a).expect("Invalid value for additional_sandbox_args")
         }))
