@@ -87,3 +87,6 @@ alias nss-unstable='nix-search --channel=unstable -d -m 3'
 export UV_LINK_MODE=symlink
 
 alias nixurl='nix store prefetch-file'
+
+# Trialing this for a bit
+set -o vi
