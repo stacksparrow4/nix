@@ -12,10 +12,6 @@ export default function(pi: ExtensionAPI) {
   });
 
   pi.on("tool_call", async (event, ctx) => {
-    if (!["bash", "command"].includes(event.toolName)) return undefined;
-
-    const command = event.input.command as string;
-
     if (ask_mode) {
       if (!ctx.hasUI) {
         return {
@@ -25,8 +21,10 @@ export default function(pi: ExtensionAPI) {
         };
       }
 
+      const details = JSON.stringify(event.input, null, 2);
+
       const choice = await ctx.ui.select(
-        `Run the following command?\n\n${command}`,
+        `Run the following tool?\n\n${event.toolName}\n\n${details}`,
         ["Yes", "No"],
       );
 
