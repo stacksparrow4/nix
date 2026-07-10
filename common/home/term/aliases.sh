@@ -87,16 +87,3 @@ alias nss-unstable='nix-search --channel=unstable -d -m 3'
 export UV_LINK_MODE=symlink
 
 alias nixurl='nix store prefetch-file'
-
-# Vim bindings
-set -o vi
-bind -m vi-insert 'Control-l: clear-screen'
-bind -m vi-command 'Control-l: clear-screen'
-
-bind -m vi-insert 'Control-p: previous-history'
-bind -m vi-insert 'Control-n: next-history'
-bind -m vi-insert '"\C-x\C-e": edit-and-execute-command'
-
-bind -m vi-command 'Control-p: previous-history'
-bind -m vi-command 'Control-n: next-history'
-bind -m vi-command '"\C-x\C-e": edit-and-execute-command'
