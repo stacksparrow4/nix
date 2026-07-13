@@ -20,6 +20,7 @@
             network.default_rootless_network_cmd = "slirp4netns";
             engine.compose_warning_logs = false;
           };
+          registries.search = [ "docker.io" ];
         };
         podman = {
           enable = true;
