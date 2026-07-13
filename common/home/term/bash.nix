@@ -15,7 +15,7 @@
     {
       programs.bash = {
         enable = true;
-        bashrcExtra = (builtins.readFile ./aliases.sh) + ''
+        bashrcExtra = config.sprrw.term.shellExtra + ''
           export PS1='${cfg.ps1}'
 
           if [[ "$IN_SPRRW_SANDBOX" == 1 ]]; then

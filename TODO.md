@@ -1,4 +1,3 @@
-- Split out aliases into nix code rather than all in one file
 - More generalised method for IPC between sandbox and outside world
     - Figure out how to make pi -p work inside of Vim
 - Tmux new panes will spawn in the correct directory when splitting from a box

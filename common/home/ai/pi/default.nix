@@ -112,5 +112,11 @@
           })
         ]
       );
+
+      sprrw.term.shellExtra = ''
+        alias pi-local='pi --local TCP:localhost:8033 --models local'
+        alias pc='pi --cwd'
+        alias pe='pi-exec'
+      '';
     };
 }

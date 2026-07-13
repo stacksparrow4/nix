@@ -19,6 +19,6 @@
         bindkey "\e[1;3D" emacs-backward-word
       ''
       + "\n"
-      + (builtins.readFile ./aliases.sh);
+      + config.sprrw.term.shellExtra;
     };
 }

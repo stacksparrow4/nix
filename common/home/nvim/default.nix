@@ -187,5 +187,11 @@ in
         (lib.hiPrio (sandboxed "vim"))
         (lib.hiPrio (sandboxed "vi"))
       ];
+
+    sprrw.term.shellExtra = ''
+      # Necessary because of nix path order
+      alias vi='nvim'
+      alias vim='nvim'
+    '';
   };
 }

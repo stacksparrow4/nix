@@ -105,5 +105,12 @@ in
         '';
       })
     ];
+
+    sprrw.term.shellExtra = ''
+      alias sbx='sandbox'
+      alias box='sandbox'
+      alias b='sandbox'
+      alias bc='sandbox --cwd'
+    '';
   };
 }
