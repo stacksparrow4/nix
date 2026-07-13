@@ -25,6 +25,10 @@ struct Args {
     #[arg(short, long)]
     tools: Option<String>,
 
+    /// Search mode - only provide brave search 
+    #[arg(short, long)]
+    search: bool,
+
     /// Print mode
     // This technically does not need pass through however keeping it here for backwards
     // compatability
@@ -66,7 +70,7 @@ struct Args {
     extensions: Option<String>,
 
     /// Custom system prompt
-    #[arg(short, long)]
+    #[arg(long)]
     system: Option<String>,
 
     /// Disable brave search tool and extension
@@ -183,7 +187,7 @@ fn main() {
             ts.split(',').map(|t| t.trim().to_string()).collect()
         })
         .into_iter()
-        .chain(if args.no_tools {
+        .chain(if args.no_tools || args.search {
             vec![]
         } else if remote || args.vm {
             vec!["command".to_string()]
@@ -198,6 +202,10 @@ fn main() {
         .collect();
 
     let system = args.system.unwrap_or_else(|| {
+        if args.search {
+            return String::from("You are a technical research assistant that searches the web to provide information. Be concise.");
+        }
+
         let mut s = "You are a helpful coding assistant.\n\nGuidelines:\n".to_string();
 
         let mut guidelines = vec![];

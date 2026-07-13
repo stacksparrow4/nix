@@ -47,41 +47,42 @@
       ]
       ++ (
         let
-          qwen35 = pkgs.fetchurl {
-            url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-UD-Q3_K_XL.gguf";
-            hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
-          };
-          qwen36 = pkgs.fetchurl {
-            url = "https://huggingface.co/unsloth/Qwen3.6-27B-GGUF/resolve/main/Qwen3.6-27B-UD-IQ3_XXS.gguf";
-            hash = "sha256-XVkd0RkY4Zant8nS8C5DkOcmSWDrNUxy1l6BqTMZePU=";
-          };
+          models = [
+            {
+              name = "qwen35";
+              model = pkgs.fetchurl {
+                url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-UD-Q3_K_XL.gguf";
+                hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
+              };
+            }
+            {
+              name = "qwen3627b";
+              model = pkgs.fetchurl {
+                url = "https://huggingface.co/unsloth/Qwen3.6-27B-GGUF/resolve/main/Qwen3.6-27B-UD-IQ3_XXS.gguf";
+                hash = "sha256-XVkd0RkY4Zant8nS8C5DkOcmSWDrNUxy1l6BqTMZePU=";
+              };
+            }
+            {
+              name = "qwen36";
+              model = pkgs.fetchurl {
+                url = "https://huggingface.co/knoopx/Qwen3.6-35B-A3B-NVFP4-GGUF/resolve/main/Qwen3.6-35B-A3B-NVFP4.gguf";
+                hash = "sha256-wTWOiAjrdpWzZN4w6ExBWAFlaDg5JXglBSTDt/3dGQY=";
+              };
+            }
+          ];
+          context = 32768;
         in
-        [
+        builtins.concatMap ({ name, model }: [
           (mkLlama {
-            name = "qwen3.5-reasoning";
-            model = qwen35;
-            context = 32768;
+            name = "${name}-reasoning";
+            inherit model context;
             reasoning = true;
           })
           (mkLlama {
-            name = "qwen3.5";
-            model = qwen35;
-            context = 32768;
+            inherit name model context;
             reasoning = false;
           })
-          (mkLlama {
-            name = "qwen3.6-reasoning";
-            model = qwen36;
-            context = 32768;
-            reasoning = true;
-          })
-          (mkLlama {
-            name = "qwen3.6";
-            model = qwen36;
-            context = 32768;
-            reasoning = false;
-          })
-        ]
+        ]) models
       );
 
     username = "sprrw";
