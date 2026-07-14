@@ -89,5 +89,10 @@
           inputs = inputs;
         };
       };
+
+      packages.x86_64-linux = {
+        sandbox = import ./pkgs/sandbox { pkgs = overlayedNixpkgs "x86_64-linux"; };
+        oob = import ./pkgs/oob { pkgs = overlayedNixpkgs "x86_64-linux"; };
+      };
     };
 }
