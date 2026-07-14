@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
 type Goal = {
@@ -7,6 +7,7 @@ type Goal = {
 };
 
 let goal: Goal | null = null;
+let lastObjective: string | null = null;
 let continuationQueued = false;
 let toolRegistered = false;
 
@@ -56,20 +57,36 @@ export default function goalExtension(pi: ExtensionAPI) {
         ctx.ui.notify("Usage: /goal <objective>", "info");
         return;
       }
-      ensureToolRegistered();
-      goal = { objective, status: "active" };
-      continuationQueued = false;
-      ctx.ui.notify(`Goal set: ${objective}`, "info");
-      pi.sendMessage(
-        {
-          customType: "goal",
-          content: continuationPrompt(objective),
-          display: true,
-        },
-        { triggerTurn: true, deliverAs: "followUp" },
-      );
+      startGoal(objective, ctx);
     },
   });
+
+  pi.registerCommand("resume-goal", {
+    description: "Resume the last goal, re-running /goal with the same objective",
+    handler: async (_args, ctx) => {
+      if (!lastObjective) {
+        ctx.ui.notify("No previous goal to resume.", "info");
+        return;
+      }
+      startGoal(lastObjective, ctx);
+    },
+  });
+
+  function startGoal(objective: string, ctx: ExtensionCommandContext) {
+    ensureToolRegistered();
+    goal = { objective, status: "active" };
+    lastObjective = objective;
+    continuationQueued = false;
+    ctx.ui.notify(`Goal set: ${objective}`, "info");
+    pi.sendMessage(
+      {
+        customType: "goal",
+        content: continuationPrompt(objective),
+        display: true,
+      },
+      { triggerTurn: true, deliverAs: "followUp" },
+    );
+  }
 
   pi.on("agent_end", (event, ctx) => {
     if (!goal || goal.status !== "active") return;
