@@ -61,7 +61,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     },
   });
 
-  pi.registerCommand("resume-goal", {
+  pi.registerCommand("goal-resume", {
     description: "Resume the last goal, re-running /goal with the same objective",
     handler: async (_args, ctx) => {
       if (!lastObjective) {
