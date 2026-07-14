@@ -17,5 +17,9 @@
     "nixpkgs-unstable=${inputs.nixpkgs-unstable}"
   ];
 
+  nix.extraOptions = ''
+    !include /home/sprrw/.local/nix-access-tokens.conf
+  '';
+
   programs.nix-ld.enable = true;
 }

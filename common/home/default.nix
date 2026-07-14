@@ -28,6 +28,10 @@
     home.file.".config/.sprrw-nixos".source =
       config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}";
 
+    nix.extraOptions = ''
+      !include /home/sprrw/.local/nix-access-tokens.conf
+    '';
+
     news.display = "silent";
 
     home.stateVersion = "24.11"; # Please read the comment before changing.
