@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ pkgs, config, lib, ... }:
 
 {
   imports = [
@@ -28,7 +28,7 @@
     home.file.".config/.sprrw-nixos".source =
       config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}";
 
-    nix.extraOptions = ''
+    nix.extraOptions = lib.mkIf (!pkgs.stdenv.isDarwin) ''
       !include /home/sprrw/.local/nix-access-tokens.conf
     '';
 
