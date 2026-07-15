@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  mkSandbox,
   ...
 }:
 
@@ -44,7 +45,6 @@
       curl # technically already exists in system package, but putting it here allows it to show inside docker which only uses home manager
       gnupg
       awscli
-
       (pkgs.writeShellApplication {
         name = "ssh";
         text = ''
@@ -52,6 +52,12 @@
 
           ${pkgs.openssh}/bin/ssh -o WarnWeakCrypto=no "$@"
         '';
+      })
+      (mkSandbox {
+        name = "nodemon";
+        shareCwd = true;
+        network = true;
+        prog = "${nodemon}/bin/nodemon";
       })
     ];
   };
