@@ -80,6 +80,7 @@
         # ];
       };
     };
+    programming.git.enable = true;
   };
 
   # Fix for apps not showing up in spotlight search
