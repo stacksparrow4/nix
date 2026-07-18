@@ -38,6 +38,8 @@
     initialPassword = "password";
   };
 
+  nix.settings.trusted-users = [ "root" "@wheel" ];
+
   networking.hostName = "vm";
   networking.networkmanager.enable = true;
 

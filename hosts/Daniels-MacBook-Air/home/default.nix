@@ -34,19 +34,21 @@
   home.packages = with pkgs; [
     sshpass
     shtris
-    # (pkgs.writeShellApplication {
-    #   name = "connect";
-    #   text = ''
-    #     sshpass -p password ssh -o PreferredAuthentications=password -R /run/user/1000/1p-agent.sock:/Users/dan/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock -t sprrw@192.168.65.2 'export SSH_AUTH_SOCK=/run/user/1000/1p-agent.sock; exec tmux'
-    #   '';
-    # })
-
-    # TODO: set up docker builder so this works
-    # then override the pi-coding-agent
-    #(
-      #import ../../../pkgs/pi { pkgs = import pkgs-unstable { system = "aarch64-linux"; }; }
-    #)
+    (pkgs.writeShellApplication {
+      name = "connect";
+      text = ''
+        sshpass -p password sprrw@192.168.64.2
+      '';
+    })
   ];
+
+  home.file.".config/nix/nix.conf".text = ''
+    experimental-features = nix-command flakes
+    builders = ssh://sprrw@192.168.64.2 aarch64-linux
+  '';
+
+  # Note: this ssh host has to be valid for the Mac root user
+  # sudo launchctl kickstart -k system/org.nixos.nix-daemon
 
   home.sessionVariables = {
     NIX_PATH = "nixpkgs=${inputs.nixpkgs}:nixpkgs-unstable=${inputs.nixpkgs-unstable}";
@@ -71,28 +73,8 @@
         };
 
         installTerminfo = false;
-
-        # bindings = [
-        #   { key = "Right"; mods = "Alt"; chars = "\\u001BF"; }
-        #   { key = "Left";  mods = "Alt"; chars = "\\u001BB"; }
-        #   { key = "Left";  mods = "Command"; chars = "\\u0001"; }
-        #   { key = "Right"; mods = "Command"; chars = "\\u0005"; }
-        # ];
       };
     };
     programming.git.enable = true;
   };
-
-  # Fix for apps not showing up in spotlight search
-  # home.activation = {
-  #   rsync-home-manager-applications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-  #     rsyncArgs="--archive --checksum --chmod=-w --copy-unsafe-links --delete"
-  #     apps_source="$genProfilePath/home-path/Applications"
-  #     moniker="Home Manager Trampolines"
-  #     app_target_base="${config.home.homeDirectory}/Applications"
-  #     app_target="$app_target_base/$moniker"
-  #     mkdir -p "$app_target"
-  #     ${pkgs.rsync}/bin/rsync $rsyncArgs "$apps_source/" "$app_target"
-  #   '';
-  # };
 }
