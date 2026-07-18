@@ -37,7 +37,7 @@
     (pkgs.writeShellApplication {
       name = "connect";
       text = ''
-        sshpass -p password ssh sprrw@192.168.64.2
+        sshpass -p password ssh root@192.168.64.2
       '';
     })
     (pkgs.writeShellApplication {

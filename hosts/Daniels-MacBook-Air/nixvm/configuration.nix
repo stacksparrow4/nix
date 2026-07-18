@@ -22,15 +22,12 @@
 
   networking.networkmanager.enable = true;
 
-  users.users.sprrw = {
-    isNormalUser = true;
-    description = "sprrw";
-    extraGroups = [ "networkmanager" "wheel" ];
+  users.users.root.password = "password";
+
+  services.openssh = {
+    enable = true;
+    settings.PermitRootLogin = "yes";
   };
-
-  nix.settings.trusted-users = [ "root" "@wheel" ];
-
-  services.openssh.enable = true;
 
   networking.firewall.enable = false;
 
