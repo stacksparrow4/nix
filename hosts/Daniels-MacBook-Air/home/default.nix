@@ -40,11 +40,20 @@
         sshpass -p password ssh sprrw@192.168.64.2
       '';
     })
+    (pkgs.writeShellApplication {
+      name = "nixvm-rebuild";
+      text = ''
+        nix run nixpkgs#nixos-rebuild -- switch \
+          --flake ~/nixos/hosts/Daniels-MacBook-Air/nixvm#macbook-vm \
+          --target-host root@192.168.64.2 \
+          --build-host root@192.168.64.2
+      '';
+    })
   ];
 
   home.file.".config/nix/nix.conf".text = ''
     experimental-features = nix-command flakes
-    builders = ssh://sprrw@192.168.64.2 aarch64-linux
+    builders = ssh://root@192.168.64.2 aarch64-linux
   '';
 
   # Note: this ssh host has to be valid for the Mac root user

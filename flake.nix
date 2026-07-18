@@ -78,17 +78,6 @@
         specialArgs = { inherit inputs; };
       };
 
-      nixosConfigurations.macbook-vm = nixpkgs.lib.nixosSystem rec {
-        system = "aarch64-linux";
-        pkgs = overlayedNixpkgs system;
-        modules = [
-          ./hosts/macbook-vm/system/configuration.nix
-          home-manager.nixosModules.home-manager
-          { home-manager.extraSpecialArgs = { inherit inputs; }; }
-        ];
-        specialArgs = { inherit inputs; };
-      };
-
       packages.aarch64-darwin.homeConfigurations."dan" = home-manager.lib.homeManagerConfiguration {
         pkgs = overlayedNixpkgs "aarch64-darwin";
 
