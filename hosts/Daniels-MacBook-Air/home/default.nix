@@ -84,6 +84,9 @@
         installTerminfo = false;
       };
     };
-    programming.git.enable = true;
+    programming = {
+      git.enable = true;
+      kubernetes.enable = true;
+    };
   };
 }
