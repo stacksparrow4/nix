@@ -1,7 +1,3 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash
-#! nix-shell --packages nix-update
+#!/usr/bin/env bash
 
-for pkg in pi; do
-  nix-update "$pkg"
-done
+./pi/update.py
