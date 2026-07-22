@@ -23,6 +23,7 @@
     in
     lib.mkIf cfg.enable {
       home.packages = with pkgs; [
+        foot # Even though already included by NixOS its here so home-manager can see the desktop file
         xdg-terminal-exec
       ];
 
