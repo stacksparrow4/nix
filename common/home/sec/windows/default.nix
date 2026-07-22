@@ -15,7 +15,6 @@
     ./krbrelayx.nix
     ./netexec.nix
     ./pygpoabuse.nix
-    ./responder-docker.nix
     ./rusthound.nix
   ];
 
@@ -32,7 +31,6 @@
       krbrelayx.enable = true;
       netexec.enable = true;
       pygpoabuse.enable = true;
-      responder-docker.enable = true;
       rusthound.enable = true;
     };
 

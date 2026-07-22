@@ -56,6 +56,8 @@
       '';
 
       boot.tmp.cleanOnBoot = true;
+
+      boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 0;
     }
     (lib.mkIf (!config.sprrw.headless) {
       programs._1password.enable = true;
