@@ -62,6 +62,11 @@ def main() -> None:
     with open(NIXFILE) as f:
         text = f.read()
 
+    m = re.search(r'(?m)^  version = "([^"]+)";', text)
+    if m and m.group(1) == version:
+        print(f"Already at version {version}; nothing to do.")
+        return
+
     # 1. version
     text, n = re.subn(r'(?m)^(  version = ")[^"]+(";)',
                       rf'\g<1>{version}\g<2>', text)
