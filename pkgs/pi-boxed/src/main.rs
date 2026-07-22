@@ -212,8 +212,7 @@ fn main() {
 
         if all_tools.contains(&"bash".to_string()) {
             guidelines.push("Use bash for file operations like ls, rg, find");
-            guidelines.push("Do NOT use `find /` to search for files (it takes too long). Instead use `find .` or `find /specific/path`");
-            guidelines.push("When asked for information about open source software, download the code to the /tmp directory and refer to it in your answers.");
+            guidelines.push("Avoid recalling information about source available software and instead answer definitively by cloning the source to /tmp and referring to it");
         }
 
         if all_tools.contains(&"read".to_string()) {
@@ -231,6 +230,8 @@ fn main() {
         }
 
         if all_tools.contains(&"command".to_string()) {
+            // TODO: Add pi extensino to make read, write, edit tools native over remote so the
+            // model does not need to use sed
             guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell");
         }
 

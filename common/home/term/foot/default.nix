@@ -22,6 +22,14 @@
       cfg = config.sprrw.term.foot;
     in
     lib.mkIf cfg.enable {
+      home.packages = with pkgs; [
+        xdg-terminal-exec
+      ];
+
+      xdg.configFile."xdg-terminals.list".text = ''
+        foot.desktop
+      '';
+
       home.file.".terminfo/f" = lib.mkIf cfg.installTerminfo {
         source = "${pkgs.foot.terminfo}/share/terminfo/f";
       };

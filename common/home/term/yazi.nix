@@ -8,6 +8,11 @@
   options.sprrw.term.yazi.enable = lib.mkEnableOption "yazi";
 
   config = lib.mkIf config.sprrw.term.yazi.enable {
+    xdg.mimeApps = {
+      enable = true;
+      defaultApplications."inode/directory" = "yazi.desktop";
+    };
+
     programs.yazi = {
       enable = true;
       shellWrapperName = "y";
