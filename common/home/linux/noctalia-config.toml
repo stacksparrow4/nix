@@ -54,3 +54,6 @@ enabled = false
 
 [weather]
 enabled = false
+
+[widget.workspaces]
+scale = 1.2
