@@ -63,4 +63,4 @@ enabled = false
 scale = 1.2
 
 [widget.clock]
-format = "{:%-I:%M %p}"
+format = "{:%a %b %-d  %-I:%M %p}"
