@@ -1,6 +1,9 @@
 [bar.default]
 center = [ "control-center", "clock" ]
 end = [ "media", "spacer_1", "tray", "notifications", "group:g1", "group:g2", "session" ]
+font_family = "IosevkaTerm NF"
+margin_ends = 0
+radius = 0
 start = [ "workspaces" ]
 
     [[bar.default.capsule_group]]
@@ -27,6 +30,7 @@ enabled = false
 
 [shell]
 clipboard_enabled = false
+font_family = "IosevkaTerm NF"
 popup_shadows = false
 
     [shell.animation]
