@@ -97,5 +97,8 @@
 
     file.".ssh/config".source =
       config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/ssh.config";
+
+    file.".config/noctalia/nest01.toml".source = 
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/noctalia.toml";
   };
 }
