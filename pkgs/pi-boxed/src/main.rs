@@ -25,7 +25,7 @@ struct Args {
     #[arg(short, long)]
     tools: Option<String>,
 
-    /// Search mode - only provide brave search 
+    /// Search mode - only provide brave search
     #[arg(short, long)]
     search: bool,
 
@@ -77,9 +77,13 @@ struct Args {
     #[arg(short, long)]
     no_brave_search: bool,
 
-    /// Execute commands on a remote host instead of inside the sandbox. Use the template <CMD>.
+    /// Execute commands on a remote host. Use the template <CMD>. The remote must be a unix/bash host.
     #[arg(long)]
     remote: Option<String>,
+
+    /// Like --remote, but for non unix hosts. Use the template <CMD>.
+    #[arg(long)]
+    universal_remote: Option<String>,
 
     /// Execute commands inside a VM
     #[arg(long)]
@@ -140,21 +144,33 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
 }
 
 const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "bash-tool.ts", "save.ts", "goal.ts"];
+const DEFAULT_FULL_REMOTE_TOOLS: &[&str] = &["read", "write", "edit", "command", "complete_goal"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
 
 fn main() {
     let args = Args::parse();
 
-    let remote = args.remote.is_some();
+    if [
+        args.remote.is_some(),
+        args.universal_remote.is_some(),
+        args.vm,
+    ]
+    .into_iter()
+    .filter(|&x| x)
+    .count()
+        > 1
+    {
+        eprintln!("Can only specify one of --remote, --universal-remote, or --vm.");
+        std::process::exit(2);
+    }
 
-    if let Some(template) = args.remote.as_ref() {
+    if let Some(template) = args.remote.as_ref().or(args.universal_remote.as_ref()) {
         validate_remote_arg(template);
     }
 
-    if args.vm && remote {
-        eprintln!("Cannot specify both --vm and --remote.");
-        std::process::exit(2);
-    }
+    let remote = args.remote.is_some() || args.universal_remote.is_some();
+    let full_remote = args.remote.is_some() || args.vm;
+    let universal = args.universal_remote.is_some();
 
     let brave_search = !(args.no_brave_search || args.local.is_some());
 
@@ -189,7 +205,12 @@ fn main() {
         .into_iter()
         .chain(if args.no_tools || args.search {
             vec![]
-        } else if remote || args.vm {
+        } else if full_remote {
+            DEFAULT_FULL_REMOTE_TOOLS
+                .iter()
+                .map(|x| x.to_string())
+                .collect()
+        } else if remote {
             vec!["command".to_string()]
         } else {
             DEFAULT_TOOLS.iter().map(|x| x.to_string()).collect()
@@ -230,9 +251,11 @@ fn main() {
         }
 
         if all_tools.contains(&"command".to_string()) {
-            // TODO: Add pi extensino to make read, write, edit tools native over remote so the
-            // model does not need to use sed
-            guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell");
+            if universal {
+                guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell");
+            } else {
+                guidelines.push("Use the command tool for file operations like ls, rg, find");
+            }
         }
 
         if brave_search {
@@ -327,7 +350,7 @@ fn main() {
 
         Some(format!("echo {starter}<CMD> | sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost"))
     } else {
-        args.remote
+        args.remote.or(args.universal_remote)
     })
     .as_ref()
     .map(|template| start_remote_server(template));
@@ -391,6 +414,11 @@ fn main() {
         )
         .args(network_args)
         .args(remote_args)
+        .args(if full_remote {
+            vec!["--env".to_string(), "PI_REMOTE_FILE_TOOLS=1".to_string()]
+        } else {
+            vec![]
+        })
         .args(if brave_search {
             vec![
                 "-v".to_string(),

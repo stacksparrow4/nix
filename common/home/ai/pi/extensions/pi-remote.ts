@@ -4,6 +4,9 @@ import {
   type BashOperations,
   createBashTool,
   createBashToolDefinition,
+  createEditToolDefinition,
+  createReadToolDefinition,
+  createWriteToolDefinition,
   type ExtensionAPI,
   isToolCallEventType,
 } from "@earendil-works/pi-coding-agent";
@@ -12,6 +15,7 @@ import { Type } from "typebox";
 
 const SOCKET_PATH = "/tmp/pi-remote/pi.sock";
 const DEFAULT_TIMEOUT_SECONDS = 10;
+const REMOTE_FILE_OP_TIMEOUT_SECONDS = 30;
 
 interface ExecOptions {
   timeout?: number; // seconds
@@ -151,6 +155,67 @@ function bridgeExec(command: string, options: ExecOptions = {}): Promise<ExecRes
   });
 }
 
+// File operations
+// ------------------------------------------------------------
+
+function shQuote(s: string): string {
+  return `'${s.split("'").join(`'\\''`)}'`;
+}
+
+async function runFileOp(command: string): Promise<ExecResult> {
+  const res = await bridgeExec(command, { timeout: REMOTE_FILE_OP_TIMEOUT_SECONDS });
+  if (res.aborted) throw new Error("aborted");
+  if (res.timedOut) throw new Error(`timeout after ${REMOTE_FILE_OP_TIMEOUT_SECONDS}s`);
+  if (res.error && res.exitCode === null) throw new Error(res.error);
+  return res;
+}
+
+function opError(res: ExecResult, fallback: string): Error {
+  const stderr = res.stderr.toString("utf-8").trim();
+  return new Error(stderr || fallback);
+}
+
+async function remoteReadFile(path: string): Promise<Buffer> {
+  const res = await runFileOp(`base64 < ${shQuote(path)}`);
+  if (res.exitCode !== 0) throw opError(res, `Failed to read ${path}`);
+  return Buffer.from(res.stdout.toString("utf-8").replace(/\s+/g, ""), "base64");
+}
+
+async function remoteWriteFile(path: string, content: string): Promise<void> {
+  const b64 = Buffer.from(content, "utf-8").toString("base64");
+  const res = await runFileOp(`printf %s ${shQuote(b64)} | base64 -d > ${shQuote(path)}`);
+  if (res.exitCode !== 0) throw opError(res, `Failed to write ${path}`);
+}
+
+async function remoteMkdir(dir: string): Promise<void> {
+  const res = await runFileOp(`mkdir -p ${shQuote(dir)}`);
+  if (res.exitCode !== 0) throw opError(res, `Failed to create directory ${dir}`);
+}
+
+async function remoteAccess(path: string, mode: "r" | "rw"): Promise<void> {
+  const test =
+    mode === "rw"
+      ? `[ -r ${shQuote(path)} ] && [ -w ${shQuote(path)} ]`
+      : `[ -r ${shQuote(path)} ]`;
+  const res = await runFileOp(test);
+  if (res.exitCode !== 0) {
+    const err = new Error(`Cannot access ${path}`) as Error & { code?: string };
+    err.code = "ENOENT";
+    throw err;
+  }
+}
+
+async function remotePwd(): Promise<string> {
+  try {
+    const res = await bridgeExec("pwd", { timeout: REMOTE_FILE_OP_TIMEOUT_SECONDS });
+    const out = res.stdout.toString("utf-8").trim();
+    if (res.exitCode === 0 && out) return out;
+  } catch {
+    // fall through to default
+  }
+  return "/";
+}
+
 function createBridgeBashOps(): BashOperations {
   return {
     exec: async (command, _cwd, { onData, signal, timeout }) => {
@@ -173,7 +238,7 @@ function createBridgeBashOps(): BashOperations {
   };
 }
 
-export default function(pi: ExtensionAPI) {
+export default async function(pi: ExtensionAPI) {
   pi.on("tool_call", async (event) => {
     if (isToolCallEventType("command", event) && event.input.timeout === undefined) {
       event.input.timeout = DEFAULT_TIMEOUT_SECONDS;
@@ -201,4 +266,36 @@ export default function(pi: ExtensionAPI) {
   pi.on("user_bash", () => {
     return { operations: createBridgeBashOps() };
   });
+
+  if (process.env.PI_REMOTE_FILE_TOOLS === "1") {
+    const cwd = await remotePwd();
+
+    pi.registerTool(
+      createReadToolDefinition(cwd, {
+        operations: {
+          readFile: remoteReadFile,
+          access: (p) => remoteAccess(p, "r"),
+        },
+      }),
+    );
+
+    pi.registerTool(
+      createWriteToolDefinition(cwd, {
+        operations: {
+          writeFile: remoteWriteFile,
+          mkdir: remoteMkdir,
+        },
+      }),
+    );
+
+    pi.registerTool(
+      createEditToolDefinition(cwd, {
+        operations: {
+          readFile: remoteReadFile,
+          writeFile: remoteWriteFile,
+          access: (p) => remoteAccess(p, "rw"),
+        },
+      }),
+    );
+  }
 }
