@@ -32,6 +32,7 @@ enabled = false
 clipboard_enabled = false
 font_family = "IosevkaTerm NF"
 popup_shadows = false
+time_format = "{:%-I:%M %p}"
 
     [shell.animation]
     enabled = false
@@ -57,3 +58,6 @@ enabled = false
 
 [widget.workspaces]
 scale = 1.2
+
+[widget.clock]
+format = "{:%-I:%M %p}"
