@@ -2,12 +2,11 @@
   pkgs,
   config,
   lib,
-inputs,
   ...
 }:
 
 {
-  imports = [ inputs.noctalia.homeModules.default ];
+  imports = [ ./noctalia.nix ];
 
   options = {
     sprrw.linux.sway.enable = lib.mkEnableOption "sway";
@@ -30,8 +29,6 @@ inputs,
         };
       in
       "${alternatingLayoutsDeriv}/bin/alternating-layouts";
-
-    programs.noctalia.enable = true;
 
     services.kanshi = {
       enable = true;

@@ -1,0 +1,40 @@
+[bar.default]
+center = [ "control-center", "clock" ]
+end = [ "tray", "notifications", "media", "network", "bluetooth", "volume", "brightness", "battery", "session" ]
+start = [ "workspaces" ]
+
+[desktop_widgets]
+enabled = false
+
+[shell]
+clipboard_enabled = false
+popup_shadows = false
+
+    [shell.animation]
+    enabled = false
+
+    [shell.screenshot]
+    save_to_file = false
+
+    [shell.shadow]
+    alpha = 0.0
+
+[theme]
+builtin = "Rosé Pine"
+community_palette = "Oxocarbon"
+mode = "dark"
+source = "builtin"
+wallpaper_scheme = "m3-content"
+
+[wallpaper]
+enabled = true
+transition = []
+
+    [wallpaper.default]
+    path = "/home/sprrw/.background-image"
+
+    [wallpaper.last]
+    path = "/home/sprrw/.background-image"
+
+[weather]
+enabled = false
