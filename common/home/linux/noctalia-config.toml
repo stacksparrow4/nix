@@ -1,7 +1,26 @@
 [bar.default]
 center = [ "control-center", "clock" ]
-end = [ "tray", "notifications", "media", "network", "bluetooth", "volume", "brightness", "battery", "session" ]
+end = [ "media", "spacer_1", "tray", "notifications", "group:g1", "group:g2", "session" ]
 start = [ "workspaces" ]
+
+    [[bar.default.capsule_group]]
+    enabled = true
+    fill = "surface_variant"
+    id = "g1"
+    members = [ "cpu", "ram" ]
+    opacity = 1.0
+    padding = 6.0
+
+    [[bar.default.capsule_group]]
+    enabled = true
+    fill = "surface_variant"
+    id = "g2"
+    members = [ "network", "bluetooth", "volume", "brightness", "battery" ]
+    opacity = 1.0
+    padding = 6.0
+
+[widget.spacer_1]
+type = "spacer"
 
 [desktop_widgets]
 enabled = false
