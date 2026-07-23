@@ -30,6 +30,7 @@
       spotify
       krita
       kdePackages.kdenlive
+      kdePackages.filelight
       vlc
       blender
       rofi
