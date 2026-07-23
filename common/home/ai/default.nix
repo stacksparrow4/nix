@@ -8,7 +8,6 @@
 
 {
   imports = [
-    ./claude
     ./llama-cpp.nix
     ./pi
   ];

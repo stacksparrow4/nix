@@ -15,7 +15,6 @@ builtins.listToAttrs (
       "slack"
       "ropr" # Doesnt exist on stable
       "brave"
-      "claude-code"
       "pi-coding-agent"
       "brave-search-cli"
       "lmms-full"
