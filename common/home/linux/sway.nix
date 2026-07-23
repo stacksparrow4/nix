@@ -2,10 +2,13 @@
   pkgs,
   config,
   lib,
+inputs,
   ...
 }:
 
 {
+  imports = [ inputs.noctalia.homeModules.default ];
+
   options = {
     sprrw.linux.sway.enable = lib.mkEnableOption "sway";
   };
@@ -28,20 +31,7 @@
       in
       "${alternatingLayoutsDeriv}/bin/alternating-layouts";
 
-    programs.waybar = {
-      enable = true;
-    };
-    home.file.".config/waybar/config".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar/waybar.jsonc";
-    home.file.".config/waybar/style.css".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/common/home/linux/waybar/style.css";
-
-    services.mako = {
-      enable = true;
-      settings = {
-        default-timeout = 10000;
-      };
-    };
+    programs.noctalia.enable = true;
 
     services.kanshi = {
       enable = true;

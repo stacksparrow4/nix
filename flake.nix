@@ -12,6 +12,7 @@
       url = "github:stacksparrow4/NixVirt?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    noctalia.url = "github:noctalia-dev/noctalia/cachix";
 
     nvim-http-client = {
       url = "github:stacksparrow4/nvim-http-client?ref=main";

@@ -1,11 +1,17 @@
 { inputs, lib, ... }:
 
 {
-  # Necessary for using flakes on this system.
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
+  nix.settings = {
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+
+    extra-substituters = [ "https://noctalia.cachix.org" ];
+    extra-trusted-public-keys = [
+      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
+    ];
+  };
 
   # Pin registry to flake versions
   nix.registry.nixpkgs.flake = inputs.nixpkgs;
