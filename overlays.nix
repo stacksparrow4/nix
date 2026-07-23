@@ -13,11 +13,8 @@ builtins.listToAttrs (
       "_1password-gui"
       "_1password-cli"
       "slack"
-      "ropr" # Doesnt exist on stable
       "brave"
       "pi-coding-agent"
-      "brave-search-cli"
-      "lmms-full"
       "signal-desktop"
     ]
 )
@@ -41,9 +38,3 @@ builtins.listToAttrs (
     aseprite = asepritePkgs.aseprite;
   }
 )
-// {
-  # Security patch
-  vimPlugins = prev.vimPlugins // {
-    typst-preview-nvim = pkgsUnstable.vimPlugins.typst-preview-nvim;
-  };
-}

@@ -22,7 +22,7 @@ pkgs,
         name = "noctalia-reset";
         text = ''
           rm -f ~/.local/state/noctalia/settings.toml
-          pkill noctalia || true
+          kill "$(pidof noctalia)" || true
           nohup noctalia &>/dev/null &
         '';
       }
