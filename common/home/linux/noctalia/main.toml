@@ -1,0 +1,67 @@
+[bar.default]
+center = [ "control-center", "clock" ]
+end = [ "media", "spacer_1", "tray", "notifications", "group:g1", "group:g2", "session" ]
+font_family = "IosevkaTerm NF"
+margin_ends = 0
+radius = 0
+start = [ "workspaces" ]
+
+    [[bar.default.capsule_group]]
+    enabled = true
+    fill = "surface_variant"
+    id = "g1"
+    members = [ "disk", "cpu", "ram" ]
+    opacity = 1.0
+    padding = 6.0
+
+    [[bar.default.capsule_group]]
+    enabled = true
+    fill = "surface_variant"
+    id = "g2"
+    members = [ "network", "bluetooth", "volume", "brightness", "battery" ]
+    opacity = 1.0
+    padding = 6.0
+
+[widget.spacer_1]
+type = "spacer"
+
+[widget.disk]
+type = "sysmon"
+stat = "disk_free"
+
+[desktop_widgets]
+enabled = false
+
+[shell]
+clipboard_enabled = false
+font_family = "IosevkaTerm NF"
+popup_shadows = false
+time_format = "{:%-I:%M %p}"
+
+    [shell.animation]
+    enabled = false
+
+    [shell.screenshot]
+    save_to_file = false
+
+    [shell.shadow]
+    alpha = 0.0
+
+[theme]
+builtin = "Rosé Pine"
+community_palette = "Oxocarbon"
+mode = "dark"
+source = "builtin"
+wallpaper_scheme = "m3-content"
+
+[wallpaper]
+enabled = false
+
+[weather]
+enabled = false
+
+[widget.workspaces]
+scale = 1.2
+
+[widget.clock]
+format = "{:%-I:%M %p}"

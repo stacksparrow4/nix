@@ -6,7 +6,7 @@
 }:
 
 {
-  imports = [ ./noctalia.nix ];
+  imports = [ ./noctalia ];
 
   options = {
     sprrw.linux.sway.enable = lib.mkEnableOption "sway";
