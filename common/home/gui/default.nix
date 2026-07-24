@@ -41,16 +41,6 @@
         prog = "${pkgs.freerdp}/bin/wlfreerdp";
       })
       (mkSandbox {
-        name = "grim";
-        wayland = true;
-        prog = "${pkgs.grim}/bin/grim";
-      })
-      (mkSandbox {
-        name = "slurp";
-        wayland = true;
-        prog = "${pkgs.slurp}/bin/slurp";
-      })
-      (mkSandbox {
         name = "swappy";
         wayland = true;
         prog = "${pkgs.swappy}/bin/swappy";

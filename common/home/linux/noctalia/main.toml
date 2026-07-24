@@ -43,6 +43,8 @@ time_format = "{:%-I:%M %p}"
 
     [shell.screenshot]
     save_to_file = false
+    pipe_to_command = true
+    pipe_command = "swappy -f -"
 
     [shell.shadow]
     alpha = 0.0
@@ -60,7 +62,7 @@ enabled = false
 enabled = false
 
 [widget.workspaces]
-scale = 1.2
+scale = 1.35
 
 [widget.clock]
 format = "{:%a %b %-d  %-I:%M %p}"
