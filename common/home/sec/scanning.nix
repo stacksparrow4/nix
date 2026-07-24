@@ -22,9 +22,14 @@
           name = "nuclei";
           sharedPaths = [
             {
-              hostPath = "$HOME/.local/nuclei-templates";
+              hostPath = "${fetchFromGitHub {
+                owner = "projectdiscovery";
+                repo = "nuclei-templates";
+                rev = "ee71c007b30bf63a44f500ffeebf11741324f7e2";
+                hash = "sha256-MNx/RcGyvspH6qECuNqQ3mBYtsBMvH/w36IDbUAkyiA=";
+              }}";
               boxPath = "/home/sprrw/.local/nuclei-templates";
-              ro = false;
+              ro = true;
               type = "dir";
             }
             {
