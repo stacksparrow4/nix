@@ -59,6 +59,11 @@
         network = true;
         prog = "${nodemon}/bin/nodemon";
       })
+      (mkSandbox {
+        name = "dumbpipe";
+        network = true;
+        prog = "${dumbpipe}/bin/dumbpipe";
+      })
     ];
   };
 }
