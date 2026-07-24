@@ -8,8 +8,6 @@
 {
   config = lib.mkIf (!config.sprrw.headless) {
     environment.systemPackages = with pkgs; [
-      pavucontrol
-      pasystray
       pulseaudio
       playerctl
     ];
