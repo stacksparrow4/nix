@@ -43,8 +43,9 @@ time_format = "{:%-I:%M %p}"
 
     [shell.screenshot]
     save_to_file = false
+    copy_to_clipboard = false
     pipe_to_command = true
-    pipe_command = "swappy -f -"
+    pipe_command = "noctalia-shot-dispatch"
 
     [shell.shadow]
     alpha = 0.0

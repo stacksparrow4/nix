@@ -30,9 +30,9 @@ bindsym $mod+backslash exec --no-startup-id "swaylock -f -F -c 000000 --ring-col
 
 bindsym Ctrl+Shift+space exec --no-startup-id "1password --quick-access"
 
-bindsym $mod+Shift+e exec noctalia msg screenshot-region
-bindsym $mod+Shift+s exec noctalia msg screenshot-region
-bindsym Print exec noctalia msg screenshot-fullscreen
+bindsym $mod+Shift+e exec sh -c 'echo swappy    > /tmp/noctalia-shot-mode; noctalia msg screenshot-region'
+bindsym $mod+Shift+s exec sh -c 'echo clipboard > /tmp/noctalia-shot-mode; noctalia msg screenshot-region'
+bindsym Print        exec sh -c 'echo swappy    > /tmp/noctalia-shot-mode; noctalia msg screenshot-fullscreen'
 
 bindsym $mod+Shift+f exec foot yazi
 
