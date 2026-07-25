@@ -4,18 +4,18 @@
 }:
 
 let
-  version = "0.81.1";
+  version = "0.82.0";
 
   src = pkgs.fetchFromGitHub {
     owner = "earendil-works";
     repo = "pi";
     rev = "v${version}";
-    hash = "sha256-xo3uoR7HceOCL3wqoMcacOe8WXP1o7ReAXne5t6Hgao=";
+    hash = "sha256-oKm0nyGmRY6rlQGMODB8DteMTVUUMroy/YXPphoxrvY=";
   };
 
   piAiTarball = pkgs.fetchurl {
     url = "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-${version}.tgz";
-    hash = "sha256-x53MD5DU370ZdNoz36P+OWZjGVpoM5sfVcEU2/ckDy8=";
+    hash = "sha256-dh4kktq3v1YBFD0AW5+C7JAAM40C0G9ze2V04Ff9YcM=";
   };
 in
 pkgs.pi-coding-agent.overrideAttrs (
@@ -24,7 +24,7 @@ pkgs.pi-coding-agent.overrideAttrs (
     npmDeps = pkgs.fetchNpmDeps {
       name = "pi-mono-${version}-npm-deps";
       inherit src;
-      hash = "sha256-lzKQZbnITzgV9koucsMno6f61ubBLYUcwQEXtak1r1s=";
+      hash = "sha256-3oqrN/uguYfkUHlfmKGxnLIvUo484IMGlydz6p9o/Dw=";
     };
 
     postPatch = (prevAttrs.postPatch or "") + ''
