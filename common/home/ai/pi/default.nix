@@ -17,10 +17,6 @@
     execModel = lib.mkOption {
       type = lib.types.str;
     };
-
-    localContext = lib.mkOption {
-      type = lib.types.int;
-    };
   };
 
   config =
@@ -29,20 +25,7 @@
     in
     lib.mkIf cfg.enable {
       home.file.".pi/agent/models.json".text = builtins.toJSON {
-        providers = {
-          local-llama = {
-            baseUrl = "http://localhost:8033/v1";
-            api = "openai-completions";
-            apiKey = "llama";
-            models = [
-              {
-                id = "local";
-                contextWindow = cfg.localContext;
-              }
-            ];
-          };
-        }
-        // cfg.extraModels;
+        providers = cfg.extraModels;
       };
 
       home.file.".pi/agent/skills".source =
@@ -113,8 +96,9 @@
         ]
       );
 
+      # TODO: fix
       sprrw.term.shellExtra = ''
-        alias pi-local='pi --local TCP:localhost:8033 --models local'
+        alias pi-local='pi --local TCP:localhost:8033'
         alias pc='pi --cwd'
         alias pe='pi-exec'
       '';

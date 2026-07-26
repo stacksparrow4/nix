@@ -8,6 +8,7 @@
 
 {
   imports = [
+    ./fetch-hf.nix
     ./llama-cpp.nix
     ./pi
   ];
