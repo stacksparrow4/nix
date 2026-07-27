@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, isAbsolute, resolve } from "node:path";
 import {
   CURRENT_SESSION_VERSION,
@@ -11,10 +12,30 @@ function stripKnownExtension(name: string): string {
   return name.replace(/\.(html?|jsonl|json)$/i, "");
 }
 
-function resolveBase(arg: string, cwd: string): string {
+/// The sessions directory is shared with the host, so exports written here survive the sandbox.
+const SESSIONS_DIR = resolve(homedir(), ".pi/agent/sessions");
+
+function resolveBase(arg: string): string {
   const trimmed = arg.trim();
   const base = stripKnownExtension(trimmed) || "session";
-  return isAbsolute(base) ? base : resolve(cwd, base);
+  return isAbsolute(base) ? base : resolve(SESSIONS_DIR, base);
+}
+
+/// Append -2, -3, ... until neither the .html nor the .jsonl export would clobber a file.
+function findFreeBase(base: string): string {
+  const isFree = (candidate: string) =>
+    !existsSync(`${candidate}.jsonl`) && !existsSync(`${candidate}.html`);
+
+  if (isFree(base)) {
+    return base;
+  }
+
+  for (let suffix = 2; ; suffix++) {
+    const candidate = `${base}-${suffix}`;
+    if (isFree(candidate)) {
+      return candidate;
+    }
+  }
 }
 
 function writeJsonl(ctx: ExtensionCommandContext, filePath: string): void {
@@ -67,7 +88,7 @@ export default function(pi: ExtensionAPI) {
   pi.registerCommand("save", {
     description: "Export session to both <name>.html and <name>.jsonl",
     handler: async (args: string, ctx: ExtensionCommandContext) => {
-      const base = resolveBase(args, ctx.cwd);
+      const base = findFreeBase(resolveBase(args));
       const jsonlPath = `${base}.jsonl`;
       const htmlPath = `${base}.html`;
 

@@ -1,5 +1,4 @@
 - Pi
-    - Allow /save to work
     - Live updates on stdout of command
         - Fix edit graphical issue
     - Refactor the use of remote to an enum
