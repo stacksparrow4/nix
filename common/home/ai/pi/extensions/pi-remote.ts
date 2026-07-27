@@ -8,12 +8,14 @@ import {
   createReadToolDefinition,
   createWriteToolDefinition,
   type ExtensionAPI,
-  isToolCallEventType,
 } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 
 const SOCKET_PATH = "/tmp/pi-remote/pi.sock";
+const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
+const TOOL_NAME = FULL_REMOTE ? "bash" : "command";
 const DEFAULT_TIMEOUT_SECONDS = 10;
 const REMOTE_FILE_OP_TIMEOUT_SECONDS = 30;
 
@@ -240,26 +242,35 @@ function createBridgeBashOps(): BashOperations {
 
 export default async function(pi: ExtensionAPI) {
   pi.on("tool_call", async (event) => {
-    if (isToolCallEventType("command", event) && event.input.timeout === undefined) {
-      event.input.timeout = DEFAULT_TIMEOUT_SECONDS;
+    const input = event.input;
+    if (event.toolName === TOOL_NAME && input && input.timeout === undefined) {
+      input.timeout = DEFAULT_TIMEOUT_SECONDS;
     }
     return undefined;
   });
 
+  const builtIn = createBashToolDefinition("/");
+  const originalRenderResult = builtIn.renderResult;
+  const bridgeTool = createBashTool("/", { operations: createBridgeBashOps() });
+
   pi.registerTool({
-    ...createBashToolDefinition("/"),
-    // Avoid using the name "bash" because it could technically be a non bash command interface (eg powershell)
-    name: "command",
-    label: "command",
-    description: `Execute a command. Returns stdout and stderr. Output may be truncated if it is too long. If no timeout is given, a default of ${DEFAULT_TIMEOUT_SECONDS} seconds is applied.`,
-    promptSnippet: "Execute commands",
+    ...builtIn,
+    name: TOOL_NAME,
+    label: TOOL_NAME,
+    description: `Execute a ${FULL_REMOTE ? "bash " : ""}command. Returns stdout and stderr. Output may be truncated if it is too long. If no timeout is given, a default of ${DEFAULT_TIMEOUT_SECONDS} seconds is applied.`,
+    promptSnippet: FULL_REMOTE ? "Execute bash commands" : "Execute commands",
     parameters: Type.Object({
-      command: Type.String({ description: "Command to execute" }),
+      command: Type.String({ description: `${FULL_REMOTE ? "Bash command" : "Command"} to execute` }),
       timeout: Type.Optional(Type.Number({ description: `Timeout in seconds (optional, defaults to ${DEFAULT_TIMEOUT_SECONDS}s if omitted)` })),
     }),
-    async execute(id, params, signal, onUpdate, _ctx) {
-      const tool = createBashTool("/", { operations: createBridgeBashOps() });
-      return tool.execute(id, params, signal, onUpdate);
+    execute(id, params, signal, onUpdate, _ctx) {
+      return bridgeTool.execute(id, params, signal, onUpdate);
+    },
+    renderResult(result, options, theme, context) {
+      if (!options.expanded) {
+        return new Text("", 0, 0);
+      }
+      return originalRenderResult!(result, options, theme, context);
     },
   });
 
@@ -267,7 +278,7 @@ export default async function(pi: ExtensionAPI) {
     return { operations: createBridgeBashOps() };
   });
 
-  if (process.env.PI_REMOTE_FILE_TOOLS === "1") {
+  if (FULL_REMOTE) {
     const cwd = await remotePwd();
 
     pi.registerTool(
