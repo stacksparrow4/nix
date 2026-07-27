@@ -207,6 +207,13 @@ async function remoteAccess(path: string, mode: "r" | "rw"): Promise<void> {
   }
 }
 
+let cachedRemotePwd: Promise<string> | undefined;
+
+function remotePwdCached(): Promise<string> {
+  cachedRemotePwd ??= remotePwd();
+  return cachedRemotePwd;
+}
+
 async function remotePwd(): Promise<string> {
   try {
     const res = await bridgeExec("pwd", { timeout: REMOTE_FILE_OP_TIMEOUT_SECONDS });
@@ -278,8 +285,24 @@ export default async function(pi: ExtensionAPI) {
     return { operations: createBridgeBashOps() };
   });
 
+  pi.on("before_agent_start", async (event) => {
+    const remoteCwd = await remotePwdCached();
+    const localLine = `Current working directory: ${process.cwd().replace(/\\/g, "/")}`;
+    const remoteLine = `Current working directory: ${remoteCwd}`;
+
+    if (remoteLine === localLine) {
+      return undefined;
+    }
+
+    return {
+      systemPrompt: event.systemPrompt.includes(localLine)
+        ? event.systemPrompt.replace(localLine, remoteLine)
+        : `${event.systemPrompt}\n${remoteLine}`,
+    };
+  });
+
   if (FULL_REMOTE) {
-    const cwd = await remotePwd();
+    const cwd = await remotePwdCached();
 
     pi.registerTool(
       createReadToolDefinition(cwd, {
