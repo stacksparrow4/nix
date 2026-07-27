@@ -38,6 +38,8 @@
             🙏 Pray
             🙂 Smile
             🙁 Frown
+            😳 Flushed
+            🫪 Flooshed
             EOF
             )
 
