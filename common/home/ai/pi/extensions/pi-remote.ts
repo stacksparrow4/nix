@@ -1,6 +1,8 @@
 import { Buffer } from "node:buffer";
 import { connect } from "node:net";
+import { basename } from "node:path";
 import {
+  type AutocompleteProviderFactory,
   type BashOperations,
   createBashTool,
   createBashToolDefinition,
@@ -9,7 +11,12 @@ import {
   createWriteToolDefinition,
   type ExtensionAPI,
 } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import {
+  type AutocompleteItem,
+  type AutocompleteProvider,
+  type AutocompleteSuggestions,
+  Text,
+} from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 
@@ -268,6 +275,197 @@ function createBridgeBashOps(): BashOperations {
   };
 }
 
+// Remote path autocomplete
+// ------------------------------------------------------------
+// Pi's built-in autocomplete resolves file paths against the filesystem of the
+// process running the TUI (the pi sandbox), but tools and files actually live in
+// the bridge's context (the tool/remote sandbox). This provider forwards plain
+// Tab path completion over the same bridge the file tools use, so it reflects the
+// real working tree. Slash-command and @-attachment completions are left to the
+// built-in provider. The prefix parsing and value formatting mirror pi's own
+// CombinedAutocompleteProvider so the built-in applyCompletion can be reused.
+
+const PATH_DELIMITERS = new Set([" ", "\t", '"', "'", "="]);
+
+function toDisplayPath(value: string): string {
+  return value.replace(/\\/g, "/");
+}
+
+function findLastDelimiter(text: string): number {
+  for (let i = text.length - 1; i >= 0; i -= 1) {
+    if (PATH_DELIMITERS.has(text[i] ?? "")) return i;
+  }
+  return -1;
+}
+
+function findUnclosedQuoteStart(text: string): number | null {
+  let inQuotes = false;
+  let quoteStart = -1;
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] === '"') {
+      inQuotes = !inQuotes;
+      if (inQuotes) quoteStart = i;
+    }
+  }
+  return inQuotes ? quoteStart : null;
+}
+
+function isTokenStart(text: string, index: number): boolean {
+  return index === 0 || PATH_DELIMITERS.has(text[index - 1] ?? "");
+}
+
+function extractQuotedPrefix(text: string): string | null {
+  const quoteStart = findUnclosedQuoteStart(text);
+  if (quoteStart === null) return null;
+  if (quoteStart > 0 && text[quoteStart - 1] === "@") {
+    if (!isTokenStart(text, quoteStart - 1)) return null;
+    return text.slice(quoteStart - 1);
+  }
+  if (!isTokenStart(text, quoteStart)) return null;
+  return text.slice(quoteStart);
+}
+
+function parsePathPrefix(prefix: string): { rawPrefix: string; isAtPrefix: boolean; isQuotedPrefix: boolean } {
+  if (prefix.startsWith('@"')) return { rawPrefix: prefix.slice(2), isAtPrefix: true, isQuotedPrefix: true };
+  if (prefix.startsWith('"')) return { rawPrefix: prefix.slice(1), isAtPrefix: false, isQuotedPrefix: true };
+  if (prefix.startsWith("@")) return { rawPrefix: prefix.slice(1), isAtPrefix: true, isQuotedPrefix: false };
+  return { rawPrefix: prefix, isAtPrefix: false, isQuotedPrefix: false };
+}
+
+function buildCompletionValue(path: string, isQuotedPrefix: boolean): string {
+  const needsQuotes = isQuotedPrefix || path.includes(" ");
+  return needsQuotes ? `"${path}"` : path;
+}
+
+function extractPathPrefix(text: string, forceExtract: boolean): string | null {
+  const quotedPrefix = extractQuotedPrefix(text);
+  if (quotedPrefix) return quotedPrefix;
+  const lastDelimiterIndex = findLastDelimiter(text);
+  const pathPrefix = lastDelimiterIndex === -1 ? text : text.slice(lastDelimiterIndex + 1);
+  if (forceExtract) return pathPrefix;
+  if (pathPrefix.includes("/") || pathPrefix.startsWith(".") || pathPrefix.startsWith("~/")) return pathPrefix;
+  if (pathPrefix === "" && text.endsWith(" ")) return pathPrefix;
+  return null;
+}
+
+// Split a raw path prefix into the directory portion (kept for display, always
+// ends with "/" when non-empty) and the trailing filter/query segment.
+function splitPathPrefix(rawPrefix: string): { dirDisplay: string; filter: string } {
+  const p = toDisplayPath(rawPrefix);
+  if (p === "~") return { dirDisplay: "~/", filter: "" };
+  const idx = p.lastIndexOf("/");
+  if (idx === -1) return { dirDisplay: "", filter: p };
+  return { dirDisplay: p.slice(0, idx + 1), filter: p.slice(idx + 1) };
+}
+
+// Turn a display directory into a shell argument evaluated in the bridge context.
+function remoteDirArg(dirDisplay: string): string {
+  if (dirDisplay === "") return ".";
+  if (dirDisplay.startsWith("~/")) return `"$HOME"/${shQuote(dirDisplay.slice(2))}`;
+  return shQuote(dirDisplay);
+}
+
+interface RemoteEntry {
+  path: string; // relative to dirDisplay
+  isDirectory: boolean;
+}
+
+// Parse newline-separated `ls -p` output (dirs carry a trailing slash).
+function parseListing(output: string): RemoteEntry[] {
+  return output
+    .split("\n")
+    .map((line) => toDisplayPath(line.replace(/\r$/, "")))
+    .filter(Boolean)
+    .map((line) => {
+      const isDirectory = line.endsWith("/");
+      return { path: isDirectory ? line.slice(0, -1) : line, isDirectory };
+    })
+    .filter((e) => e.path && e.path !== ".git" && !e.path.startsWith(".git/") && !e.path.includes("/.git/"));
+}
+
+function entriesToItems(entries: RemoteEntry[], dirDisplay: string, isQuotedPrefix: boolean): AutocompleteItem[] {
+  const items: AutocompleteItem[] = [];
+  for (const { path: relativePath, isDirectory } of entries) {
+    const displayPath = toDisplayPath(dirDisplay + relativePath);
+    const pathValue = isDirectory ? `${displayPath}/` : displayPath;
+    items.push({
+      value: buildCompletionValue(pathValue, isQuotedPrefix),
+      label: basename(relativePath) + (isDirectory ? "/" : ""),
+    });
+  }
+  return items;
+}
+
+// List a single directory level in the bridge context.
+async function remoteListDir(dirDisplay: string, signal: AbortSignal): Promise<RemoteEntry[]> {
+  try {
+    // -1 one per line, -A hidden but not . / .., -p mark dirs with /, -L follow symlinks.
+    const res = await bridgeExec(`ls -1ApL -- ${remoteDirArg(dirDisplay)} 2>/dev/null`, {
+      timeout: REMOTE_FILE_OP_TIMEOUT_SECONDS,
+      signal,
+    });
+    if (res.aborted || res.exitCode !== 0) return [];
+    return parseListing(res.stdout.toString("utf-8"));
+  } catch {
+    return [];
+  }
+}
+
+async function shallowSuggestions(
+  dirDisplay: string,
+  filter: string,
+  isQuotedPrefix: boolean,
+  signal: AbortSignal,
+): Promise<AutocompleteItem[]> {
+  const entries = await remoteListDir(dirDisplay, signal);
+  let filtered = entries;
+  if (filter) {
+    const lower = filter.toLowerCase();
+    filtered = entries.filter((e) => e.path.toLowerCase().startsWith(lower));
+  }
+  filtered.sort((a, b) => {
+    if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+    return a.path.localeCompare(b.path);
+  });
+  return entriesToItems(filtered, dirDisplay, isQuotedPrefix);
+}
+
+// Wrap the built-in provider so Tab path completion resolves in the bridge context.
+const createRemoteAutocompleteProvider: AutocompleteProviderFactory = (
+  current: AutocompleteProvider,
+): AutocompleteProvider => ({
+  triggerCharacters: current.triggerCharacters,
+
+  async getSuggestions(lines, cursorLine, cursorCol, options): Promise<AutocompleteSuggestions | null> {
+    const currentLine = lines[cursorLine] || "";
+    const textBeforeCursor = currentLine.slice(0, cursorCol);
+
+    // Slash commands are pi-local; leave them to the built-in provider.
+    if (!options.force && textBeforeCursor.startsWith("/")) {
+      return current.getSuggestions(lines, cursorLine, cursorCol, options);
+    }
+
+    const pathMatch = extractPathPrefix(textBeforeCursor, options.force ?? false);
+    if (pathMatch === null) return null;
+
+    const { rawPrefix, isAtPrefix, isQuotedPrefix } = parsePathPrefix(pathMatch);
+    // @-attachments are pi-local; leave them to the built-in provider.
+    if (isAtPrefix) return current.getSuggestions(lines, cursorLine, cursorCol, options);
+
+    const { dirDisplay, filter } = splitPathPrefix(rawPrefix);
+    const items = await shallowSuggestions(dirDisplay, filter, isQuotedPrefix, options.signal);
+    if (items.length === 0) return null;
+    return { items, prefix: pathMatch };
+  },
+
+  applyCompletion: (lines, cursorLine, cursorCol, item, prefix) =>
+    current.applyCompletion(lines, cursorLine, cursorCol, item, prefix),
+
+  shouldTriggerFileCompletion: current.shouldTriggerFileCompletion
+    ? (lines, cursorLine, cursorCol) => current.shouldTriggerFileCompletion!(lines, cursorLine, cursorCol)
+    : undefined,
+});
+
 export default async function(pi: ExtensionAPI) {
   pi.on("tool_call", async (event) => {
     const input = event.input;
@@ -333,6 +531,16 @@ export default async function(pi: ExtensionAPI) {
 
   if (FULL_REMOTE) {
     const cwd = await remotePwdCached();
+
+    // Resolve Tab file completion against the bridge (tool/remote sandbox)
+    // filesystem instead of the pi sandbox the TUI runs in. addAutocompleteProvider
+    // lives on the per-session UI context, so register it on session_start.
+    let autocompleteRegistered = false;
+    pi.on("session_start", (_event, ctx) => {
+      if (autocompleteRegistered) return;
+      ctx.ui?.addAutocompleteProvider?.(createRemoteAutocompleteProvider);
+      autocompleteRegistered = true;
+    });
 
     pi.registerTool(
       createReadToolDefinition(cwd, {
