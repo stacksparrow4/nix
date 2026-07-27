@@ -430,6 +430,13 @@ async function shallowSuggestions(
   return entriesToItems(filtered, dirDisplay, isQuotedPrefix);
 }
 
+// Items this provider produced. Because completion is async (a bridge round-trip),
+// a laggy connection can leave the shown list — and the editor's stored prefix —
+// behind the text actually typed. On apply we therefore re-derive the replaced
+// range from the live line for our own items, so a stale prefix cannot duplicate
+// the leading path segment.
+const remoteItems = new WeakSet<AutocompleteItem>();
+
 // Wrap the built-in provider so Tab path completion resolves in the bridge context.
 const createRemoteAutocompleteProvider: AutocompleteProviderFactory = (
   current: AutocompleteProvider,
@@ -455,11 +462,21 @@ const createRemoteAutocompleteProvider: AutocompleteProviderFactory = (
     const { dirDisplay, filter } = splitPathPrefix(rawPrefix);
     const items = await shallowSuggestions(dirDisplay, filter, isQuotedPrefix, options.signal);
     if (items.length === 0) return null;
+    for (const item of items) remoteItems.add(item);
     return { items, prefix: pathMatch };
   },
 
-  applyCompletion: (lines, cursorLine, cursorCol, item, prefix) =>
-    current.applyCompletion(lines, cursorLine, cursorCol, item, prefix),
+  applyCompletion(lines, cursorLine, cursorCol, item, prefix) {
+    let effectivePrefix = prefix;
+    if (remoteItems.has(item)) {
+      // Our item.value is a full path token, so the range to replace is the whole
+      // path token currently under the cursor, regardless of the (possibly stale)
+      // prefix the editor captured when the list was built.
+      const line = lines[cursorLine] ?? "";
+      effectivePrefix = extractPathPrefix(line.slice(0, cursorCol), true) ?? prefix;
+    }
+    return current.applyCompletion(lines, cursorLine, cursorCol, item, effectivePrefix);
+  },
 
   shouldTriggerFileCompletion: current.shouldTriggerFileCompletion
     ? (lines, cursorLine, cursorCol) => current.shouldTriggerFileCompletion!(lines, cursorLine, cursorCol)
