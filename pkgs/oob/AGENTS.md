@@ -18,7 +18,7 @@ All other interactsh output (banner, INF logs, raw responses) is suppressed.
 
 - `src/main.rs` — the entire implementation (single file).
 - `Cargo.toml` — package manifest and dependencies.
-- `default.nix` — Nix package build (`rustPlatform.buildRustPackage`).
+- `default.nix` — Nix package build (via [crane](https://github.com/ipetkov/crane)).
 
 ## Build / run / test
 
@@ -34,7 +34,7 @@ cargo test               # run tests (none yet)
 Nix build:
 
 ```sh
-nix-build                # builds via default.nix
+nix build .#oob          # builds via crane (run from the repo root)
 ```
 
 Toolchain in use: cargo/rustc 1.91 (edition 2021).
@@ -56,7 +56,13 @@ Toolchain in use: cargo/rustc 1.91 (edition 2021).
 
 ## Notes for changes
 
-- If you change the `default.nix` source or dependencies, the `cargoHash` in
-  `default.nix` will likely need updating.
+- The build uses crane, which reads `Cargo.lock` to vendor dependencies. There
+  is no `cargoHash` to maintain — just keep `Cargo.lock` in sync with
+  `Cargo.toml` (run `cargo build`/`cargo update` after changing deps).
+- Dependencies are built separately (`buildDepsOnly`) and cached, so only the
+  crate itself is rebuilt when `src/` changes.
+- `default.nix` receives the `crane` flake input via the top-level flake; it
+  cannot be built standalone with plain `nix-build` anymore — use
+  `nix build .#oob` from the repo root.
 - The `Interaction` struct in `src/main.rs` deliberately ignores most
   interactsh fields; only add fields when they are actually displayed.

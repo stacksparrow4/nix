@@ -14,6 +14,8 @@
     };
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
 
+    crane.url = "github:ipetkov/crane";
+
     nvim-http-client = {
       url = "github:stacksparrow4/nvim-http-client?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -93,7 +95,10 @@
 
       packages.x86_64-linux = {
         sandbox = import ./pkgs/sandbox { pkgs = overlayedNixpkgs "x86_64-linux"; };
-        oob = import ./pkgs/oob { pkgs = overlayedNixpkgs "x86_64-linux"; };
+        oob = import ./pkgs/oob {
+          pkgs = overlayedNixpkgs "x86_64-linux";
+          crane = inputs.crane;
+        };
       };
     };
 }
