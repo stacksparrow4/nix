@@ -226,6 +226,8 @@ fn main() {
 
     let universal = args.universal_remote.is_some();
 
+    let specified_remote = args.remote.is_some() || args.universal_remote.is_some();
+
     let brave_search = !(args.no_brave_search || args.local.is_some());
 
     let all_tools: Vec<String> = args
@@ -482,6 +484,11 @@ fn main() {
             vec![]
         } else {
             vec!["--env", "PI_REMOTE_FILE_TOOLS=1"]
+        })
+        .args(if specified_remote {
+            vec!["--env", "PI_SPECIFIED_REMOTE=1"]
+        } else {
+            vec![]
         })
         .args(if brave_search {
             vec![

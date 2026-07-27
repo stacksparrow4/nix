@@ -15,6 +15,7 @@ import { Type } from "typebox";
 
 const SOCKET_PATH = "/tmp/pi-remote/pi.sock";
 const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
+const SPECIFIED_REMOTE = process.env.PI_SPECIFIED_REMOTE === "1";
 const TOOL_NAME = FULL_REMOTE ? "bash" : "command";
 const DEFAULT_TIMEOUT_SECONDS = 10;
 const REMOTE_FILE_OP_TIMEOUT_SECONDS = 30;
@@ -225,6 +226,26 @@ async function remotePwd(): Promise<string> {
   return "/";
 }
 
+/**
+ * Read the context file sitting directly in the bridge's cwd. Pi discovers context files relative
+ * to its own cwd, which is not where tools run, so it never finds this one. Parent directories are
+ * deliberately not searched.
+ */
+async function remoteContextFile(): Promise<string | undefined> {
+  try {
+    const res = await bridgeExec("[ -f ./AGENTS.md ] && base64 < ./AGENTS.md", {
+      timeout: REMOTE_FILE_OP_TIMEOUT_SECONDS,
+    });
+    if (res.exitCode !== 0) return undefined;
+    const content = Buffer.from(res.stdout.toString("utf-8").replace(/\s+/g, ""), "base64").toString("utf-8");
+    if (content.trim()) return content;
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+}
+
 function createBridgeBashOps(): BashOperations {
   return {
     exec: async (command, _cwd, { onData, signal, timeout }) => {
@@ -290,15 +311,24 @@ export default async function(pi: ExtensionAPI) {
     const localLine = `Current working directory: ${process.cwd().replace(/\\/g, "/")}`;
     const remoteLine = `Current working directory: ${remoteCwd}`;
 
-    if (remoteLine === localLine) {
-      return undefined;
+    let systemPrompt = event.systemPrompt;
+
+    const context = SPECIFIED_REMOTE ? undefined : await remoteContextFile();
+
+    if (context) {
+      const block =
+        "<project_context>\n\nProject-specific instructions and guidelines:\n\n" +
+        `<project_instructions path="./AGENTS.md">\n${context}\n</project_instructions>\n\n` +
+        "</project_context>\n";
+
+      systemPrompt = systemPrompt.includes(localLine)
+        ? systemPrompt.replace(localLine, `${block}${localLine}`)
+        : `${systemPrompt}\n\n${block}`;
     }
 
-    return {
-      systemPrompt: event.systemPrompt.includes(localLine)
-        ? event.systemPrompt.replace(localLine, remoteLine)
-        : `${event.systemPrompt}\n${remoteLine}`,
-    };
+    systemPrompt = systemPrompt.replace(localLine, remoteLine);
+
+    return { systemPrompt };
   });
 
   if (FULL_REMOTE) {
