@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 
@@ -54,7 +55,10 @@
       };
 
       home.packages = [
-        (import ../../../../pkgs/pi-boxed { inherit pkgs; })
+        (import ../../../../pkgs/pi-boxed {
+          inherit pkgs;
+          inherit (inputs) crane;
+        })
         (import ./pi-convert.nix {
           inherit pkgs;
           model = cfg.execModel;

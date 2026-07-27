@@ -97,7 +97,7 @@
         sandbox = import ./pkgs/sandbox { pkgs = overlayedNixpkgs "x86_64-linux"; };
         oob = import ./pkgs/oob {
           pkgs = overlayedNixpkgs "x86_64-linux";
-          crane = inputs.crane;
+          inherit (inputs) crane;
         };
       };
     };

@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 
@@ -43,6 +44,7 @@
       home.packages = [
         (import ../../../pkgs/llama-server {
           inherit pkgs;
+          inherit (inputs) crane;
           inherit (cfg) models context;
         })
       ];

@@ -1,17 +1,26 @@
 {
   pkgs ? import <nixpkgs-unstable> { },
+  crane,
 }:
 
 let
+  craneLib = crane.mkLib pkgs;
+
   pi-unsandboxed = import ../pi { inherit pkgs; };
-  pi-boxed = pkgs.rustPlatform.buildRustPackage (finalAttrs: {
-    pname = "pi";
-    version = "0.1.0";
 
-    src = ./.;
+  commonArgs = {
+    src = craneLib.cleanCargoSource ./.;
+    strictDeps = true;
+  };
 
-    cargoHash = "sha256-iYxoidXdWkHJnW0bQ1Nwq6TZ6pP40oeKRh7jCDsIzU0=";
-  });
+  cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+  pi-boxed = craneLib.buildPackage (
+    commonArgs
+    // {
+      inherit cargoArtifacts;
+    }
+  );
 in
 pkgs.writeShellApplication {
   name = "pi";

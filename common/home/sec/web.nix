@@ -48,7 +48,7 @@
         prog = "${
           import ../../../pkgs/oob {
             inherit pkgs;
-            crane = inputs.crane;
+            inherit (inputs) crane;
           }
         }/bin/oob";
         sharedPaths = [
