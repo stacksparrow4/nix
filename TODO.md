@@ -1,3 +1,8 @@
+- Pi
+    - Allow /save to work
+    - Live updates on stdout of command
+        - Fix edit graphical issue
+    - Refactor the use of remote to an enum
 - Some hardcoded revisions are used for some things. Refactor them to be flake inputs. Then we can easily update and track upstream source
 - Refactor out common configuration.nix logic
 - Agenix for github api
