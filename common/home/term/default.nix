@@ -2,7 +2,6 @@
 
 {
   imports = [
-    ./ghostty.nix
     ./bash.nix
     ./navi
     ./tmux
@@ -20,7 +19,6 @@
   };
 
   config = lib.mkIf config.sprrw.term.enable {
-    sprrw.term.ghostty.enable = false;
     sprrw.term.foot.enable = true;
     sprrw.term.navi.enable = true;
     sprrw.term.tmux.enable = true;

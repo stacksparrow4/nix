@@ -1,6 +1,5 @@
 {
   pkgs,
-  lib,
   config,
   inputs,
   ...
@@ -21,7 +20,7 @@
     package = null;
     settings = {
       env = "TERMINFO_DIRS=/Users/dan/.terminfo";
-      command = lib.mkForce "${pkgs.tmux}/bin/tmux";
+      command = "${pkgs.tmux}/bin/tmux";
       app-notifications = "no-clipboard-copy";
       macos-option-as-alt = true;
     };
@@ -74,14 +73,6 @@
       tmux = {
         enable = true;
         defaultTerm = "ghostty";
-      };
-      ghostty = {
-        font = {
-          family = "IosevkaTerm Nerd Font Mono";
-          size = 14;
-        };
-
-        installTerminfo = false;
       };
     };
     programming = {

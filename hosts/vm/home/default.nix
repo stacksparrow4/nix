@@ -16,10 +16,7 @@
       gui.enable = lib.mkForce false;
       caido.enable = lib.mkForce false;
     };
-    term = {
-      enable = true;
-      ghostty.enable = lib.mkForce false;
-    };
+    term.enable = true;
   };
 
   home = {
