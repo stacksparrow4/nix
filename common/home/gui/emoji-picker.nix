@@ -40,6 +40,7 @@
             🙁 Frown
             😳 Flushed
             🫪 Flooshed
+            😅 Sweat smile
             EOF
             )
 
