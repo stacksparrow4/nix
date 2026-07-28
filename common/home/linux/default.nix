@@ -9,6 +9,7 @@
   imports = [
     ./sway.nix
     ./rofi.nix
+    ./desktop-entries.nix
     ./term.nix
     ./yubikey.nix
   ];
