@@ -215,6 +215,28 @@ async function remoteAccess(path: string, mode: "r" | "rw"): Promise<void> {
   }
 }
 
+// The edit tool's renderCall draws a live diff preview by calling computeEditsDiff(),
+// which reads the file with node:fs/promises directly and therefore bypasses the
+// pluggable EditOperations we hand to createEditToolDefinition(). For remote edits the
+// file only exists on the bridge side, so that local read fails and the header flashes
+// red with "Could not edit file: ... Error code: ENOENT." until renderResult() replaces
+// it with the real diff coming back from the (remote) execution.
+//
+// The preview is only attempted when context.argsComplete is true, and nothing else in
+// renderCall looks at that flag, so rendering with argsComplete: false gives us the
+// header alone and leaves the diff to renderResult. Drop this wrapper once
+// computeEditsDiff() accepts the tool's EditOperations upstream.
+function withoutLocalEditPreview<T extends { renderCall?: (...args: any[]) => any }>(tool: T): T {
+  const renderCall = tool.renderCall;
+  if (!renderCall) return tool;
+  return {
+    ...tool,
+    renderCall(args: any, theme: any, context: any) {
+      return renderCall.call(tool, args, theme, { ...context, argsComplete: false });
+    },
+  };
+}
+
 let cachedRemotePwd: Promise<string> | undefined;
 
 function remotePwdCached(): Promise<string> {
@@ -577,7 +599,7 @@ export default async function(pi: ExtensionAPI) {
       }),
     );
 
-    pi.registerTool(
+    pi.registerTool(withoutLocalEditPreview(
       createEditToolDefinition(cwd, {
         operations: {
           readFile: remoteReadFile,
@@ -585,6 +607,6 @@ export default async function(pi: ExtensionAPI) {
           access: (p) => remoteAccess(p, "rw"),
         },
       }),
-    );
+    ));
   }
 }

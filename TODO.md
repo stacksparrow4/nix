@@ -1,6 +1,5 @@
 - Pi
-    - Live updates on stdout of command
-        - Fix edit graphical issue
+    - Fix edit graphical issue
     - Refactor the use of remote to an enum
     - Prompts
         - Recheck files
@@ -12,6 +11,6 @@
     - vim
 - More generalised method for IPC between sandbox and outside world
     - Figure out how to make pi -p work inside of Vim
-- Tmux new panes will spawn in the correct directory when splitting from a box
+    - Tmux new panes will spawn in the correct directory when splitting from a box
 - Fix fonts in vesktop
 - Nvim prettier formatter for GraphQL
