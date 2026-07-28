@@ -413,7 +413,7 @@ fn main() {
         };
 
         Some(format!(
-            "echo {starter}<CMD> | sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost"
+            "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost {starter}<CMD>"
         ))
     } else {
         args.remote.or(args.universal_remote)
