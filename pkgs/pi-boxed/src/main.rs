@@ -437,6 +437,7 @@ fn main() {
         "--approve".to_string(),
         "--no-tools".to_string(),
         "--no-extensions".to_string(),
+        "--offline".to_string()
     ]
     .into_iter()
     .chain(if args.print {
