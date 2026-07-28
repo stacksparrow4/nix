@@ -1,3 +1,4 @@
+- Refactor build, update, etc scripts into a sprrw cli tool
 - Pi
     - Fix edit graphical issue
     - Refactor the use of remote to an enum
