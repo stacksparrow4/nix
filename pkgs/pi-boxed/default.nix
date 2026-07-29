@@ -1,26 +1,15 @@
+# The pi wrapper: pi-boxed sandboxes the real (unsandboxed) pi agent.
+#
+# The Rust source now lives in ../rust, as a workspace member sharing the command
+# bridge with `sandbox`.
 {
   pkgs ? import <nixpkgs-unstable> { },
   crane,
 }:
 
 let
-  craneLib = crane.mkLib pkgs;
-
   pi-unsandboxed = import ../pi { inherit pkgs; };
-
-  commonArgs = {
-    src = craneLib.cleanCargoSource ./.;
-    strictDeps = true;
-  };
-
-  cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-
-  pi-boxed = craneLib.buildPackage (
-    commonArgs
-    // {
-      inherit cargoArtifacts;
-    }
-  );
+  pi-boxed = (import ../rust { inherit pkgs crane; }).pi-boxed;
 in
 pkgs.writeShellApplication {
   name = "pi";

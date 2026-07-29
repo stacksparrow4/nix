@@ -1,0 +1,17 @@
+[package]
+name = "sandbox"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "sandbox"
+path = "src/main.rs"
+
+[dependencies]
+bridge = { path = "../bridge" }
+base64.workspace = true
+clap.workspace = true
+libc.workspace = true
+shlex.workspace = true
+signal-hook.workspace = true
+tempfile.workspace = true

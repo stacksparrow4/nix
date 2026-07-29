@@ -99,7 +99,10 @@
         # Kernel + initrd + cmdline + image, for `sandbox --vm` to direct-boot.
         vm-boot = vmSystem.config.system.build.images.iso.passthru.config.system.build.sandboxDirectBoot;
 
-        sandbox = import ./pkgs/sandbox { pkgs = overlayedNixpkgs "x86_64-linux"; };
+        sandbox = import ./pkgs/sandbox {
+          pkgs = overlayedNixpkgs "x86_64-linux";
+          inherit (inputs) crane;
+        };
         oob = import ./pkgs/oob {
           pkgs = overlayedNixpkgs "x86_64-linux";
           inherit (inputs) crane;

@@ -8,9 +8,34 @@ use std::{
 use clap::Parser;
 use tempfile::{TempDir, tempdir};
 
-use crate::remote::{SOCKET_NAME, start_remote_server, validate_remote_arg};
+use bridge::SOCKET_NAME;
 
-mod remote;
+/// Serve tool calls by substituting each command into a caller-supplied template.
+///
+/// Only --remote / --universal-remote reach this; sandboxes (bwrap and VM alike)
+/// are served by `sandbox --serve`, which speaks the same protocol from the same
+/// crate.
+fn start_remote_server(template: &str) -> TempDir {
+    let dir = tempdir().expect("Failed to create temporary remote dir");
+    let socket_path = dir.path().join(SOCKET_NAME);
+    let template = template.to_string();
+    std::thread::spawn(move || {
+        if let Err(e) = bridge::serve(&socket_path, bridge::Template(template)) {
+            eprintln!("Bridge server failed: {e}");
+        }
+    });
+    dir
+}
+
+fn validate_remote_arg(remote_arg: &str) {
+    if !bridge::Template::is_valid(remote_arg) {
+        eprintln!(
+            "error: --remote template must contain {}",
+            bridge::CMD_PLACEHOLDER
+        );
+        std::process::exit(2);
+    }
+}
 
 /// Pi sandbox wrapper. For Pi help, use pi -- --help
 #[derive(Parser, Debug)]

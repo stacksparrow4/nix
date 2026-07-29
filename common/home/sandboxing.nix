@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }:
 
@@ -66,7 +67,10 @@ in
     _module.args.mkSandbox = mkSandbox;
 
     home.packages = lib.mkIf config.sprrw.sandbox.enable [
-      (import ../../pkgs/sandbox { inherit pkgs; })
+      (import ../../pkgs/sandbox {
+        inherit pkgs;
+        inherit (inputs) crane;
+      })
       (pkgs.writeShellApplication {
         name = "build-vm";
         text = ''
@@ -89,7 +93,6 @@ in
         name = "vm-enter";
         runtimeInputs = with pkgs; [
           openssh
-          socat
           fzf
         ];
         text = ''
@@ -115,12 +118,14 @@ in
             exit 1
           fi
 
+          # sandbox --proxy shuttles stdin/stdout to the socket, so no external
+          # forwarder is needed.
           exec ssh -F /dev/null \
             -o IdentitiesOnly=yes \
             -o "IdentityFile=$target/id" \
             -o StrictHostKeyChecking=yes \
             -o "UserKnownHostsFile=$target/known_hosts" \
-            -o "ProxyCommand=socat - UNIX-CONNECT:$target/ssh.sock" \
+            -o "ProxyCommand=sandbox --proxy $target/ssh.sock" \
             sprrw@sandbox-vm
         '';
       })
