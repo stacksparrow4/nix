@@ -15,19 +15,18 @@ use std::{
 
 use base64::prelude::*;
 use serde_json::json;
-use tempfile::{tempdir, TempDir};
+use tempfile::{TempDir, tempdir};
 use wait_timeout::ChildExt;
 
 const CMD_PLACEHOLDER: &str = "<CMD>";
 pub const SOCKET_NAME: &str = "pi.sock";
 
-/// How a command received over the bridge is turned into a process.
-enum Executor {
-    /// Run the command on this host by substituting it into a template (eg an ssh invocation).
-    Template(String),
-    /// Run the command directly, in whatever context this server itself runs in.
-    Local,
-}
+// Only --remote / --universal-remote reach this server now. Sandboxes (bwrap and
+// VM alike) are served by `sandbox --serve`, which speaks the same protocol; see
+// pkgs/sandbox/sandbox/bridge.py.
+
+/// Run the command on this host by substituting it into a template (eg an ssh invocation).
+struct Executor(String);
 
 pub fn validate_remote_arg(remote_arg: &str) {
     if !remote_arg.contains(CMD_PLACEHOLDER) {
@@ -59,13 +58,8 @@ fn stream_pipe<R: Read>(mut reader: R, kind: &'static str, writer: &Mutex<UnixSt
 }
 
 fn spawn_command(executor: &Executor, command: &str) -> std::io::Result<Child> {
-    let script = match executor {
-        Executor::Template(template) => {
-            let quoted = shlex::try_quote(command).expect("Failed to quote command");
-            template.replace(CMD_PLACEHOLDER, &quoted)
-        }
-        Executor::Local => command.to_string(),
-    };
+    let quoted = shlex::try_quote(command).expect("Failed to quote command");
+    let script = executor.0.replace(CMD_PLACEHOLDER, &quoted);
 
     Command::new("bash")
         .arg("-c")
@@ -172,19 +166,7 @@ pub fn start_remote_server(template: &str) -> TempDir {
     let template = template.to_string();
     thread::spawn(move || {
         let listener = bind_socket(&socket_path);
-        accept_loop(listener, Executor::Template(template));
+        accept_loop(listener, Executor(template));
     });
     dir
-}
-
-/// Serve commands that are executed directly by this process. Used by --internal-serve, which runs
-/// inside the tool sandbox so that tool calls never touch the host.
-pub fn serve_local(socket_path: &str) -> ! {
-    let path = Path::new(socket_path);
-    let _ = fs::remove_file(path);
-
-    let listener = bind_socket(path);
-    accept_loop(listener, Executor::Local);
-
-    std::process::exit(0);
 }

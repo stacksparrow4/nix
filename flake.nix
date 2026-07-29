@@ -57,6 +57,17 @@
           overlays = [ (overlay system) ];
           config = nixpkgsConfig;
         };
+
+      vmSystem = nixpkgs.lib.nixosSystem rec {
+        system = "x86_64-linux";
+        pkgs = overlayedNixpkgs system;
+        modules = [
+          ./hosts/vm/system/configuration.nix
+          home-manager.nixosModules.home-manager
+          { home-manager.extraSpecialArgs = { inherit inputs; }; }
+        ];
+        specialArgs = { inherit inputs; };
+      };
     in
     {
       nixosConfigurations.nest01 = nixpkgs.lib.nixosSystem rec {
@@ -70,16 +81,7 @@
         specialArgs = { inherit inputs; };
       };
 
-      nixosConfigurations.vm = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        pkgs = overlayedNixpkgs system;
-        modules = [
-          ./hosts/vm/system/configuration.nix
-          home-manager.nixosModules.home-manager
-          { home-manager.extraSpecialArgs = { inherit inputs; }; }
-        ];
-        specialArgs = { inherit inputs; };
-      };
+      nixosConfigurations.vm = vmSystem;
 
       packages.aarch64-darwin.homeConfigurations."dan" = home-manager.lib.homeManagerConfiguration {
         pkgs = overlayedNixpkgs "aarch64-darwin";
@@ -94,6 +96,9 @@
       };
 
       packages.x86_64-linux = {
+        # Kernel + initrd + cmdline + image, for `sandbox --vm` to direct-boot.
+        vm-boot = vmSystem.config.system.build.images.iso.passthru.config.system.build.sandboxDirectBoot;
+
         sandbox = import ./pkgs/sandbox { pkgs = overlayedNixpkgs "x86_64-linux"; };
         oob = import ./pkgs/oob {
           pkgs = overlayedNixpkgs "x86_64-linux";

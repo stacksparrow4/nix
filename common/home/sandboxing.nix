@@ -73,35 +73,55 @@ in
           cd ~/${config.sprrw.nixosRepoPath}
           git add .
 
-          isopath=$(nixos-rebuild build-image --flake .#vm --image-variant iso --no-link)
-          echo "$isopath"
+          # Builds the ISO plus the kernel/initrd/cmdline needed to direct-boot
+          # it, so `sandbox --vm` can skip the bootloader entirely.
+          bootpath=$(nix build --no-link --print-out-paths .#vm-boot)
+          echo "$bootpath"
 
           mkdir -p ~/.local
 
-          rm -f ~/.local/vm.iso
-          ln -s "$isopath" ~/.local/vm.iso
+          ln -sfn "$bootpath" ~/.local/vm-boot
+          # Kept for anything still expecting the raw image.
+          ln -sfn "$bootpath/image.iso" ~/.local/vm.iso
         '';
       })
       (pkgs.writeShellApplication {
         name = "vm-enter";
+        runtimeInputs = with pkgs; [
+          openssh
+          socat
+          fzf
+        ];
         text = ''
-          ports=$(ss -tlpn | grep qemu-system | grep -oE '127\.0\.0\.1:[0-9]+' | cut -d: -f2)
+          shopt -s nullglob
 
-          if [[ -z "$ports" ]]; then
+          # Each running sandbox VM owns a private 0700 directory holding its
+          # control socket and its per-VM keypair. There are no shared
+          # credentials and no listening TCP ports to enumerate.
+          dirs=( "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/sandboxvm.*/ /tmp/sandboxvm.*/ )
+
+          if [[ ''${#dirs[@]} -eq 0 ]]; then
             echo "No valid vms found"
             exit 1
           fi
 
-          target=$(echo "$ports" | while read -r line; do
-            echo "$line - $(sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$line" ps aux 2>/dev/null | grep pts | awk '{print $11}' | tr '\n' ' ')";
-          done | fzf | awk '{print $1}')
+          target=$(for d in "''${dirs[@]}"; do
+            [[ -S "$d/ssh.sock" ]] || continue
+            printf '%s\t%s\n' "$d" "$(cat "$d/info" 2>/dev/null || echo '?')"
+          done | fzf --with-nth=2.. --delimiter='\t' | cut -f1)
 
           if [[ -z "$target" ]]; then
             echo "Cancelled."
             exit 1
           fi
 
-          sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$target"
+          exec ssh -F /dev/null \
+            -o IdentitiesOnly=yes \
+            -o "IdentityFile=$target/id" \
+            -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$target/known_hosts" \
+            -o "ProxyCommand=socat - UNIX-CONNECT:$target/ssh.sock" \
+            sprrw@sandbox-vm
         '';
       })
     ];

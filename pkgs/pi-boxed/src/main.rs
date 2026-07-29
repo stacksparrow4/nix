@@ -1,16 +1,14 @@
 use std::{
     env,
-    io::{BufRead, BufReader, Write},
     process::{Child, Command, Stdio},
     thread::sleep,
     time::Duration,
 };
 
 use clap::Parser;
-use regex::Regex;
 use tempfile::{TempDir, tempdir};
 
-use crate::remote::{SOCKET_NAME, serve_local, start_remote_server, validate_remote_arg};
+use crate::remote::{SOCKET_NAME, start_remote_server, validate_remote_arg};
 
 mod remote;
 
@@ -91,14 +89,9 @@ struct Args {
     #[arg(long)]
     vm: bool,
 
-    /// Internal: serve tool calls on the given unix socket, executing them in this process's
-    /// context. Used inside the tool sandbox, you should never need to supply this option.
-    #[arg(long, hide = true)]
-    internal_serve: Option<String>,
-
     /// Real pi location, used internally by Nix. You shouldn't need to supply this option, it will
     /// be added automatically
-    #[arg(required_unless_present = "internal_serve", hide = true)]
+    #[arg(hide = true)]
     internal_real_pi_location: Option<String>,
 
     /// Positional arguments for Pi
@@ -156,29 +149,34 @@ const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
 const BRIDGE_DIR: &str = "/tmp/pi-remote";
 
-/// Start a sandbox serving tool calls from the inside, and wait for its socket to appear.
-fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Child) {
+/// Start one sandbox serving tool calls, and wait for its socket to appear.
+///
+/// `sandbox --serve` owns the box and the transport: for the bwrap backend it runs
+/// the bridge inside the box, and for `--vm` it runs on the host and forwards each
+/// command into the VM. Either way it binds the socket only once the box is
+/// usable, so waiting for the socket is a sufficient readiness check.
+fn start_serving_sandbox(
+    sandbox_args: &[String],
+    no_network: bool,
+    backend_args: &[&str],
+) -> (TempDir, Child) {
     let dir = tempdir().expect("Failed to create temporary bridge dir");
+    let socket = dir.path().join(SOCKET_NAME);
 
     let mut proc = Command::new("sandbox")
-        .arg("-v")
-        .arg(format!("{}:{}:rw:dir", dir.path().display(), BRIDGE_DIR))
+        .arg("--serve")
+        .arg(&socket)
+        .args(backend_args)
         .args(if no_network {
             vec!["--no-network"]
         } else {
             vec![]
         })
         .args(sandbox_args)
-        .arg("--")
-        .arg(env::current_exe().expect("Failed to locate own executable"))
-        .arg("--internal-serve")
-        .arg(format!("{}/{}", BRIDGE_DIR, SOCKET_NAME))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .spawn()
         .expect("Failed to start tool sandbox");
-
-    let socket = dir.path().join(SOCKET_NAME);
 
     while !socket.exists() {
         if let Some(status) = proc
@@ -195,12 +193,19 @@ fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Ch
     (dir, proc)
 }
 
+/// Ask a serving sandbox to shut down and wait for it.
+///
+/// Must be SIGTERM rather than `Child::kill`, which sends SIGKILL: the sandbox
+/// needs to run its cleanup to terminate qemu and remove its run directory.
+fn terminate(proc: &mut Child) {
+    unsafe {
+        libc::kill(proc.id() as i32, libc::SIGTERM);
+    }
+    let _ = proc.wait();
+}
+
 fn main() {
     let args = Args::parse();
-
-    if let Some(socket_path) = args.internal_serve.as_deref() {
-        serve_local(socket_path);
-    }
 
     let real_pi_location = args
         .internal_real_pi_location
@@ -375,54 +380,17 @@ fn main() {
         )
     };
 
-    let mut vm_proc = if args.vm {
-        Some(
-            Command::new("sandbox")
-                .arg("--vm")
-                .args(&sandbox_args)
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::null())
-                .env("PYTHONUNBUFFERED", "1")
-                .spawn()
-                .expect("Failed to start VM box"),
-        )
-    } else {
-        None
-    };
-
-    let host_template = if args.vm {
-        let vm_proc = vm_proc.as_mut().unwrap();
-        let mut stdout_reader = BufReader::new(vm_proc.stdout.as_mut().unwrap());
-
-        let mut first_line = String::new();
-        let _ = stdout_reader
-            .read_line(&mut first_line)
-            .expect("Failed to read first line of VM process");
-
-        let re = Regex::new(r"^Forwarding SSH to port (\d+)$").unwrap();
-
-        let ssh_port = &re
-            .captures(first_line.trim())
-            .expect("Failed to extract SSH port")[1];
-
-        let starter = if args.cwd || args.ro_cwd {
-            "'cd /pwd &&' "
-        } else {
-            ""
-        };
-
-        Some(format!(
-            "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost 'exec 0</dev/null;' {starter}<CMD>"
-        ))
-    } else {
-        args.remote.or(args.universal_remote)
-    };
-
-    let (bridge_dir, tool_proc) = match host_template {
+    let (bridge_dir, serving_proc) = match args.remote.or(args.universal_remote) {
+        // --remote / --universal-remote: we serve, running each command through
+        // the caller's template on this host.
         Some(template) => (start_remote_server(&template), None),
+        // Otherwise the sandbox serves, and owns the box and the transport.
         None => {
-            let (dir, proc) = start_tool_sandbox(&sandbox_args, args.local.is_some());
+            let (dir, proc) = start_serving_sandbox(
+                &sandbox_args,
+                args.local.is_some(),
+                if args.vm { &["--vm"] } else { &[] },
+            );
             (dir, Some(proc))
         }
     };
@@ -437,7 +405,7 @@ fn main() {
         "--approve".to_string(),
         "--no-tools".to_string(),
         "--no-extensions".to_string(),
-        "--offline".to_string()
+        "--offline".to_string(),
     ]
     .into_iter()
     .chain(if args.print {
@@ -504,20 +472,8 @@ fn main() {
         .status()
         .expect("Failed to launch sandboxed pi");
 
-    if let Some(mut tool_proc) = tool_proc {
-        let _ = tool_proc.kill();
-        let _ = tool_proc.wait();
-    }
-
-    if let Some(mut vm_proc) = vm_proc {
-        let _ = vm_proc
-            .stdin
-            .as_ref()
-            .expect("Failed to obtain stdin of vm process")
-            .write("exit\n".as_bytes())
-            .expect("Failed to send exit message");
-
-        let _ = vm_proc.wait().expect("Failed to wait for vm process");
+    if let Some(mut proc) = serving_proc {
+        terminate(&mut proc);
     }
 
     if let Some((_, mut socat_proc)) = socat_info {
