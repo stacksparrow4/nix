@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 
 let
   isoModule =
@@ -32,13 +32,8 @@ in
 
   sprrw.headless = true;
 
-  boot.loader.timeout = lib.mkForce 0;
-
-  boot.initrd.systemd.enable = true;
-
   services.openssh = {
     enable = true;
-    ports = [ 22 ];
 
     startWhenNeeded = true;
 
@@ -51,14 +46,9 @@ in
     ];
 
     settings = {
-      UseDns = false;
-
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       PermitRootLogin = "no";
-
-      AllowUsers = null;
-      X11Forwarding = false;
     };
   };
 
@@ -103,7 +93,6 @@ in
     isNormalUser = true;
     description = "sprrw";
     extraGroups = [
-      "networkmanager"
       "wheel"
       "podman"
     ];
@@ -117,7 +106,6 @@ in
 
   networking.hostName = "vm";
 
-  networking.networkmanager.enable = false;
   networking.useDHCP = false;
   networking.useNetworkd = true;
 
@@ -127,7 +115,6 @@ in
       matchConfig.Type = "ether";
       address = [ "10.0.2.15/24" ];
       routes = [ { Gateway = "10.0.2.2"; } ];
-      linkConfig.RequiredForOnline = false;
     };
   };
 
