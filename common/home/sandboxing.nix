@@ -89,46 +89,6 @@ in
           ln -sfn "$bootpath/image.iso" ~/.local/vm.iso
         '';
       })
-      (pkgs.writeShellApplication {
-        name = "vm-enter";
-        runtimeInputs = with pkgs; [
-          openssh
-          fzf
-        ];
-        text = ''
-          shopt -s nullglob
-
-          # Each running sandbox VM owns a private 0700 directory holding its
-          # control socket and its per-VM keypair. There are no shared
-          # credentials and no listening TCP ports to enumerate.
-          dirs=( "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/sandboxvm.*/ /tmp/sandboxvm.*/ )
-
-          if [[ ''${#dirs[@]} -eq 0 ]]; then
-            echo "No valid vms found"
-            exit 1
-          fi
-
-          target=$(for d in "''${dirs[@]}"; do
-            [[ -S "$d/ssh.sock" ]] || continue
-            printf '%s\t%s\n' "$d" "$(cat "$d/info" 2>/dev/null || echo '?')"
-          done | fzf --with-nth=2.. --delimiter='\t' | cut -f1)
-
-          if [[ -z "$target" ]]; then
-            echo "Cancelled."
-            exit 1
-          fi
-
-          # sandbox --proxy shuttles stdin/stdout to the socket, so no external
-          # forwarder is needed.
-          exec ssh -F /dev/null \
-            -o IdentitiesOnly=yes \
-            -o "IdentityFile=$target/id" \
-            -o StrictHostKeyChecking=yes \
-            -o "UserKnownHostsFile=$target/known_hosts" \
-            -o "ProxyCommand=sandbox --proxy $target/ssh.sock" \
-            sprrw@sandbox-vm
-        '';
-      })
     ];
 
     sprrw.term.shellExtra = ''

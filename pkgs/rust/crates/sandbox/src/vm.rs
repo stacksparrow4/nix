@@ -202,11 +202,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
     let pidfile = rundir.join("pid");
     let console_log = rundir.join("console.log");
 
-    let _ = fs::write(
-        rundir.join("info"),
-        format!("{} :: {}\n", cwd.display(), args.exec.join(" ")),
-    );
-
     // Fresh keypairs per VM. The guest no longer generates host keys at boot (the
     // upstream default is RSA-4096, regenerated on every boot because the live ISO
     // has a fresh tmpfs /etc, blocking sshd for seconds). ed25519 keygen on the
@@ -373,8 +368,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
         let _ = fs::remove_dir_all(&rundir);
         return code;
     }
-
-    println!("Enter the VM yourself with: vm-enter");
 
     let vm = Arc::new(Mutex::new(Vm {
         rundir: rundir.clone(),
