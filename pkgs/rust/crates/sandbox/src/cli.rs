@@ -83,17 +83,15 @@ pub struct Args {
 
     /// Keep one sandbox alive and serve commands into it over a unix socket at
     /// SOCKET, instead of running a command interactively. The socket is bound
-    /// only once the sandbox is ready, so its existence can be used as a
-    /// readiness signal
+    /// only once the sandbox is ready
     #[arg(long, value_name = "SOCKET")]
     pub serve: Option<String>,
 
-    /// Internal: this is how --serve runs the bridge inside a bwrap sandbox
+    /// Internal: how --serve runs the bridge inside a bwrap sandbox
     #[arg(long = "serve-agent", value_name = "SOCKET", hide = true)]
     pub serve_agent: Option<String>,
 
-    /// Internal: shuttle stdin/stdout to a unix socket, used as an ssh
-    /// ProxyCommand so that no external forwarder is needed
+    /// Internal: shuttle stdin/stdout to a unix socket, for ssh's ProxyCommand
     #[arg(long, value_name = "SOCKET", hide = true)]
     pub proxy: Option<String>,
 
@@ -112,7 +110,6 @@ impl Args {
         }
     }
 
-    /// Where commands run inside the box.
     pub fn box_cwd(&self) -> &'static str {
         if self.cwd || self.ro_cwd {
             "/pwd"

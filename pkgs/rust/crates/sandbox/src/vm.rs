@@ -16,11 +16,10 @@ use crate::{
     tools,
 };
 
-/// Arbitrary; only used for known_hosts matching, since the VM is reached through
-/// a unix socket rather than a hostname.
+/// Arbitrary: the VM is reached through a socket, so this only keys known_hosts.
 const SSH_HOST: &str = "sandbox-vm";
 
-/// State that must be torn down however we exit, including on SIGTERM.
+/// Torn down however we exit, including on SIGTERM.
 pub struct Vm {
     rundir: PathBuf,
     qemu_pid: Option<i32>,
@@ -53,8 +52,6 @@ impl Vm {
         }
 
         if self.keep_rundir {
-            // Leave the console log and keys in place; deleting them is what makes
-            // a failure to boot hard to diagnose.
             eprintln!("Kept VM state for debugging in {}", self.rundir.display());
             eprintln!("  full boot log: {}", self.console_log().display());
             eprintln!("  for an interactive serial console, re-run with --vm-console");
@@ -65,14 +62,10 @@ impl Vm {
     }
 }
 
-/// A directory to hold the control socket and credentials, with a path containing
-/// no hyphens.
+/// Private directory for the control socket and credentials.
 ///
-/// QEMU <= 10.2 splits a `hostfwd=unix:<path>-:<port>` rule at the *first* hyphen
-/// in the rule rather than the last (net/slirp.c calls get_str_sep with '-', i.e.
-/// strchr; only later versions pass `0 - '-'` to get strrchr). A hyphen anywhere in
-/// the socket path is therefore taken as the host/guest separator, and the rule is
-/// rejected with "Bad guest address".
+/// The path must contain no hyphen: QEMU <= 10.2 splits a `hostfwd=unix:<path>-:22`
+/// rule at the first hyphen, not the last, and rejects it as "Bad guest address".
 fn make_rundir() -> PathBuf {
     let mut bases: Vec<PathBuf> = Vec::new();
     if let Some(dir) = std::env::var_os("XDG_RUNTIME_DIR") {
@@ -117,11 +110,8 @@ fn keygen(path: &Path) {
     }
 }
 
-/// Write a systemd credential for QEMU to pass over SMBIOS.
-///
-/// systemd's PID 1 picks these up from SMBIOS type 11 OEM strings and exposes them
-/// in /run/credentials/@system. Passing them via a file (`-smbios type=11,path=`)
-/// avoids having to escape commas.
+/// systemd's PID 1 exposes SMBIOS type 11 OEM strings in /run/credentials/@system.
+/// Passed as a file so commas need no escaping.
 fn write_credential(rundir: &Path, name: &str, data: &[u8]) -> PathBuf {
     let path = rundir.join(format!("cred.{name}"));
     let mut file = fs::File::create(&path).expect("Failed to create credential file");
@@ -202,10 +192,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
     let pidfile = rundir.join("pid");
     let console_log = rundir.join("console.log");
 
-    // Fresh keypairs per VM. The guest no longer generates host keys at boot (the
-    // upstream default is RSA-4096, regenerated on every boot because the live ISO
-    // has a fresh tmpfs /etc, blocking sshd for seconds). ed25519 keygen on the
-    // host is ~5ms.
     keygen(&host_key);
     keygen(&client_key);
 
@@ -225,15 +211,8 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
         &fs::read(rundir.join("id.pub")).expect("Failed to read client key"),
     );
 
-    // A unix socket instead of a forwarded TCP port. Two reasons: it removes the
-    // race in picking a free ephemeral port, and it makes the VM unreachable from
-    // other guests. slirp rewrites guest traffic to 10.0.2.2 into host loopback
-    // connections and offers no way to turn that off, so a TCP hostfwd let any
-    // sandbox connect to any other sandbox's sshd.
     let mut netdev = format!("user,id=net0,hostfwd=unix:{}-:22", ssh_sock.display());
     if args.no_network {
-        // Drops all guest-initiated traffic while still serving the pre-existing
-        // hostfwd socket.
         netdev.push_str(",restrict=on");
     }
 
@@ -243,23 +222,18 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
         "-nodefaults".into(),
         "-machine".into(),
         "q35,accel=kvm".into(),
-        // The default qemu64 model hides AES-NI/AVX/RDRAND from the guest.
         "-cpu".into(),
         "host".into(),
         "-m".into(),
         args.vm_memory.to_string(),
         "-smp".into(),
         args.vm_cpus.to_string(),
-        // Direct kernel boot: no SeaBIOS, no isolinux, and the initrd comes
-        // straight out of the host page cache.
         "-kernel".into(),
         boot_dir.join("kernel").display().to_string(),
         "-initrd".into(),
         boot_dir.join("initrd").display().to_string(),
         "-append".into(),
         cmdline.trim().to_string(),
-        // Read-only for every VM, and virtio-blk rather than the emulated ATAPI
-        // cdrom this used to boot from.
         "-drive".into(),
         format!(
             "file={},format=raw,if=none,id=iso,readonly=on",
@@ -267,7 +241,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
         ),
         "-device".into(),
         "virtio-blk-pci,drive=iso".into(),
-        // Host entropy, so guest crypto never waits on a cold entropy pool.
         "-device".into(),
         "virtio-rng-pci".into(),
         "-netdev".into(),
@@ -292,7 +265,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
     qemu_args.extend(["-display".to_string(), "none".to_string()]);
 
     if args.vm_console {
-        // Serial multiplexed onto our stdio, in the foreground.
         qemu_args.extend(["-serial".to_string(), "mon:stdio".to_string()]);
     } else {
         qemu_args.extend([
@@ -319,7 +291,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
         "-o".into(),
         format!("UserKnownHostsFile={}", known_hosts.display()),
         "-o".into(),
-        // Our own --proxy shuttle, so no external forwarder is needed.
         format!(
             "ProxyCommand={} --proxy {}",
             tools::own_executable().display(),
@@ -330,8 +301,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
         "-o".into(),
         format!("ControlPath={}", rundir.join("cm").display()),
         "-o".into(),
-        // A server has no long-running session holding the master open, so persist
-        // it indefinitely and tear it down explicitly on shutdown.
         if serve_socket.is_some() {
             "ControlPersist=yes".into()
         } else {
@@ -376,8 +345,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
         keep_rundir: false,
     }));
 
-    // Installed before qemu starts, so a signal at any point from here on tears the
-    // VM down instead of orphaning it.
     crate::install_shutdown_handler(vm.clone());
 
     let code = boot_and_run(
@@ -433,17 +400,6 @@ fn boot_and_run(
     vm.lock().unwrap().qemu_pid = Some(qemu_pid);
     println!("Process id {qemu_pid}");
 
-    // Poll until sshd answers. The successful probe establishes the ControlMaster,
-    // so the real invocation below reuses that connection and pays no second
-    // handshake.
-    //
-    // ssh applies ConnectTimeout to the *banner* exchange as well as to the TCP
-    // connect. While the guest is still booting, QEMU's unix socket accepts
-    // immediately and slirp then retransmits to a guest that isn't answering yet,
-    // so the connection is established but silent and each probe burns the full
-    // ConnectTimeout. Use a short one here so we notice sshd coming up promptly;
-    // the real session keeps the longer value. ssh takes the first value given for
-    // an option, so prepending this overrides the one in ssh_base.
     let (program, options) = ssh_base.split_first().unwrap();
     let mut last_report = started;
     loop {
@@ -473,9 +429,6 @@ fn boot_and_run(
             return 1;
         }
 
-        // Deliberately does not echo ssh's error. Until sshd is up every probe
-        // legitimately fails, and printing "Connection timed out during banner
-        // exchange" each time just looks like a fault.
         if last_report.elapsed() >= Duration::from_secs(3) {
             println!(
                 "  waiting for VM to finish booting ({}s)",
@@ -507,9 +460,6 @@ fn boot_and_run(
 
     match serve_socket {
         Some(socket) => {
-            // Apply the 9p mounts once, then serve commands into the VM. The box
-            // outlives individual commands, so files and background processes
-            // persist across them exactly as in the bwrap backend.
             if !mount_lines.is_empty() {
                 let setup = Command::new(program)
                     .args(options)
@@ -557,8 +507,6 @@ fn boot_and_run(
                 shlex::try_join(exec.iter().map(String::as_str)).unwrap()
             ));
 
-            // A single multiplexed session, rather than one connection to upload the
-            // script and a second one to run it.
             Command::new(program)
                 .args(options)
                 .arg("-t")

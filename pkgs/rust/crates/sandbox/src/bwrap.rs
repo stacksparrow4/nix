@@ -19,8 +19,6 @@ fn ensure_env(key: &str) -> String {
 }
 
 pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32 {
-    // home-manager's generated files are mapped in one by one, so the box sees the
-    // same dotfiles without sharing the real home directory.
     let mut mounts: Vec<Mount> = find_symlinks(Path::new(HOME_FILES))
         .into_iter()
         .filter_map(|path| {
@@ -51,10 +49,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
     }
 
     if let Some(socket) = serve_socket {
-        // The agent runs inside the box and binds the socket itself, so the
-        // directory holding it has to be visible in there at the same path. This
-        // bind is emitted after --tmpfs /tmp, so a socket under /tmp survives
-        // rather than being hidden by the tmpfs -- do not reorder.
         let parent = socket.parent().expect("socket path has no parent");
         mounts.push(Mount::new(parent, parent.display().to_string(), Kind::Dir));
     }
@@ -132,10 +126,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
     let mut command = Command::new("bwrap");
     command.arg("--unshare-all");
 
-    // --as-pid-1 suppresses bwrap's own PID 1 reaper. The interactive case wants
-    // that, but the long-lived server does not: commands can leave orphans
-    // behind, and without a reaper they would accumulate as zombies for the
-    // lifetime of the session.
     if serve_socket.is_none() {
         command.arg("--as-pid-1");
     }
@@ -179,8 +169,6 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
         }
     };
 
-    // SIGINT was already delivered to the child by the terminal, so just wait for
-    // it to exit and report its status.
     match child.wait() {
         Ok(status) => status.code().unwrap_or(1),
         Err(e) => {
@@ -191,7 +179,7 @@ pub fn run(args: &Args, volumes: Vec<Mount>, serve_socket: Option<&Path>) -> i32
     }
 }
 
-/// Re-exec the requested command directly, for when we are already inside a box.
+/// For when we are already inside a box.
 pub fn passthrough(exec: &[String]) -> i32 {
     let (program, rest) = match exec.split_first() {
         Some(split) => split,

@@ -14,12 +14,8 @@ use clap::Parser;
 
 use cli::{Args, Backend};
 
-/// Tear the VM down on SIGTERM/SIGINT rather than orphaning qemu and its run
-/// directory.
-///
-/// Handled on a dedicated thread rather than in a signal handler, so that the
-/// cleanup can do real work. Only installed when serving: in an interactive
-/// session Ctrl-C belongs to the program running inside the box.
+/// Only installed when serving: in an interactive session Ctrl-C belongs to the
+/// program running inside the box.
 pub fn install_shutdown_handler(vm: Arc<Mutex<vm::Vm>>) {
     use signal_hook::{consts::TERM_SIGNALS, iterator::Signals};
 
@@ -47,8 +43,6 @@ fn fail(message: impl std::fmt::Display) -> ! {
 fn main() {
     let args = Args::parse();
 
-    // Must precede the IN_SPRRW_SANDBOX check below: the agent runs inside a
-    // sandbox, where that variable is set.
     if let Some(socket) = args.serve_agent.as_deref() {
         if let Err(e) = bridge::serve(Path::new(socket), bridge::Local) {
             fail(format!("Failed to serve on {socket}: {e}"));

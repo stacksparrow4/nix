@@ -77,15 +77,12 @@ in
           cd ~/${config.sprrw.nixosRepoPath}
           git add .
 
-          # Builds the ISO plus the kernel/initrd/cmdline needed to direct-boot
-          # it, so `sandbox --vm` can skip the bootloader entirely.
           bootpath=$(nix build --no-link --print-out-paths .#vm-boot)
           echo "$bootpath"
 
           mkdir -p ~/.local
 
           ln -sfn "$bootpath" ~/.local/vm-boot
-          # Kept for anything still expecting the raw image.
           ln -sfn "$bootpath/image.iso" ~/.local/vm.iso
         '';
       })

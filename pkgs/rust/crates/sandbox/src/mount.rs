@@ -43,7 +43,6 @@ impl Mount {
         ]
     }
 
-    /// Create the host side if it is missing, which requires knowing what to make.
     pub fn ensure_exists(&self) -> Result<(), String> {
         if self.host_path.exists() {
             return Ok(());
@@ -67,7 +66,7 @@ impl Mount {
     }
 }
 
-/// Parse a `hostpath:boxpath:ro/rw:type` volume specification.
+/// Parses `hostpath:boxpath:ro/rw:type`.
 pub fn parse_volume(spec: &str) -> Result<Mount, String> {
     let parts: Vec<&str> = spec.split(':').collect();
     if parts.len() < 2 {
@@ -92,8 +91,6 @@ pub fn parse_volume(spec: &str) -> Result<Mount, String> {
     Ok(mount)
 }
 
-/// Every symlink under `root`, which is how home-manager's generated home files
-/// are discovered so they can be mapped into the box individually.
 pub fn find_symlinks(root: &Path) -> Vec<PathBuf> {
     let mut found = Vec::new();
     let mut stack = vec![root.to_path_buf()];
@@ -104,7 +101,6 @@ pub fn find_symlinks(root: &Path) -> Vec<PathBuf> {
         };
         for entry in entries.flatten() {
             let path = entry.path();
-            // symlink_metadata, so that symlinks are reported rather than followed.
             let Ok(meta) = path.symlink_metadata() else {
                 continue;
             };

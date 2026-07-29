@@ -1,11 +1,6 @@
-//! Locating the external programs the sandbox drives.
-//!
-//! Absolute store paths are baked in at build time (see default.nix) rather than
-//! prefixed onto PATH, so that sandboxes do not inherit these tools in their own
-//! PATH. Falling back to a PATH lookup keeps `cargo run` usable from a checkout.
-//!
-//! qemu is deliberately not baked in: that would pull its ~1GB closure into this
-//! package's closure purely to support the --vm backend.
+//! Store paths are baked in at build time (see default.nix) rather than prefixed
+//! onto PATH, so sandboxes do not inherit these tools. qemu is looked up on PATH
+//! instead, to keep its ~1GB closure out of ours.
 
 use std::path::{Path, PathBuf};
 
@@ -47,11 +42,7 @@ pub fn qemu() -> PathBuf {
     resolve(None, "qemu-system-x86_64")
 }
 
-/// This binary, for re-invoking ourselves inside a sandbox or as an ssh
-/// ProxyCommand.
-///
-/// A single static binary in /nix/store resolves identically inside and outside
-/// the sandbox, since the store is bind-mounted in wholesale.
+/// The store is bind-mounted into the sandbox, so this path resolves in both.
 pub fn own_executable() -> PathBuf {
     match std::env::current_exe() {
         Ok(path) => path,

@@ -1,7 +1,3 @@
-# The pi wrapper: pi-boxed sandboxes the real (unsandboxed) pi agent.
-#
-# The Rust source now lives in ../rust, as a workspace member sharing the command
-# bridge with `sandbox`.
 {
   pkgs ? import <nixpkgs-unstable> { },
   crane,

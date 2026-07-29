@@ -1,8 +1,4 @@
-//! Shuttle stdin/stdout to a unix socket.
-//!
-//! Used as ssh's ProxyCommand so that reaching the VM's forwarded sshd needs no
-//! external forwarder. This replaces `socat - UNIX-CONNECT:...`, which was the
-//! only reason socat was in this package's closure.
+//! Shuttles stdin/stdout to a unix socket, as ssh's ProxyCommand.
 
 use std::{
     io::{Read, Write},
@@ -30,8 +26,6 @@ pub fn run(socket: &Path) -> i32 {
     };
     let mut from_socket = stream;
 
-    // stdin -> socket on a second thread; socket -> stdout on this one. Each
-    // direction shuts down its half when it hits EOF so the peer notices.
     let pump = thread::spawn(move || {
         let mut stdin = std::io::stdin().lock();
         let mut buf = [0u8; 65536];
@@ -62,8 +56,6 @@ pub fn run(socket: &Path) -> i32 {
         }
     }
 
-    // ssh has closed the connection; do not wait for a stdin read that may never
-    // return.
     let _ = from_socket.shutdown(Shutdown::Both);
     drop(pump);
     0
