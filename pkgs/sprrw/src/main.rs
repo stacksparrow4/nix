@@ -5,7 +5,7 @@ use std::process::Command;
 
 use clap::{Parser, Subcommand};
 
-use config::{Config, FileConfig};
+use config::{Config, FileConfig, parse_override_input};
 
 const PROFILE_DIR: &str = "/nix/var/nix/profiles";
 
@@ -27,6 +27,15 @@ struct Cli {
     /// Absolute path to a flake to `git add -A` before building (repeatable)
     #[arg(long = "add-flake", global = true, value_name = "PATH")]
     add_flakes: Vec<PathBuf>,
+
+    /// Override a flake input as NAME=VALUE (repeatable)
+    #[arg(
+        long = "override-input",
+        global = true,
+        value_name = "NAME=VALUE",
+        value_parser = parse_override_input
+    )]
+    override_inputs: Vec<(String, String)>,
 
     #[command(subcommand)]
     command: Cmd,
@@ -51,7 +60,13 @@ fn main() {
 
 fn run(cli: Cli) -> Result<(), String> {
     let file = FileConfig::load()?;
-    let config = Config::resolve(cli.build_flake, cli.update_flake, cli.add_flakes, file)?;
+    let config = Config::resolve(
+        cli.build_flake,
+        cli.update_flake,
+        cli.add_flakes,
+        cli.override_inputs,
+        file,
+    )?;
 
     match cli.command {
         Cmd::Build => build(&config),
@@ -69,34 +84,44 @@ fn build(config: &Config) -> Result<(), String> {
     }
 
     println!(":: switching to {}", config.build_flake.display());
+    for (name, value) in &config.override_inputs {
+        println!("   override input {name} = {value}");
+    }
+
     if cfg!(target_os = "macos") {
-        run_cmd(
-            Command::new("nix")
-                .current_dir(&config.build_flake)
-                .args(["run", "home-manager/master", "--", "switch", "--show-trace"])
-                .arg("--flake")
-                .arg(&config.build_flake),
-        )?;
+        let mut cmd = Command::new("nix");
+        cmd.current_dir(&config.build_flake)
+            .args(["run", "home-manager/master", "--", "switch", "--show-trace"])
+            .arg("--flake")
+            .arg(&config.build_flake);
+        append_override_inputs(&mut cmd, config);
+        run_cmd(&mut cmd)?;
     } else {
-        run_cmd(
-            Command::new("nixos-rebuild")
-                .current_dir(&config.build_flake)
-                .args(["switch", "--sudo"])
-                .arg("--flake")
-                .arg(&config.build_flake)
-                .args([
-                    "--option",
-                    "warn-dirty",
-                    "false",
-                    "--show-trace",
-                    "--print-build-logs",
-                ]),
-        )?;
+        let mut cmd = Command::new("nixos-rebuild");
+        cmd.current_dir(&config.build_flake)
+            .args(["switch", "--sudo"])
+            .arg("--flake")
+            .arg(&config.build_flake)
+            .args([
+                "--option",
+                "warn-dirty",
+                "false",
+                "--show-trace",
+                "--print-build-logs",
+            ]);
+        append_override_inputs(&mut cmd, config);
+        run_cmd(&mut cmd)?;
 
         diff_last_system_closures()?;
     }
 
     trim_history()
+}
+
+fn append_override_inputs(cmd: &mut Command, config: &Config) {
+    for (name, value) in &config.override_inputs {
+        cmd.arg("--override-input").arg(name).arg(value);
+    }
 }
 
 fn update(config: &Config) -> Result<(), String> {
