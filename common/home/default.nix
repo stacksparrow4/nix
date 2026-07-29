@@ -11,6 +11,7 @@
     ./term
     ./gui
     ./sandboxing.nix
+    ./sprrw.nix
     ./general.nix
     ./misc.nix
     ./payloads.nix

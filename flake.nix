@@ -99,6 +99,10 @@
           pkgs = overlayedNixpkgs "x86_64-linux";
           inherit (inputs) crane;
         };
+        sprrw = import ./pkgs/sprrw {
+          pkgs = overlayedNixpkgs "x86_64-linux";
+          inherit (inputs) crane;
+        };
       };
     };
 }
