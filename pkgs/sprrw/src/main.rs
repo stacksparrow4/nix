@@ -24,10 +24,6 @@ struct Cli {
     #[arg(long, global = true, value_name = "PATH")]
     update_flake: Option<PathBuf>,
 
-    /// Absolute path to a flake to `git add -A` before building (repeatable)
-    #[arg(long = "add-flake", global = true, value_name = "PATH")]
-    add_flakes: Vec<PathBuf>,
-
     /// Override a flake input as NAME=VALUE (repeatable)
     #[arg(
         long = "override-input",
@@ -60,13 +56,7 @@ fn main() {
 
 fn run(cli: Cli) -> Result<(), String> {
     let file = FileConfig::load()?;
-    let config = Config::resolve(
-        cli.build_flake,
-        cli.update_flake,
-        cli.add_flakes,
-        cli.override_inputs,
-        file,
-    )?;
+    let config = Config::resolve(cli.build_flake, cli.update_flake, cli.override_inputs, file)?;
 
     match cli.command {
         Cmd::Build => build(&config),
