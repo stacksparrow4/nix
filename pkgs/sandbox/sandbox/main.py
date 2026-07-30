@@ -5,6 +5,7 @@ import shlex
 import signal
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -22,6 +23,26 @@ class Mount:
 
 def find_symlinks(path):
     yield from (str(p) for p in Path(path).rglob("*") if p.is_symlink())
+
+
+def build_stage_script(mounts, stage, ro_git):
+    q = shlex.quote
+    lines = ["set -e", f"mount -t tmpfs tmpfs {q(stage)}"]
+
+    for i, m in enumerate(mounts):
+        root = f"{stage}/{i}"
+        lines.append(f"mkdir -p {q(root)}")
+        lines.append(f"mount --bind {q(m.host_path)} {q(root)}")
+
+        if ro_git and m.box_path == "/pwd":
+            git = f"{root}/.git"
+            lines.append(f"mount --bind {q(git)} {q(git)}")
+            lines.append(f"mount -o remount,bind,ro {q(git)}")
+
+        if m.ro:
+            lines.append(f"mount -o remount,bind,ro {q(root)}")
+
+    return lines
 
 
 def ensure_env(key):
@@ -299,7 +320,6 @@ def main():
         exit(return_code)
 
     elif args.type == "vm":
-        # All VM shared paths must be directories
         for v in volume_mounts:
             if v.type != "dir":
                 print(
@@ -318,8 +338,7 @@ def main():
         if args.ro_cwd:
             mounts.append(Mount(str(Path.cwd()), "/pwd", "dir", ro=True))
 
-        if args.ro_git and os.path.exists("./.git"):
-            mounts.append(Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True))
+        ro_git = args.ro_git and os.path.isdir("./.git")
 
         # Find an open port in the ephemeral range
         used_ports = set()
@@ -344,12 +363,14 @@ def main():
             f"sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {open_port} localhost"
         )
 
+        stage = tempfile.mkdtemp(prefix="sprrw-sandbox-stage.")
+
         virtfs_args = []
         for i, m in enumerate(mounts):
             virtfs_args.extend(
                 [
                     "-virtfs",
-                    f"local,path={m.host_path},mount_tag=sandboxshare{i},security_model=none,id=host{i}{',readonly=on' if m.ro else ''}",
+                    f"local,path={stage}/{i},mount_tag=sandboxshare{i},security_model=none,id=host{i}{',readonly=on' if m.ro else ''}",
                 ]
             )
 
@@ -376,9 +397,31 @@ def main():
                 pidfile_path,
             ]
 
-            result = subprocess.run(qemu_args)
+            stage_script = "\n".join(
+                build_stage_script(mounts, stage, ro_git)
+                + ["exec " + " ".join(shlex.quote(a) for a in qemu_args)]
+            )
+
+            result = subprocess.run(
+                [
+                    "unshare",
+                    "--mount",
+                    "--user",
+                    "--map-current-user",
+                    "--keep-caps",
+                    "--propagation",
+                    "private",
+                    "sh",
+                    "-c",
+                    stage_script,
+                ]
+            )
             if result.returncode != 0:
                 print("Failed to start QEMU")
+                try:
+                    os.rmdir(stage)
+                except OSError:
+                    pass
                 exit(1)
 
             with open(pidfile_path) as f:
@@ -406,7 +449,8 @@ def main():
             for i, m in enumerate(mounts):
                 startup_lines.append(f'sudo mkdir -p "{m.box_path}"')
                 startup_lines.append(
-                    f'sudo mount -t 9p -o trans=virtio,version=9p2000.L sandboxshare{i} "{m.box_path}"'
+                    f"sudo mount -t 9p -o trans=virtio,version=9p2000.L"
+                    f' sandboxshare{i} "{m.box_path}"'
                 )
             if args.cwd or args.ro_cwd:
                 startup_lines.append("cd /pwd")
@@ -430,6 +474,14 @@ def main():
                 os.kill(qemu_pid, signal.SIGTERM)
             except ProcessLookupError:
                 pass
+            for _ in range(50):
+                try:
+                    os.rmdir(stage)
+                    break
+                except FileNotFoundError:
+                    break
+                except OSError:
+                    time.sleep(0.1)
 
         print("Done!")
         exit(return_code)
