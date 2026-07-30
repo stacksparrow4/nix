@@ -30,7 +30,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         mounts.push(Mount::new(&cwd(), "/pwd", MountType::Dir, true));
     }
 
-    let ro_git = args.ro_git && Path::new("./.git").is_dir();
+    let ro_git = args.ro_git && Path::new("./.git").exists();
 
     let open_port = pick_open_port();
 
