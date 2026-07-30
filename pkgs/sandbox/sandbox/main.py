@@ -24,6 +24,35 @@ def find_symlinks(path):
     yield from (str(p) for p in Path(path).rglob("*") if p.is_symlink())
 
 
+def worktree_git_dir(dot_git):
+    content = Path(dot_git).read_text().strip()
+
+    if not content.startswith("gitdir:"):
+        print(dot_git, "is a file but does not contain a gitdir pointer")
+        exit(1)
+
+    base = Path(dot_git).parent
+    gitdir = Path(os.path.realpath(base / content.removeprefix("gitdir:").strip()))
+
+    if not gitdir.is_dir():
+        print(dot_git, "points at", gitdir, "which is not a directory")
+        exit(1)
+
+    root = gitdir
+    commondir = gitdir / "commondir"
+
+    if commondir.is_file():
+        common = Path(os.path.realpath(gitdir / commondir.read_text().strip()))
+
+        if common != gitdir and common not in gitdir.parents:
+            print(gitdir, "and its common dir", common, "are not nested")
+            exit(1)
+
+        root = common
+
+    return str(root), os.path.relpath(gitdir, root)
+
+
 def ensure_env(key):
     r = os.getenv(key)
     if r is None:
@@ -213,6 +242,10 @@ def main():
             ]
         )
 
+        if (args.cwd or args.ro_cwd) and os.path.isfile("./.git"):
+            root, _ = worktree_git_dir("./.git")
+            mounts.append(Mount(root, root, "dir", ro=args.ro_git))
+
         envvars = args.env_vars + [
             "PATH="
             + ("" if args.reset_env else ensure_env("PATH") + ":")
@@ -318,8 +351,18 @@ def main():
         if args.ro_cwd:
             mounts.append(Mount(str(Path.cwd()), "/pwd", "dir", ro=True))
 
-        if args.ro_git and os.path.exists("./.git"):
-            mounts.append(Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True))
+        box_gitdir = None
+
+        if (args.cwd or args.ro_cwd) and os.path.exists("./.git"):
+            if os.path.isdir("./.git"):
+                if args.ro_git:
+                    mounts.append(
+                        Mount(str(Path.cwd() / ".git"), "/pwd/.git", "dir", ro=True)
+                    )
+            else:
+                root, rel = worktree_git_dir("./.git")
+                mounts.append(Mount(root, "/gitdir", "dir", ro=args.ro_git))
+                box_gitdir = "/gitdir" if rel == "." else f"/gitdir/{rel}"
 
         # Find an open port in the ephemeral range
         used_ports = set()
@@ -408,6 +451,11 @@ def main():
                 startup_lines.append(
                     f'sudo mount -t 9p -o trans=virtio,version=9p2000.L sandboxshare{i} "{m.box_path}"'
                 )
+            if box_gitdir is not None:
+                startup_lines.append(
+                    f"printf %s 'gitdir: {box_gitdir}' | sudo tee /tmp/dotgit >/dev/null"
+                )
+                startup_lines.append("sudo mount --bind /tmp/dotgit /pwd/.git")
             if args.cwd or args.ro_cwd:
                 startup_lines.append("cd /pwd")
             startup_lines.append(" ".join(shlex.quote(a) for a in args.exec))
