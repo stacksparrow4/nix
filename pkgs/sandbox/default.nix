@@ -1,15 +1,21 @@
 {
-  pkgs ? import <nixpkgs> { },
+  pkgs ? import <nixpkgs-unstable> { },
+  crane,
 }:
 
-pkgs.python3Packages.buildPythonApplication {
-  pname = "sandbox";
-  version = "0.1.0";
-  pyproject = true;
+let
+  craneLib = crane.mkLib pkgs;
 
-  src = ./.;
+  commonArgs = {
+    src = craneLib.cleanCargoSource ./.;
+    strictDeps = true;
+  };
 
-  build-system = with pkgs.python3Packages; [ setuptools ];
-
-  pythonImportsCheck = [ "sandbox" ];
-}
+  cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+in
+craneLib.buildPackage (
+  commonArgs
+  // {
+    inherit cargoArtifacts;
+  }
+)
