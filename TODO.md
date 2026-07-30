@@ -1,3 +1,4 @@
+- Fix VM unmount .git
 - Refactor build, update, etc scripts into a sprrw cli tool
 - Pi
     - Fix edit graphical issue
