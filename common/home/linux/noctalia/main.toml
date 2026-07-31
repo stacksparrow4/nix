@@ -41,6 +41,11 @@ time_format = "{:%-I:%M %p}"
     [shell.animation]
     enabled = false
 
+    [shell.screenshot]
+    save_to_file = false
+    copy_to_clipboard = true
+    pipe_to_command = false
+
     [shell.shadow]
     alpha = 0.0
 
