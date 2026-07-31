@@ -105,6 +105,12 @@ struct Args {
     args: Vec<String>,
 }
 
+enum Target {
+    Sandbox,
+    Vm,
+    Remote { universal: bool },
+}
+
 enum VolType {
     File,
     Dir,
@@ -206,27 +212,26 @@ fn main() {
         .internal_real_pi_location
         .expect("Missing real pi location");
 
-    if [
-        args.remote.is_some(),
-        args.universal_remote.is_some(),
+    let target = match (
+        args.remote.as_deref(),
+        args.universal_remote.as_deref(),
         args.vm,
-    ]
-    .into_iter()
-    .filter(|&x| x)
-    .count()
-        > 1
-    {
-        eprintln!("Can only specify one of --remote, --universal-remote, or --vm.");
-        std::process::exit(2);
-    }
-
-    if let Some(template) = args.remote.as_ref().or(args.universal_remote.as_ref()) {
-        validate_remote_arg(template);
-    }
-
-    let universal = args.universal_remote.is_some();
-
-    let specified_remote = args.remote.is_some() || args.universal_remote.is_some();
+    ) {
+        (None, None, false) => Target::Sandbox,
+        (None, None, true) => Target::Vm,
+        (Some(template), None, false) => {
+            validate_remote_arg(template);
+            Target::Remote { universal: false }
+        }
+        (None, Some(template), false) => {
+            validate_remote_arg(template);
+            Target::Remote { universal: true }
+        }
+        _ => {
+            eprintln!("Can only specify one of --remote, --universal-remote, or --vm.");
+            std::process::exit(2);
+        }
+    };
 
     let brave_search = !(args.no_brave_search || args.local.is_some());
 
@@ -239,7 +244,7 @@ fn main() {
         .into_iter()
         .chain(if args.no_tools || args.search {
             vec![]
-        } else if universal {
+        } else if matches!(target, Target::Remote { universal: true }) {
             vec!["command".to_string()]
         } else {
             DEFAULT_TOOLS.iter().map(|t| t.to_string()).collect()
@@ -298,10 +303,9 @@ fn main() {
         }
 
         if all_tools.contains(&"command".to_string()) {
-            if universal {
-                guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell");
-            } else {
-                guidelines.push("Use the command tool for file operations like ls, rg, find");
+            match target {
+                Target::Remote { universal: true } => guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell"),
+                _ => guidelines.push("Use the command tool for file operations like ls, rg, find"),
             }
         }
 
@@ -375,9 +379,9 @@ fn main() {
         )
     };
 
-    let mut vm_proc = if args.vm {
-        Some(
-            Command::new("sandbox")
+    let (vm_proc, host_template) = match target {
+        Target::Vm => {
+            let mut proc = Command::new("sandbox")
                 .arg("--vm")
                 .args(&sandbox_args)
                 .stdin(Stdio::piped())
@@ -385,38 +389,35 @@ fn main() {
                 .stderr(Stdio::null())
                 .env("PYTHONUNBUFFERED", "1")
                 .spawn()
-                .expect("Failed to start VM box"),
-        )
-    } else {
-        None
-    };
+                .expect("Failed to start VM box");
 
-    let host_template = if args.vm {
-        let vm_proc = vm_proc.as_mut().unwrap();
-        let mut stdout_reader = BufReader::new(vm_proc.stdout.as_mut().unwrap());
+            let mut stdout_reader = BufReader::new(proc.stdout.as_mut().unwrap());
 
-        let mut first_line = String::new();
-        let _ = stdout_reader
-            .read_line(&mut first_line)
-            .expect("Failed to read first line of VM process");
+            let mut first_line = String::new();
+            let _ = stdout_reader
+                .read_line(&mut first_line)
+                .expect("Failed to read first line of VM process");
 
-        let re = Regex::new(r"^Forwarding SSH to port (\d+)$").unwrap();
+            let re = Regex::new(r"^Forwarding SSH to port (\d+)$").unwrap();
 
-        let ssh_port = &re
-            .captures(first_line.trim())
-            .expect("Failed to extract SSH port")[1];
+            let ssh_port = &re
+                .captures(first_line.trim())
+                .expect("Failed to extract SSH port")[1];
 
-        let starter = if args.cwd || args.ro_cwd {
-            "'cd /pwd &&' "
-        } else {
-            ""
-        };
+            let starter = if args.cwd || args.ro_cwd {
+                "'cd /pwd &&' "
+            } else {
+                ""
+            };
 
-        Some(format!(
-            "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost 'exec 0</dev/null;' {starter}<CMD>"
-        ))
-    } else {
-        args.remote.or(args.universal_remote)
+            (
+                Some(proc),
+                Some(format!(
+                    "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost 'exec 0</dev/null;' {starter}<CMD>"
+                )),
+            )
+        }
+        _ => (None, args.remote.or(args.universal_remote)),
     };
 
     let (bridge_dir, tool_proc) = match host_template {
@@ -437,7 +438,7 @@ fn main() {
         "--approve".to_string(),
         "--no-tools".to_string(),
         "--no-extensions".to_string(),
-        "--offline".to_string()
+        "--offline".to_string(),
     ]
     .into_iter()
     .chain(if args.print {
@@ -481,15 +482,13 @@ fn main() {
         )
         .args(network_args)
         .args(bridge_args)
-        .args(if universal {
-            vec![]
-        } else {
-            vec!["--env", "PI_REMOTE_FILE_TOOLS=1"]
+        .args(match target {
+            Target::Remote { universal: true } => vec![],
+            _ => vec!["--env", "PI_REMOTE_FILE_TOOLS=1"],
         })
-        .args(if specified_remote {
-            vec!["--env", "PI_SPECIFIED_REMOTE=1"]
-        } else {
-            vec![]
+        .args(match target {
+            Target::Remote { .. } => vec![],
+            _ => vec!["--env", "PI_READ_AGENTS_MD=1"],
         })
         .args(if brave_search {
             vec![

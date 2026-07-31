@@ -15,7 +15,7 @@ use std::{
 
 use base64::prelude::*;
 use serde_json::json;
-use tempfile::{tempdir, TempDir};
+use tempfile::{TempDir, tempdir};
 use wait_timeout::ChildExt;
 
 const CMD_PLACEHOLDER: &str = "<CMD>";

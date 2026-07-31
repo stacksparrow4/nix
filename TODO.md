@@ -1,5 +1,3 @@
-- Pi
-    - Refactor the use of remote to an enum
 - Flake parts
 - Refactor to be able to use packages from any machine
     - vim
