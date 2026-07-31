@@ -146,8 +146,8 @@ default_border pixel 1
 exec --no-startup-id ~/.config/sway/alternating_layouts.py
 exec --no-startup-id 1password --silent
 
-exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP GTK_THEME 
-exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway GTK_THEME
+exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP GTK_THEME SWAYSOCK
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway GTK_THEME SWAYSOCK
 
 exec noctalia
 exec_always kanshi

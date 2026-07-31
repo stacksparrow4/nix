@@ -5,6 +5,9 @@
   ...
 }:
 
+let
+  portal-chooser = import ../../pkgs/portal-chooser { inherit pkgs; };
+in
 {
   config = lib.mkMerge [
     {
@@ -44,7 +47,7 @@
 
           settings.screencast = {
             chooser_type = "dmenu";
-            chooser_cmd = "${pkgs.rofi}/bin/rofi -dmenu -p 'Select output'";
+            chooser_cmd = "${portal-chooser}/bin/portal-chooser";
           };
         };
         extraPortals = with pkgs; [
