@@ -1,16 +1,13 @@
-- Fix VM unmount .git
-- Refactor build, update, etc scripts into a sprrw cli tool
 - Pi
-    - Fix edit graphical issue
     - Refactor the use of remote to an enum
     - Prompts
-        - Recheck files
         - Headless tmux
-- Some hardcoded revisions are used for some things. Refactor them to be flake inputs. Then we can easily update and track upstream source
 - Refactor out common configuration.nix logic
-- Agenix for github api
+- Flake parts
 - Refactor to be able to use packages from any machine
     - vim
+- Some hardcoded revisions are used for some things. Refactor them to be flake inputs. Then we can easily update and track upstream source
+- Agenix for github api
 - More generalised method for IPC between sandbox and outside world
     - Figure out how to make pi -p work inside of Vim
     - Tmux new panes will spawn in the correct directory when splitting from a box
