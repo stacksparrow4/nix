@@ -28,11 +28,6 @@
 
   home-manager.users.sprrw = ../home;
 
-  users.users.sprrw.extraGroups = [ "audio" ];
-
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
   networking.hostName = "nest01";
   networking.extraHosts = ''
     192.9.173.108 kubernetes.default

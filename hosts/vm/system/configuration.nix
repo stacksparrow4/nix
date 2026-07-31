@@ -25,8 +25,6 @@
 
   users.users.sprrw.initialPassword = "password";
 
-  nix.settings.trusted-users = [ "root" "@wheel" ];
-
   networking.hostName = "vm";
 
   system.stateVersion = "24.11";
