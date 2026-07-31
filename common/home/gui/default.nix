@@ -34,16 +34,12 @@
       vlc
       blender
       rofi
+      flameshot
       (mkSandbox {
         name = "wlfreerdp";
         wayland = true;
         network = true;
         prog = "${pkgs.freerdp}/bin/wlfreerdp";
-      })
-      (mkSandbox {
-        name = "swappy";
-        wayland = true;
-        prog = "${pkgs.swappy}/bin/swappy";
       })
     ];
   };

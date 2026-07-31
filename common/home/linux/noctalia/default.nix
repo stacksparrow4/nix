@@ -26,16 +26,6 @@ pkgs,
           nohup noctalia &>/dev/null &
         '';
       })
-      (pkgs.writeShellApplication {
-        name = "noctalia-shot-dispatch";
-        runtimeInputs = [ pkgs.wl-clipboard pkgs.swappy pkgs.coreutils ];
-        text = ''
-          case "$(cat /tmp/noctalia-shot-mode 2>/dev/null)" in
-            clipboard) wl-copy --type image/png ;;
-            swappy)    swappy -f - ;;
-          esac
-        '';
-      })
     ];
   };
 }

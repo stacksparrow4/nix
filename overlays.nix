@@ -16,6 +16,7 @@ builtins.listToAttrs (
       "brave"
       "pi-coding-agent"
       "signal-desktop"
+      "flameshot"
     ]
 )
 // {

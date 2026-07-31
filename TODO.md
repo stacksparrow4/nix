@@ -1,7 +1,5 @@
 - Pi
     - Refactor the use of remote to an enum
-    - Prompts
-        - Headless tmux
 - Refactor out common configuration.nix logic
 - Flake parts
 - Refactor to be able to use packages from any machine
