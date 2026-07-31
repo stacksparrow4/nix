@@ -11,7 +11,9 @@
     ./audio.nix
     ./display.nix
     ./fonts.nix
+    ./locale.nix
     ./nix-config.nix
+    ./users.nix
     ./virt.nix
     ./flatpak.nix
     ./vms
@@ -38,14 +40,7 @@
           "hm-package".source = hmConfig.home.activationPackage;
         };
 
-      # systemd.coredump.enable = true;
-      # systemd.coredump.settings.Coredump = {
-      #   Storage = "none";
-      #   ProcessSizeMax = 0;
-      # };
-
-      boot.kernelPackages = lib.mkIf (lib.versionOlder pkgs.linux.version "6.18.22") pkgs.linuxPackages_6_18;
-
+      # TODO: is this needed
       boot.blacklistedKernelModules = [
         "esp4"
         "esp6"
@@ -58,6 +53,8 @@
       boot.tmp.cleanOnBoot = true;
 
       boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 0;
+
+      networking.networkmanager.enable = lib.mkDefault true;
     }
     (lib.mkIf (!config.sprrw.headless) {
       programs._1password.enable = true;
