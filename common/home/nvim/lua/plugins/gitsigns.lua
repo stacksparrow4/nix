@@ -35,6 +35,12 @@ return {
             end)
           end)
           map("n", "<leader>hr", gs.reset_hunk)
+          map("n", "<leader>hn", function()
+            gs.nav_hunk("next")
+          end)
+          map("n", "<leader>hN", function()
+            gs.nav_hunk("prev")
+          end)
         end,
       })
     end,
