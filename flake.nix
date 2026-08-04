@@ -106,6 +106,9 @@
           pkgs = overlayedNixpkgs "x86_64-linux";
           inherit (inputs) crane;
         };
+        nxc = import ./pkgs/netexec {
+          pkgs = overlayedNixpkgs "x86_64-linux";
+        };
       };
     };
 }
