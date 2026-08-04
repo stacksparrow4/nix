@@ -284,7 +284,6 @@ fn main() {
         let mut guidelines = vec![];
 
         if all_tools.contains(&"bash".to_string()) {
-            guidelines.push("Use bash for file operations like ls, rg, find");
             guidelines.push("Avoid recalling information about source available software and instead answer definitively by cloning the source to /tmp and referring to it");
         }
 
