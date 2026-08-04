@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use rand::seq::IndexedRandom;
 
-use crate::mount::{Mount, MountType, build_stage_script, quote};
+use crate::mount::{BOX_CWD, Mount, MountType, build_stage_script, quote};
 use crate::utils::exit_code;
 use crate::{Cli, cwd};
 
@@ -23,11 +23,11 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let mut mounts = volume_mounts;
 
     if args.cwd {
-        mounts.push(Mount::new(&cwd(), "/pwd", MountType::Dir, false));
+        mounts.push(Mount::new(&cwd(), BOX_CWD, MountType::Dir, false));
     }
 
     if args.ro_cwd {
-        mounts.push(Mount::new(&cwd(), "/pwd", MountType::Dir, true));
+        mounts.push(Mount::new(&cwd(), BOX_CWD, MountType::Dir, true));
     }
 
     let ro_git = args.ro_git && Path::new("./.git").exists();
@@ -185,7 +185,7 @@ fn enter_vm(args: &Cli, mounts: &[Mount], open_port: u16) -> Result<i32, String>
         ));
     }
     if args.cwd || args.ro_cwd {
-        startup_lines.push("cd /pwd".to_string());
+        startup_lines.push(format!("cd {BOX_CWD}"));
     }
     startup_lines.push(
         args.exec

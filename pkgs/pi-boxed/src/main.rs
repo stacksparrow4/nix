@@ -405,7 +405,7 @@ fn main() {
                 .expect("Failed to extract SSH port")[1];
 
             let starter = if args.cwd || args.ro_cwd {
-                "'cd /pwd &&' "
+                "'cd /box &&' "
             } else {
                 ""
             };

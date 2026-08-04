@@ -30,7 +30,7 @@ struct Cli {
     #[arg(long = "ro-cwd")]
     ro_cwd: bool,
 
-    /// Make /pwd/.git in the sandbox read only
+    /// Make /box/.git in the sandbox read only
     #[arg(short = 'g', long = "ro-git")]
     ro_git: bool,
 

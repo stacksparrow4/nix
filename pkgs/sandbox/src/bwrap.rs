@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::process::Command;
 
-use crate::mount::{Mount, MountType};
+use crate::mount::{BOX_CWD, Mount, MountType};
 use crate::utils::exit_code;
 use crate::{Cli, cwd, ensure_env, find_symlinks};
 
@@ -19,17 +19,17 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     mounts.extend(volume_mounts);
 
     if args.cwd {
-        mounts.push(Mount::new(&cwd(), "/pwd", MountType::Dir, false));
+        mounts.push(Mount::new(&cwd(), BOX_CWD, MountType::Dir, false));
     }
 
     if args.ro_cwd {
-        mounts.push(Mount::new(&cwd(), "/pwd", MountType::Dir, true));
+        mounts.push(Mount::new(&cwd(), BOX_CWD, MountType::Dir, true));
     }
 
     if args.ro_git && Path::new("./.git").exists() {
         mounts.push(Mount::new(
             &format!("{}/.git", cwd()),
-            "/pwd/.git",
+            &format!("{BOX_CWD}/.git"),
             MountType::Dir,
             true,
         ));
@@ -143,7 +143,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     subprocess_args.push("--chdir".to_string());
     subprocess_args.push(
         if args.cwd || args.ro_cwd {
-            "/pwd"
+            BOX_CWD
         } else {
             "/home/sprrw"
         }

@@ -1,3 +1,5 @@
+pub const BOX_CWD: &str = "/box";
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MountType {
     Unknown,
@@ -58,7 +60,7 @@ pub fn build_stage_script(mounts: &[Mount], stage: &str, ro_git: bool) -> Vec<St
             quote(&root)
         ));
 
-        if ro_git && m.box_path == "/pwd" {
+        if ro_git && m.box_path == BOX_CWD {
             let git = format!("{root}/.git");
             lines.push(format!("mount --bind {} {}", quote(&git), quote(&git)));
             lines.push(format!("mount -o remount,bind,ro {}", quote(&git)));
