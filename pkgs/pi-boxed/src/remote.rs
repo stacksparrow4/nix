@@ -1,14 +1,21 @@
 use std::{
     fs,
     io::{BufRead, BufReader, Read, Write},
-    os::unix::{
-        fs::PermissionsExt,
-        net::{UnixListener, UnixStream},
-        process::CommandExt,
+    net::Shutdown,
+    os::{
+        fd::{AsRawFd, RawFd},
+        unix::{
+            fs::PermissionsExt,
+            net::{UnixListener, UnixStream},
+            process::CommandExt,
+        },
     },
     path::Path,
     process::{Child, Command, Stdio},
-    sync::{Arc, Mutex},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
     thread,
     time::Duration,
 };
@@ -36,24 +43,58 @@ pub fn validate_remote_arg(remote_arg: &str) {
     }
 }
 
-fn send_msg(writer: &Mutex<UnixStream>, obj: serde_json::Value) {
+fn send_msg(writer: &Mutex<UnixStream>, obj: serde_json::Value) -> bool {
     let mut line = obj.to_string();
     line.push('\n');
-    let _ = writer.lock().unwrap().write_all(line.as_bytes());
+    writer.lock().unwrap().write_all(line.as_bytes()).is_ok()
 }
 
-fn stream_pipe<R: Read>(mut reader: R, kind: &'static str, writer: &Mutex<UnixStream>) {
+fn readable(fd: RawFd, timeout_ms: libc::c_int) -> bool {
+    let mut fds = [libc::pollfd {
+        fd,
+        events: libc::POLLIN,
+        revents: 0,
+    }];
+    unsafe { libc::poll(fds.as_mut_ptr(), 1, timeout_ms) > 0 }
+}
+
+fn stream_pipe<R: Read + AsRawFd>(
+    mut reader: R,
+    kind: &'static str,
+    writer: &Mutex<UnixStream>,
+    stop: &AtomicBool,
+) {
     let mut buf = [0u8; 65536];
     loop {
+        let stopping = stop.load(Ordering::SeqCst);
+        if !readable(reader.as_raw_fd(), if stopping { 0 } else { 50 }) {
+            if stopping {
+                break;
+            }
+            continue;
+        }
+
         match reader.read(&mut buf) {
             Ok(0) | Err(_) => break,
-            Ok(n) => send_msg(
-                writer,
-                json!({
-                    "type": kind,
-                    "data": BASE64_STANDARD.encode(&buf[..n]),
-                }),
-            ),
+            Ok(n) => {
+                if !send_msg(
+                    writer,
+                    json!({
+                        "type": kind,
+                        "data": BASE64_STANDARD.encode(&buf[..n]),
+                    }),
+                ) {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+fn kill_group(pgid: &Mutex<Option<i32>>, signal: i32) {
+    if let Some(pgid) = *pgid.lock().unwrap() {
+        unsafe {
+            libc::killpg(pgid, signal);
         }
     }
 }
@@ -67,14 +108,24 @@ fn spawn_command(executor: &Executor, command: &str) -> std::io::Result<Child> {
         Executor::Local => command.to_string(),
     };
 
-    Command::new("bash")
+    let mut command = Command::new("bash");
+    command
         .arg("-c")
         .arg(&script)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .process_group(0)
-        .spawn()
+        .stderr(Stdio::piped());
+
+    unsafe {
+        command.pre_exec(|| {
+            if libc::setsid() == -1 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
+    }
+
+    command.spawn()
 }
 
 fn handle_remote_connection(stream: UnixStream, executor: Arc<Executor>) {
@@ -113,33 +164,58 @@ fn handle_remote_connection(stream: UnixStream, executor: Arc<Executor>) {
     let stdout = child.stdout.take().expect("Failed to capture stdout");
     let stderr = child.stderr.take().expect("Failed to capture stderr");
 
+    let pgid = Arc::new(Mutex::new(Some(child.id() as i32)));
+    let aborted = Arc::new(AtomicBool::new(false));
+
+    {
+        let pgid = pgid.clone();
+        let aborted = aborted.clone();
+        thread::spawn(move || {
+            let mut buf = [0u8; 1024];
+            loop {
+                match reader.read(&mut buf) {
+                    Ok(0) | Err(_) => break,
+                    Ok(_) => {}
+                }
+            }
+            aborted.store(true, Ordering::SeqCst);
+            kill_group(&pgid, libc::SIGKILL);
+        });
+    }
+
+    let stop = Arc::new(AtomicBool::new(false));
+
     let out_writer = writer.clone();
     let err_writer = writer.clone();
-    let out_thread = thread::spawn(move || stream_pipe(stdout, "stdout", &out_writer));
-    let err_thread = thread::spawn(move || stream_pipe(stderr, "stderr", &err_writer));
+    let out_stop = stop.clone();
+    let err_stop = stop.clone();
+    let out_thread = thread::spawn(move || stream_pipe(stdout, "stdout", &out_writer, &out_stop));
+    let err_thread = thread::spawn(move || stream_pipe(stderr, "stderr", &err_writer, &err_stop));
 
     let mut timed_out = false;
 
-    let exit_code = child
+    let exit_code = match child
         .wait_timeout(Duration::from_secs(timeout))
         .expect("Failed to wait on process")
-        .map_or_else(
-            || {
-                timed_out = true;
-                // child.id() == process group id because of process_group(0).
-                unsafe {
-                    libc::killpg(child.id() as i32, libc::SIGKILL);
-                }
-                let _ = child.wait();
-                -1
-            },
-            |e| e.code().unwrap_or(-1),
-        );
+    {
+        Some(status) => status.code().unwrap_or(-1),
+        None => {
+            timed_out = true;
+            kill_group(&pgid, libc::SIGKILL);
+            let _ = child.wait();
+            -1
+        }
+    };
 
+    *pgid.lock().unwrap() = None;
+
+    stop.store(true, Ordering::SeqCst);
     let _ = out_thread.join();
     let _ = err_thread.join();
 
-    if timed_out {
+    if aborted.load(Ordering::SeqCst) {
+        send_msg(&writer, json!({"type": "error", "message": "aborted"}));
+    } else if timed_out {
         send_msg(
             &writer,
             json!({"type": "error", "message": format!("timeout after {}s", timeout)}),
@@ -147,6 +223,8 @@ fn handle_remote_connection(stream: UnixStream, executor: Arc<Executor>) {
     } else {
         send_msg(&writer, json!({"type": "exit", "code": exit_code}));
     }
+
+    let _ = writer.lock().unwrap().shutdown(Shutdown::Both);
 }
 
 fn accept_loop(listener: UnixListener, executor: Executor) {
