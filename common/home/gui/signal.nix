@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-unstable,
   lib,
   config,
   ...
@@ -13,10 +14,11 @@
   config =
     let
       cfg = config.sprrw.gui.signal;
+      signal-desktop = pkgs-unstable.signal-desktop;
     in
     lib.mkIf cfg.enable {
-      home.packages = with pkgs; [
-        (runCommand "signal" { } ''
+      home.packages = [
+        (pkgs.runCommand "signal" { } ''
           mkdir -p $out/share/applications
           cat <<EOF > $out/share/applications/signal.desktop
           [Desktop Entry]

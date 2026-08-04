@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-unstable,
   lib,
   config,
   ...
@@ -30,10 +31,10 @@
       cfg = config.sprrw.gui.browsers;
     in
     lib.mkIf cfg.enable {
-      home.packages = with pkgs; [
-        brave
-        firefox
-        chromium
+      home.packages = [
+        pkgs-unstable.brave
+        pkgs.firefox
+        pkgs.chromium
       ];
 
       home.sessionVariables.BROWSER = "brave";

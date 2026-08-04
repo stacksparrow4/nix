@@ -1,4 +1,3 @@
-- Flake parts
 - Refactor to be able to use packages from any machine
     - vim
 - Some hardcoded revisions are used for some things. Refactor them to be flake inputs. Then we can easily update and track upstream source

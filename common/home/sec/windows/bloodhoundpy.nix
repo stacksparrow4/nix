@@ -1,8 +1,8 @@
 {
-  pkgs,
   lib,
   config,
   mkSandbox,
+  self',
   ...
 }:
 
@@ -17,7 +17,7 @@
         name = "bloodhound-ce";
         shareCwd = true;
         network = true;
-        prog = "${import ../../../../pkgs/bloodhound-ce { inherit pkgs; }}/bin/bloodhound-ce-python";
+        prog = "${self'.packages.bloodhound-ce}/bin/bloodhound-ce-python";
       })
     ];
   };

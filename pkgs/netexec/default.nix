@@ -1,22 +1,20 @@
 {
-  nixpkgs-inputs ? { },
-  pkgs ? import <nixpkgs> nixpkgs-inputs,
+  pkgs,
+  netexec-impacket,
+  original-bloodhound-ce,
 }:
 
 let
   python = pkgs.python313.override {
     self = python;
     packageOverrides = self: super: {
-      impacket = import ../netexec-impacket { inherit pkgs; };
+      impacket = netexec-impacket;
       # certipy-ad pins impacket~=0.13.0, but the netexec impacket fork
       # reports 0.14.0; relax the constraint so the runtime deps check passes.
       certipy-ad = super.certipy-ad.overridePythonAttrs (old: {
         pythonRelaxDeps = (old.pythonRelaxDeps or [ ]) ++ [ "impacket" ];
       });
-      bloodhound-ce = import ../bloodhound-ce {
-        inherit pkgs;
-        impacket = self.impacket;
-      };
+      bloodhound-ce = original-bloodhound-ce.override { impacket = self.impacket; };
     };
   };
 in

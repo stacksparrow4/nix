@@ -1,12 +1,11 @@
 {
-  pkgs ? import <nixpkgs-unstable> { },
+  pkgs,
   crane,
+  pi,
 }:
 
 let
   craneLib = crane.mkLib pkgs;
-
-  pi-unsandboxed = import ../pi { inherit pkgs; };
 
   commonArgs = {
     src = craneLib.cleanCargoSource ./.;
@@ -25,6 +24,6 @@ in
 pkgs.writeShellApplication {
   name = "pi";
   text = ''
-    ${pi-boxed}/bin/pi ${pi-unsandboxed}/bin/pi "$@"
+    ${pi-boxed}/bin/pi ${pi}/bin/pi "$@"
   '';
 }

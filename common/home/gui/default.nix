@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-unstable,
   lib,
   config,
   mkSandbox,
@@ -34,7 +35,7 @@
       vlc
       blender
       rofi
-      flameshot
+      pkgs-unstable.flameshot
       (mkSandbox {
         name = "wlfreerdp";
         wayland = true;

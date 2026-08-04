@@ -1,14 +1,15 @@
 {
-  pkgs ? import <nixpkgs-unstable> { },
+  pkgs,
   crane,
+  interactsh,
 }:
 
 let
   craneLib = crane.mkLib pkgs;
 
-  interactsh = pkgs.runCommand "interactsh" { } ''
+  interactsh-client = pkgs.runCommand "interactsh" { } ''
     mkdir -p $out/bin
-    ln -s ${import ../interactsh { inherit pkgs; }}/bin/interactsh-client $out/bin/interactsh
+    ln -s ${interactsh}/bin/interactsh-client $out/bin/interactsh
   '';
 
   commonArgs = {
@@ -27,7 +28,7 @@ craneLib.buildPackage (
 
     postInstall = ''
       wrapProgram $out/bin/oob \
-        --prefix PATH : ${pkgs.lib.makeBinPath [ interactsh ]}
+        --prefix PATH : ${pkgs.lib.makeBinPath [ interactsh-client ]}
     '';
   }
 )

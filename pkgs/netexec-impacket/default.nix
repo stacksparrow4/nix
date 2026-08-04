@@ -1,6 +1,5 @@
 {
-  nixpkgs-inputs ? { },
-  pkgs ? import <nixpkgs> nixpkgs-inputs,
+  pkgs,
 }:
 
 pkgs.python313Packages.impacket.overridePythonAttrs {

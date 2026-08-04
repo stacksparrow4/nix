@@ -2,6 +2,8 @@
   description = "ssparrow NixOS Flake";
 
   inputs = {
+    flake-parts.url = "github:hercules-ci/flake-parts";
+
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     home-manager = {
@@ -34,81 +36,83 @@
   };
 
   outputs =
-    {
-      nixpkgs,
-      nixpkgs-unstable,
-      home-manager,
-      ...
-    }@inputs:
-    let
-      nixpkgsConfig = import ./nixpkgs-config.nix;
-      overlay =
-        system:
-        import ./overlays.nix (
-          import nixpkgs-unstable {
-            inherit system;
-            config = nixpkgsConfig;
-          }
-        );
-      overlayedNixpkgs =
-        system:
-        import nixpkgs {
-          inherit system;
-          overlays = [ (overlay system) ];
-          config = nixpkgsConfig;
-        };
-    in
-    {
-      nixosConfigurations.nest01 = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        pkgs = overlayedNixpkgs system;
-        modules = [
-          ./hosts/nest01/system/configuration.nix
-          home-manager.nixosModules.home-manager
-          { home-manager.extraSpecialArgs = { inherit inputs; }; }
-        ];
-        specialArgs = { inherit inputs; };
-      };
+    inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } (
+      { withSystem, ... }:
+      let
+        nixpkgsConfig = import ./nixpkgs-config.nix;
 
-      nixosConfigurations.vm = nixpkgs.lib.nixosSystem rec {
-        system = "x86_64-linux";
-        pkgs = overlayedNixpkgs system;
-        modules = [
-          ./hosts/vm/system/configuration.nix
-          home-manager.nixosModules.home-manager
-          { home-manager.extraSpecialArgs = { inherit inputs; }; }
-        ];
-        specialArgs = { inherit inputs; };
-      };
+        specialArgs =
+          {
+            self',
+            pkgs-unstable,
+            ...
+          }:
+          {
+            inherit
+              inputs
+              self'
+              pkgs-unstable
+              ;
+          };
 
-      packages.aarch64-darwin.homeConfigurations."dan" = home-manager.lib.homeManagerConfiguration {
-        pkgs = overlayedNixpkgs "aarch64-darwin";
+        mkNixosSystem =
+          system: module:
+          withSystem system (
+            args@{ pkgs, ... }:
+            inputs.nixpkgs.lib.nixosSystem {
+              inherit pkgs;
+              specialArgs = specialArgs args;
+              modules = [
+                module
+                inputs.home-manager.nixosModules.home-manager
+                { home-manager.extraSpecialArgs = specialArgs args; }
+              ];
+            }
+          );
+      in
+      {
+        imports = [ ./pkgs ];
 
-        modules = [
-          ./hosts/Daniels-MacBook-Air/home/default.nix
+        systems = [
+          "x86_64-linux"
+          "aarch64-darwin"
         ];
 
-        extraSpecialArgs = {
-          inputs = inputs;
-        };
-      };
+        perSystem =
+          { system, ... }:
+          let
+            pkgs-unstable = import inputs.nixpkgs-unstable {
+              inherit system;
+              config = nixpkgsConfig;
+            };
+          in
+          {
+            _module.args = {
+              inherit pkgs-unstable;
 
-      packages.x86_64-linux = {
-        sandbox = import ./pkgs/sandbox {
-          pkgs = overlayedNixpkgs "x86_64-linux";
-          inherit (inputs) crane;
+              pkgs = import inputs.nixpkgs {
+                inherit system;
+                config = nixpkgsConfig;
+              };
+            };
+          };
+
+        flake = {
+          nixosConfigurations = {
+            nest01 = mkNixosSystem "x86_64-linux" ./hosts/nest01/system/configuration.nix;
+            vm = mkNixosSystem "x86_64-linux" ./hosts/vm/system/configuration.nix;
+          };
+
+          homeConfigurations.dan = withSystem "aarch64-darwin" (
+            args@{ pkgs, ... }:
+            inputs.home-manager.lib.homeManagerConfiguration {
+              inherit pkgs;
+              modules = [ ./hosts/Daniels-MacBook-Air/home/default.nix ];
+              extraSpecialArgs = specialArgs args;
+            }
+          );
         };
-        oob = import ./pkgs/oob {
-          pkgs = overlayedNixpkgs "x86_64-linux";
-          inherit (inputs) crane;
-        };
-        sprrw = import ./pkgs/sprrw {
-          pkgs = overlayedNixpkgs "x86_64-linux";
-          inherit (inputs) crane;
-        };
-        nxc = import ./pkgs/netexec {
-          pkgs = overlayedNixpkgs "x86_64-linux";
-        };
-      };
-    };
+      }
+    );
 }

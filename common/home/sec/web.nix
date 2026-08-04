@@ -3,7 +3,7 @@
   lib,
   pkgs,
   mkSandbox,
-  inputs,
+  self',
   ...
 }:
 
@@ -31,7 +31,7 @@
 
       (mkSandbox {
         name = "interactsh";
-        prog = "${interactsh}/bin/interactsh-client";
+        prog = "${self'.packages.interactsh}/bin/interactsh-client";
         sharedPaths = [
           {
             hostPath = "$HOME/.config/interactsh-client/config.yaml";
@@ -45,12 +45,7 @@
 
       (mkSandbox {
         name = "oob";
-        prog = "${
-          import ../../../pkgs/oob {
-            inherit pkgs;
-            inherit (inputs) crane;
-          }
-        }/bin/oob";
+        prog = "${self'.packages.oob}/bin/oob";
         sharedPaths = [
           {
             hostPath = "$HOME/.config/interactsh-client/config.yaml";

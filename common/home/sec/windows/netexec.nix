@@ -1,8 +1,8 @@
 {
-  pkgs,
   lib,
   config,
   mkSandbox,
+  self',
   ...
 }:
 
@@ -25,7 +25,7 @@
         ];
         shareCwd = true;
         network = true;
-        prog = "${import ../../../../pkgs/netexec { inherit pkgs; }}/bin/nxc";
+        prog = "${self'.packages.netexec}/bin/nxc";
       })
     ];
   };

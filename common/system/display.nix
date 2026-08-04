@@ -2,11 +2,12 @@
   pkgs,
   config,
   lib,
+  self',
   ...
 }:
 
 let
-  portal-chooser = import ../../pkgs/portal-chooser { inherit pkgs; };
+  portal-chooser = self'.packages.portal-chooser;
 in
 {
   config = lib.mkMerge [

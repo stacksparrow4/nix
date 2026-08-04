@@ -2,7 +2,7 @@
   pkgs,
   lib,
   config,
-  inputs,
+  self',
   ...
 }:
 
@@ -67,10 +67,7 @@ in
     _module.args.mkSandbox = mkSandbox;
 
     home.packages = lib.mkIf config.sprrw.sandbox.enable [
-      (import ../../pkgs/sandbox {
-        inherit pkgs;
-        inherit (inputs) crane;
-      })
+      self'.packages.sandbox
       (pkgs.writeShellApplication {
         name = "build-vm";
         text = ''

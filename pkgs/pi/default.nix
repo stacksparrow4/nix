@@ -1,9 +1,10 @@
 {
-  nixpkgs-inputs ? { },
-  pkgs ? import <nixpkgs-unstable> nixpkgs-inputs,
+  pkgs-unstable,
 }:
 
 let
+  pkgs = pkgs-unstable;
+
   version = "0.83.0";
 
   src = pkgs.fetchFromGitHub {

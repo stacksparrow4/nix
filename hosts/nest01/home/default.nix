@@ -6,6 +6,18 @@
   ...
 }:
 
+let
+  asepritePkgs =
+    import
+      (fetchTarball {
+        url = "https://github.com/NixOS/nixpkgs/archive/4e92bbcdb030f3b4782be4751dc08e6b6cb6ccf2.tar.gz";
+        sha256 = "sha256:1mrf745k78ivw11rj1qibgwi966a83lcljc62p4qix25m1ignirq";
+      })
+      {
+        system = pkgs.stdenv.hostPlatform.system;
+        config = import ../../../nixpkgs-config.nix;
+      };
+in
 {
   imports = [
     ../../../common/home
@@ -67,7 +79,7 @@
   home = {
     packages = with pkgs; [
       audacity
-      aseprite
+      asepritePkgs.aseprite
       prismlauncher
     ];
 
@@ -84,7 +96,7 @@
     file.".ssh/config".source =
       config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/ssh.config";
 
-    file.".config/noctalia/nest01.toml".source = 
+    file.".config/noctalia/nest01.toml".source =
       config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/hosts/nest01/home/noctalia.toml";
   };
 }

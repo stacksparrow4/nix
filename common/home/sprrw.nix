@@ -1,14 +1,10 @@
 {
-  pkgs,
-  inputs,
+  self',
   ...
 }:
 
 {
   home.packages = [
-    (import ../../pkgs/sprrw {
-      inherit pkgs;
-      inherit (inputs) crane;
-    })
+    self'.packages.sprrw
   ];
 }

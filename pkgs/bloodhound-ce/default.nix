@@ -1,6 +1,5 @@
 {
-  nixpkgs-inputs ? { },
-  pkgs ? import <nixpkgs> nixpkgs-inputs,
+  pkgs,
   impacket ? pkgs.python3Packages.impacket,
 }:
 

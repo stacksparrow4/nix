@@ -2,7 +2,7 @@
   pkgs,
   lib,
   config,
-  inputs,
+  self',
   ...
 }:
 
@@ -39,13 +39,25 @@
   config =
     let
       cfg = config.sprrw.ai.llama;
+
+      modelsDir = pkgs.linkFarm "llama-models" (
+        map (
+          { name, path }:
+          {
+            name = "${name}.gguf";
+            inherit path;
+          }
+        ) cfg.models
+      );
     in
     lib.mkIf cfg.enable {
       home.packages = [
-        (import ../../../pkgs/llama-server {
-          inherit pkgs;
-          inherit (inputs) crane;
-          inherit (cfg) models context;
+        (pkgs.writeShellApplication {
+          name = "llama-server";
+          runtimeInputs = [ pkgs.socat ];
+          text = ''
+            ${self'.packages.llama-server}/bin/llama-server ${modelsDir} ${toString cfg.context} "$@"
+          '';
         })
       ];
     };
