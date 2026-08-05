@@ -1,12 +1,9 @@
-{ pkgs, ... }:
+{ self', ... }:
 
 {
-  imports = [
-    ./mkpythonenv.nix
-    ./mkwindowsenv.nix
-  ];
-
   home.packages = [
-    (pkgs.writeShellScriptBin "windows-yaml.sh" (builtins.readFile ./windows-yaml.sh))
+    self'.packages.windows-yaml
+    self'.packages.mkpythonenv
+    self'.packages.mkwindowsenv
   ];
 }

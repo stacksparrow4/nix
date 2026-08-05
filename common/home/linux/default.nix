@@ -11,6 +11,7 @@
     ./rofi.nix
     ./desktop-entries.nix
     ./term.nix
+    ./yazi.nix
     ./yubikey.nix
   ];
 

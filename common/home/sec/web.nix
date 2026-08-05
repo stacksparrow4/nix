@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  mkSandbox,
   self',
   ...
 }:
@@ -13,49 +12,10 @@
   };
 
   config = lib.mkIf config.sprrw.sec.web.enable {
-    home.packages = with pkgs; [
-      (mkSandbox {
-        name = "mitmproxy";
-        prog = "${mitmproxy}/bin/mitmproxy";
-        shareCwd = true;
-        sharedPaths = [
-          {
-            hostPath = "$HOME/.mitmproxy";
-            boxPath = "/home/sprrw/.mitmproxy";
-            ro = false;
-            type = "dir";
-          }
-        ];
-        network = true;
-      })
-
-      (mkSandbox {
-        name = "interactsh";
-        prog = "${self'.packages.interactsh}/bin/interactsh-client";
-        sharedPaths = [
-          {
-            hostPath = "$HOME/.config/interactsh-client/config.yaml";
-            boxPath = "/home/sprrw/.config/interactsh-client/config.yaml";
-            ro = true;
-            type = "file";
-          }
-        ];
-        network = true;
-      })
-
-      (mkSandbox {
-        name = "oob";
-        prog = "${self'.packages.oob}/bin/oob";
-        sharedPaths = [
-          {
-            hostPath = "$HOME/.config/interactsh-client/config.yaml";
-            boxPath = "/home/sprrw/.config/interactsh-client/config.yaml";
-            ro = true;
-            type = "file";
-          }
-        ];
-        network = true;
-      })
-    ];
+    home.packages = (with self'.packages; [
+      mitmproxy
+      interactsh-boxed
+      oob-boxed
+    ]);
   };
 }

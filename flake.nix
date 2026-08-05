@@ -3,6 +3,7 @@
 
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
+    import-tree.url = "github:denful/import-tree";
 
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -36,83 +37,6 @@
   };
 
   outputs =
-    inputs@{ flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } (
-      { withSystem, ... }:
-      let
-        nixpkgsConfig = import ./nixpkgs-config.nix;
-
-        specialArgs =
-          {
-            self',
-            pkgs-unstable,
-            ...
-          }:
-          {
-            inherit
-              inputs
-              self'
-              pkgs-unstable
-              ;
-          };
-
-        mkNixosSystem =
-          system: module:
-          withSystem system (
-            args@{ pkgs, ... }:
-            inputs.nixpkgs.lib.nixosSystem {
-              inherit pkgs;
-              specialArgs = specialArgs args;
-              modules = [
-                module
-                inputs.home-manager.nixosModules.home-manager
-                { home-manager.extraSpecialArgs = specialArgs args; }
-              ];
-            }
-          );
-      in
-      {
-        imports = [ ./pkgs ];
-
-        systems = [
-          "x86_64-linux"
-          "aarch64-darwin"
-        ];
-
-        perSystem =
-          { system, ... }:
-          let
-            pkgs-unstable = import inputs.nixpkgs-unstable {
-              inherit system;
-              config = nixpkgsConfig;
-            };
-          in
-          {
-            _module.args = {
-              inherit pkgs-unstable;
-
-              pkgs = import inputs.nixpkgs {
-                inherit system;
-                config = nixpkgsConfig;
-              };
-            };
-          };
-
-        flake = {
-          nixosConfigurations = {
-            nest01 = mkNixosSystem "x86_64-linux" ./hosts/nest01/system/configuration.nix;
-            vm = mkNixosSystem "x86_64-linux" ./hosts/vm/system/configuration.nix;
-          };
-
-          homeConfigurations.dan = withSystem "aarch64-darwin" (
-            args@{ pkgs, ... }:
-            inputs.home-manager.lib.homeManagerConfiguration {
-              inherit pkgs;
-              modules = [ ./hosts/Daniels-MacBook-Air/home/default.nix ];
-              extraSpecialArgs = specialArgs args;
-            }
-          );
-        };
-      }
-    );
+    inputs@{ flake-parts, import-tree, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } (import-tree ./modules);
 }

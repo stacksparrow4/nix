@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  mkSandbox,
+  self',
   ...
 }:
 
@@ -12,15 +12,10 @@
   };
 
   config = lib.mkIf config.sprrw.sec.cracking.enable {
-    home.packages = with pkgs; [
+    home.packages = (with pkgs; [
       hashcat
       john
-      (mkSandbox {
-        name = "hydra";
-        shareCwd = true;
-        network = true;
-        prog = "${thc-hydra}/bin/hydra";
-      })
-    ];
+    ])
+    ++ [ self'.packages.hydra ];
   };
 }

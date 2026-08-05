@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  mkSandbox,
   self',
   ...
 }:
@@ -12,21 +11,6 @@
   };
 
   config = lib.mkIf config.sprrw.sec.windows.netexec.enable {
-    home.packages = [
-      (mkSandbox {
-        name = "nxc";
-        sharedPaths = [
-          {
-            hostPath = "$HOME/.nxc";
-            boxPath = "/home/sprrw/.nxc";
-            ro = false;
-            type = "dir";
-          }
-        ];
-        shareCwd = true;
-        network = true;
-        prog = "${self'.packages.netexec}/bin/nxc";
-      })
-    ];
+    home.packages = [ self'.packages.nxc ];
   };
 }

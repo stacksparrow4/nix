@@ -2,7 +2,7 @@
   pkgs,
   lib,
   config,
-  mkSandbox,
+  self',
   ...
 }:
 
@@ -10,23 +10,18 @@
   options.sprrw.linux.term.enable = lib.mkEnableOption "term";
 
   config = lib.mkIf config.sprrw.linux.term.enable {
-    home.packages = with pkgs; [
-      ltrace
-      linux-manual
-      man-pages
-      man-pages-posix
-      netcat-openbsd
-      lsof
-      traceroute
-      bubblewrap
+    home.packages = [
+      pkgs.ltrace
+      pkgs.linux-manual
+      pkgs.man-pages
+      pkgs.man-pages-posix
+      pkgs.netcat-openbsd
+      pkgs.lsof
+      pkgs.traceroute
+      pkgs.bubblewrap
 
-      (mkSandbox {
-        name = "neofetch";
-        prog = "${fastfetch}/bin/fastfetch";
-      })
-      (pkgs.writeShellScriptBin "proxychains" ''
-        ${pkgs.proxychains-ng}/bin/proxychains4 -q "$@"
-      '')
+      self'.packages.neofetch
+      self'.packages.proxychains
     ];
   };
 }

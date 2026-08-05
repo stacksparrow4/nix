@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  mkSandbox,
   self',
   ...
 }:
@@ -12,13 +11,6 @@
   };
 
   config = lib.mkIf config.sprrw.sec.windows.bloodhoundpy.enable {
-    home.packages = [
-      (mkSandbox {
-        name = "bloodhound-ce";
-        shareCwd = true;
-        network = true;
-        prog = "${self'.packages.bloodhound-ce}/bin/bloodhound-ce-python";
-      })
-    ];
+    home.packages = [ self'.packages.bloodhound-ce-python ];
   };
 }

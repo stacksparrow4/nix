@@ -8,61 +8,10 @@
   options.sprrw.term.yazi.enable = lib.mkEnableOption "yazi";
 
   config = lib.mkIf config.sprrw.term.yazi.enable {
-    xdg.mimeApps = {
-      enable = true;
-      defaultApplications."inode/directory" = "yazi.desktop";
-    };
-
     programs.yazi = {
       enable = true;
       shellWrapperName = "y";
 
-      settings = {
-        opener = {
-          viewimg = [
-            {
-              run = "gimp \"$1\"";
-              orphan = true;
-              for = "unix";
-            }
-          ];
-
-          viewvid = [
-            {
-              run = "vlc \"$1\"";
-              orphan = true;
-              for = "unix";
-            }
-          ];
-
-          xdgopen = [
-            {
-              run = "xdg-open \"$1\"";
-              orphan = true;
-              for = "unix";
-            }
-          ];
-        };
-
-        open.prepend_rules = [
-          {
-            mime = "image/*";
-            use = "viewimg";
-          }
-          {
-            mime = "video/*";
-            use = "viewvid";
-          }
-          {
-            url = "*.docx";
-            use = "xdgopen";
-          }
-          {
-            url = "*.odt";
-            use = "xdgopen";
-          }
-        ];
-      };
       keymap = {
         mgr.prepend_keymap = [
           {
@@ -72,10 +21,6 @@
           {
             run = "remove --permanently";
             on = [ "d" ];
-          }
-          {
-            run = "shell 'dragon-drop \"$@\"' --confirm";
-            on = [ "D" ];
           }
         ];
 

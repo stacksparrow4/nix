@@ -1,9 +1,7 @@
 {
   config,
   lib,
-  pkgs,
-  inputs,
-  mkSandbox,
+  self',
   ...
 }:
 
@@ -29,35 +27,10 @@
         // cfg.config
       );
 
-      home.packages =
-        let
-          pwnproxy = inputs.pwnproxy.packages."${pkgs.stdenv.hostPlatform.system}".default;
-          autorize = inputs.autorize.packages."${pkgs.stdenv.hostPlatform.system}".default;
-          urlenc = inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".urlenc;
-        in
-        [
-          (mkSandbox {
-            name = "pwnproxy";
-            prog = "${pwnproxy}/bin/mitmproxy";
-            shareCwd = true;
-            sharedPaths = [
-              {
-                hostPath = "$HOME/.mitmproxy";
-                boxPath = "/home/sprrw/.mitmproxy";
-                ro = false;
-                type = "dir";
-              }
-            ];
-            network = true;
-            wayland = true; # nvim copy
-          })
-          urlenc
-          (mkSandbox {
-            name = "autorize";
-            prog = "${autorize}/bin/autorize";
-            shareCwd = true;
-            network = true;
-          })
-        ];
+      home.packages = [
+        self'.packages.pwnproxy
+        self'.packages.urlenc
+        self'.packages.autorize
+      ];
     };
 }

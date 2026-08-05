@@ -1,8 +1,7 @@
 {
   config,
   lib,
-  pkgs,
-  mkSandbox,
+  self',
   ...
 }:
 
@@ -12,12 +11,6 @@
   };
 
   config = lib.mkIf config.sprrw.programming.sage.enable {
-    home.packages = [
-      (mkSandbox {
-        name = "sage";
-        shareCwd = true;
-        prog = "${pkgs.sage}/bin/sage";
-      })
-    ];
+    home.packages = [ self'.packages.sage ];
   };
 }

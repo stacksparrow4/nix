@@ -2,7 +2,7 @@
   pkgs,
   lib,
   config,
-  mkSandbox,
+  self',
   ...
 }:
 
@@ -34,31 +34,13 @@
       rusthound.enable = true;
     };
 
-    home.packages = with pkgs; [
-      rlwrap
-      (mkSandbox {
-        name = "evil-winrm";
-        prog = "${evil-winrm}/bin/evil-winrm";
-        network = true;
-      })
-      samba # rpcclient
-      (mkSandbox {
-        name = "certipy";
-        prog = "${certipy}/bin/certipy";
-        shareCwd = true;
-        network = true;
-      })
-      (mkSandbox {
-        name = "bloodyAD";
-        prog = "${python312Packages.bloodyad}/bloodyAD";
-        shareCwd = true;
-        network = true;
-      })
-      (mkSandbox {
-        name = "pwsh";
-        prog = "${powershell}/bin/pwsh";
-        network = true;
-      })
+    home.packages = [
+      pkgs.rlwrap
+      self'.packages.evil-winrm
+      pkgs.samba # rpcclient
+      self'.packages.certipy
+      self'.packages.bloodyAD
+      self'.packages.pwsh
     ];
   };
 }

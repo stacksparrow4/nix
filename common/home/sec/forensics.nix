@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  mkSandbox,
+  self',
   ...
 }:
 
@@ -12,26 +12,11 @@
   };
 
   config = lib.mkIf config.sprrw.sec.forensics.enable {
-    home.packages = with pkgs; [
-      (mkSandbox {
-        name = "exiftool";
-        type = "bwrap";
-        shareCwd = true;
-        prog = "${exiftool}/bin/exiftool";
-      })
-      (mkSandbox {
-        name = "binwalk";
-        type = "bwrap";
-        shareCwd = true;
-        prog = "${binwalk}/bin/binwalk";
-      })
-      (mkSandbox {
-        name = "ent";
-        type = "bwrap";
-        shareCwd = true;
-        prog = "${ent}/bin/ent";
-      })
-      tcpdump
-    ];
+    home.packages = (with self'.packages; [
+      exiftool
+      binwalk
+      ent
+    ])
+    ++ [ pkgs.tcpdump ];
   };
 }

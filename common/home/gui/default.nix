@@ -3,7 +3,7 @@
   pkgs-unstable,
   lib,
   config,
-  mkSandbox,
+  self',
   ...
 }:
 
@@ -36,12 +36,7 @@
       blender
       rofi
       pkgs-unstable.flameshot
-      (mkSandbox {
-        name = "wlfreerdp";
-        wayland = true;
-        network = true;
-        prog = "${pkgs.freerdp}/bin/wlfreerdp";
-      })
+      self'.packages.wlfreerdp
     ];
   };
 }

@@ -1,8 +1,7 @@
 {
-  pkgs,
   lib,
   config,
-  mkSandbox,
+  self',
   ...
 }:
 
@@ -20,20 +19,6 @@
       cfg = config.sprrw.ai;
     in
     lib.mkIf cfg.enable {
-      home.packages = with pkgs; [
-        (mkSandbox {
-          name = "bx";
-          sharedPaths = [
-            {
-              hostPath = "$HOME/.config/brave-search";
-              boxPath = "/home/sprrw/.config/brave-search";
-              ro = false;
-              type = "dir";
-            }
-          ];
-          network = true;
-          prog = "${brave-search-cli}/bin/bx";
-        })
-      ];
+      home.packages = [ self'.packages.bx ];
     };
 }
