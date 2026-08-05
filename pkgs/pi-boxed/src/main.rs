@@ -287,10 +287,6 @@ fn main() {
             guidelines.push("Avoid recalling information about source available software and instead answer definitively by cloning the source to /tmp and referring to it");
         }
 
-        if all_tools.contains(&"read".to_string()) {
-            guidelines.push("Use read to examine files instead of cat or sed");
-        }
-
         if all_tools.contains(&"edit".to_string()) {
             guidelines.push("Use edit for precise changes (edits[].oldText must match exactly)");
             guidelines.push("When changing multiple separate locations in one file, use one edit call with multiple entries in edits[]");
