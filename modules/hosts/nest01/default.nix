@@ -7,6 +7,7 @@
 
 let
   nixosModules = config.flake.nixosModules;
+  homeModules = config.flake.homeModules;
 in
 {
   flake.nixosModules.gaming = {
@@ -19,7 +20,7 @@ in
   };
 
   flake.nixosConfigurations.nest01 = withSystem "x86_64-linux" (
-    { self', pkgs-unstable, ... }:
+    { fetchHF, ... }:
     inputs.nixpkgs.lib.nixosSystem {
       modules = [
         inputs.home-manager.nixosModules.home-manager
@@ -38,13 +39,109 @@ in
           ];
         }
 
-        # TRANSITIONAL: the home side is still the old common/home tree, which
-        # wants these via extraSpecialArgs. Removed once home is converted.
         {
-          home-manager.extraSpecialArgs = {
-            inherit inputs self' pkgs-unstable;
-          };
-          home-manager.users.sprrw = ../../../hosts/nest01/home;
+          home-manager.users.sprrw =
+            { pkgs, config, ... }:
+            let
+              # Old aseprite, pinned to the last nixpkgs that packaged it.
+              asepritePkgs =
+                import
+                  (fetchTarball {
+                    url = "https://github.com/NixOS/nixpkgs/archive/4e92bbcdb030f3b4782be4751dc08e6b6cb6ccf2.tar.gz";
+                    sha256 = "sha256:1mrf745k78ivw11rj1qibgwi966a83lcljc62p4qix25m1ignirq";
+                  })
+                  {
+                    system = pkgs.stdenv.hostPlatform.system;
+                    config = import ../../../nixpkgs-config.nix;
+                  };
+
+              repo = "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/nest01";
+            in
+            {
+              imports = with homeModules; [
+                base
+                general
+                general-linux
+                misc
+                payloads
+                sprrw-cli
+                sandbox
+                scripts
+
+                term
+                term-yazi-linux
+                linux
+                nvim
+
+                programming
+                programming-sage
+
+                sec
+                sec-gui
+
+                gui
+                gui-signal
+                gui-lmms
+
+                ai
+                ai-llama
+                ai-pi
+              ];
+
+              sprrw.ai = {
+                pi.execModel = "qwen3.5";
+
+                llama = {
+                  context = 32768;
+                  models = [
+                    {
+                      name = "qwen3.5";
+                      path = pkgs.fetchurl {
+                        url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-UD-Q3_K_XL.gguf";
+                        hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
+                      };
+                    }
+                    {
+                      name = "qwen3.6-27b";
+                      path = pkgs.fetchurl {
+                        url = "https://huggingface.co/unsloth/Qwen3.6-27B-GGUF/resolve/main/Qwen3.6-27B-UD-IQ3_XXS.gguf";
+                        hash = "sha256-XVkd0RkY4Zant8nS8C5DkOcmSWDrNUxy1l6BqTMZePU=";
+                      };
+                    }
+                    {
+                      name = "qwen3.6";
+                      path = fetchHF {
+                        repo = "knoopx/Qwen3.6-35B-A3B-NVFP4-GGUF";
+                        filename = "Qwen3.6-35B-A3B-NVFP4.gguf";
+                        revision = "b1bb81d83149a74fc9c7179b539a796d93f18820";
+                        hash = "sha256-wTWOiAjrdpWzZN4w6ExBWAFlaDg5JXglBSTDt/3dGQY=";
+                      };
+                    }
+                  ];
+                };
+              };
+
+              home = {
+                username = "sprrw";
+                homeDirectory = "/home/sprrw";
+
+                packages = [
+                  pkgs.audacity
+                  asepritePkgs.aseprite
+                  pkgs.prismlauncher
+                ];
+
+                file.".background-image".source = ./bg.png;
+
+                file.".config/sway/conf.d/nest01".source =
+                  config.lib.file.mkOutOfStoreSymlink "${repo}/sway.config";
+                file.".config/kanshi/config".source =
+                  config.lib.file.mkOutOfStoreSymlink "${repo}/kanshi.config";
+                file.".ssh/config".source = config.lib.file.mkOutOfStoreSymlink "${repo}/ssh.config";
+                file.".config/noctalia/nest01.toml".source =
+                  config.lib.file.mkOutOfStoreSymlink "${repo}/noctalia.toml";
+              };
+            };
         }
 
         (
