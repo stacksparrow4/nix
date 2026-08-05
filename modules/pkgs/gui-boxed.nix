@@ -1,4 +1,3 @@
-# Sandboxed GUI tooling.
 {
   perSystem =
     {

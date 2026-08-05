@@ -1,6 +1,3 @@
-# The sandbox helper in the profile, plus the two config-reading wrappers around
-# it. `mkSandbox` itself lives in modules/lib/mksandbox.nix — sandboxed tools are
-# packages, not home aspects. Linux-only (bubblewrap).
 { moduleWithSystem, ... }:
 
 {

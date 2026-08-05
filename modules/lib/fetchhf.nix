@@ -1,6 +1,3 @@
-# fetchHF downloads a single file from a HuggingFace repo as a fixed-output
-# derivation. Like mkSandbox it only needs `pkgs`, so it is a perSystem module
-# argument rather than a home aspect.
 {
   perSystem =
     { pkgs, ... }:

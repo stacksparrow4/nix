@@ -1,4 +1,3 @@
-# Sandboxed wrappers for the general-purpose tools.
 {
   perSystem =
     {

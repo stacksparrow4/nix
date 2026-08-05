@@ -9,7 +9,6 @@
         hash = "sha256-ctRx81DL5orVioB+d22qSsEe9m5+CLU7VqmRmLBN4xs=";
       };
 
-      # The sandbox shares the cwd's payloads dir in at /payloads.
       smugglerSrcWithPayloadsLink = pkgs.runCommand "smuggler-src-linked" { } ''
         mkdir $out
         cd $out

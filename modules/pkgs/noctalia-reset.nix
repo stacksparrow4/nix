@@ -1,4 +1,3 @@
-# Wipes noctalia's state and restarts it.
 {
   perSystem =
     { pkgs, lib, ... }:

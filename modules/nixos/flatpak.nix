@@ -50,7 +50,6 @@
       };
     };
 
-  # The actual list of flatpaks to install.
   flake.nixosModules.apps = {
     sprrw.flatpaks = [
       {

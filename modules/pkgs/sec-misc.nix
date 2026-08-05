@@ -1,4 +1,3 @@
-# Sandboxed wrappers for the mobile / reversing / cracking tooling, plus caido.
 {
   perSystem =
     {
@@ -18,14 +17,11 @@
     in
     {
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        # mobile
         apktool = cwdOnly "apktool" "${pkgs.apktool}/bin/apktool";
         jadx = cwdOnly "jadx" "${pkgs.jadx}/bin/jadx";
 
-        # reversing
         webcrack-boxed = cwdOnly "webcrack" "${config.packages.webcrack}/bin/webcrack";
 
-        # cracking
         hydra = mkSandbox {
           name = "hydra";
           shareCwd = true;
@@ -33,7 +29,6 @@
           prog = "${pkgs.thc-hydra}/bin/hydra";
         };
 
-        # Caido runs as a podman container; this only drives it.
         caido = pkgs.writeShellApplication {
           name = "caido";
           text = ''

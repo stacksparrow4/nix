@@ -5,7 +5,7 @@
     imports = with config.flake.homeModules; [
       gui-browsers
       gui-emoji-picker
-      gui-obs
+
       (moduleWithSystem (
         { self', pkgs-unstable, ... }:
         { pkgs, ... }:
@@ -22,6 +22,7 @@
             rofi
             pkgs-unstable.flameshot
             self'.packages.wlfreerdp
+            obs-studio
           ];
         }
       ))

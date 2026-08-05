@@ -1,8 +1,6 @@
 { moduleWithSystem, ... }:
 
 {
-  # GUI security tools. caido used to be its own aspect but was always enabled
-  # together with the rest of these, so it is merged in here.
   flake.homeModules.sec-gui = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:

@@ -1,4 +1,3 @@
-# Sandboxed AI-adjacent tooling.
 {
   perSystem =
     {

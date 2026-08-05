@@ -1,16 +1,15 @@
 { config, ... }:
 
-# Everything that used to sit behind `lib.mkIf (!config.sprrw.headless)`.
-# Headless hosts simply don't import this.
 {
+  # TODO: shouldn't be called graphical, should be called non-headless or something
   flake.nixosModules.graphical = {
     imports = with config.flake.nixosModules; [
       audio
-      display-graphical
+      display
       fonts
       flatpak
       apps
-      virt-graphical
+      host-virt
     ];
 
     programs._1password.enable = true;
@@ -24,8 +23,6 @@
 
     programs.wireshark.enable = true;
 
-    # NOTE: not graphical as such, but this is where it lived before: headless
-    # hosts are built as images and provide their own boot configuration.
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
   };

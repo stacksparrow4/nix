@@ -31,9 +31,6 @@
     {
       packages = {
         bloodhound-ce = mkBloodhoundCE pkgs.python3Packages.impacket;
-
-        # Same derivation, but against the Pennyw0rth impacket fork that
-        # netexec needs.
         bloodhound-ce-netexec = mkBloodhoundCE config.packages.netexec-impacket;
       };
     };

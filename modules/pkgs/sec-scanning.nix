@@ -1,4 +1,3 @@
-# Sandboxed wrappers for the scanning tools.
 {
   perSystem =
     {
@@ -16,8 +15,7 @@
         hash = "sha256-MNx/RcGyvspH6qECuNqQ3mBYtsBMvH/w36IDbUAkyiA=";
       };
 
-      # Most of these only need the cwd plus network access.
-      simple =
+      boxCwdNetwork =
         name: prog:
         mkSandbox {
           inherit name prog;
@@ -48,15 +46,15 @@
           prog = "${pkgs.nuclei}/bin/nuclei -ud /home/sprrw/.local/nuclei-templates -duc";
         };
 
-        sqlmap = simple "sqlmap" "${pkgs.sqlmap}/bin/sqlmap";
-        feroxbuster = simple "feroxbuster" "${pkgs.feroxbuster}/bin/feroxbuster";
-        ffuf = simple "ffuf" "${pkgs.ffuf}/bin/ffuf";
-        shortscan = simple "shortscan" "${pkgs.shortscan}/bin/shortscan";
-        gau = simple "gau" "${pkgs.gau}/bin/gau";
-        naabu = simple "naabu" "${pkgs.naabu}/bin/naabu";
-        clairvoyance = simple "clairvoyance" "${pkgs.clairvoyance}/bin/clairvoyance";
-        sourcemapper = simple "sourcemapper" "${pkgs.sourcemapper}/bin/sourcemapper";
-        subfinder = simple "subfinder" "${pkgs.subfinder}/bin/subfinder";
+        sqlmap = boxCwdNetwork "sqlmap" "${pkgs.sqlmap}/bin/sqlmap";
+        feroxbuster = boxCwdNetwork "feroxbuster" "${pkgs.feroxbuster}/bin/feroxbuster";
+        ffuf = boxCwdNetwork "ffuf" "${pkgs.ffuf}/bin/ffuf";
+        shortscan = boxCwdNetwork "shortscan" "${pkgs.shortscan}/bin/shortscan";
+        gau = boxCwdNetwork "gau" "${pkgs.gau}/bin/gau";
+        naabu = boxCwdNetwork "naabu" "${pkgs.naabu}/bin/naabu";
+        clairvoyance = boxCwdNetwork "clairvoyance" "${pkgs.clairvoyance}/bin/clairvoyance";
+        sourcemapper = boxCwdNetwork "sourcemapper" "${pkgs.sourcemapper}/bin/sourcemapper";
+        subfinder = boxCwdNetwork "subfinder" "${pkgs.subfinder}/bin/subfinder";
 
         vulnx = mkSandbox {
           name = "vulnx";

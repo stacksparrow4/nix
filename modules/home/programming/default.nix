@@ -1,6 +1,3 @@
-# Aggregate of the language toolchains every dev host wants. `programming-sage`
-# is not in here: it is a heavy, rarely-used build, imported explicitly by
-# nest01.
 { config, ... }:
 
 {

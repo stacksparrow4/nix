@@ -2,7 +2,6 @@
   perSystem =
     { pkgs, lib, ... }:
     {
-      # glibc.dev in BINDGEN_EXTRA_CLANG_ARGS makes this Linux-only.
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         rusthound-ce = pkgs.rustPlatform.buildRustPackage (finalAttrs: {
           name = "rusthound-ce";

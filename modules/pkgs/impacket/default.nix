@@ -1,5 +1,3 @@
-# The impacket example scripts, each individually sandboxed, joined into one
-# package so the profile only carries a single store path.
 {
   perSystem =
     {

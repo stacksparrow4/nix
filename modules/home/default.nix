@@ -1,9 +1,3 @@
-# The always-imported home aspect: the two cross-cutting *data* options
-# (`nixosRepoPath`, `term.shellExtra`) plus the handful of settings every host
-# needs. Both options are declared here rather than next to their main consumer
-# because they are read and written across unrelated aspects (`term-foot`,
-# `linux-sway`, `ai-pi`, `programming-git`, `nvim`, …) and hosts import those
-# aspects individually.
 {
   flake.homeModules.base =
     { config, lib, ... }:

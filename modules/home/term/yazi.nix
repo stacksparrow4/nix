@@ -1,6 +1,4 @@
 {
-  # Portable yazi config. The Linux-only openers and mime associations live in
-  # `term-yazi-linux`.
   flake.homeModules.term-yazi = {
     programs.yazi = {
       enable = true;

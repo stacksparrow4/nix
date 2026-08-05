@@ -1,6 +1,3 @@
-# mkSandbox builds a wrapper that runs `prog` inside the `sandbox` bubblewrap
-# helper. It only needs `pkgs`, so it lives in perSystem and the sandboxed tools
-# are exposed as ordinary packages.
 {
   perSystem =
     { pkgs, config, ... }:

@@ -1,4 +1,3 @@
-# Terminal tooling wrappers (Linux).
 {
   perSystem =
     {

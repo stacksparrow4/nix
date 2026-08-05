@@ -1,4 +1,3 @@
-# Sandboxed wrappers for the SNMP tooling.
 {
   perSystem =
     {

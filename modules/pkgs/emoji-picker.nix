@@ -1,4 +1,3 @@
-# Rofi-based emoji picker.
 {
   perSystem =
     { pkgs, lib, ... }:

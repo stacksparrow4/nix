@@ -1,6 +1,3 @@
-# Terminal environment aggregate. The `sprrw.term.shellExtra` option it feeds is
-# declared in `base`, since aspects outside this tree write to it and the darwin
-# host imports `term-zshrc` without this aggregate.
 { config, ... }:
 
 {

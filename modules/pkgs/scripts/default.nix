@@ -4,7 +4,6 @@
   perSystem =
     { pkgs, ... }:
     let
-      # Writes a shell.nix into the cwd, pinned to this flake's nixpkgs.
       shellNixCreator =
         { scriptName, mkShellCmd }:
         pkgs.writeShellScriptBin scriptName ''
@@ -55,6 +54,7 @@
           '';
         };
 
+        # TODO: remove
         windows-yaml = pkgs.writeShellScriptBin "windows-yaml.sh" (builtins.readFile ./windows-yaml.sh);
 
         sshp = pkgs.writeShellApplication {

@@ -1,4 +1,3 @@
-# Sandboxed sage.
 {
   perSystem =
     {

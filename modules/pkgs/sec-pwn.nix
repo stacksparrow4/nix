@@ -1,4 +1,3 @@
-# Sandboxed wrappers plus the pwntools env for binary exploitation.
 {
   perSystem =
     {

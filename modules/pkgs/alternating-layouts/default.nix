@@ -1,4 +1,3 @@
-# i3ipc script that alternates sway split direction.
 {
   perSystem =
     { pkgs, lib, ... }:

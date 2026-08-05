@@ -1,8 +1,4 @@
 {
-  # Additive Linux-only half of the yazi config, imported alongside `term-yazi`
-  # (via the `term` aggregate): xdg.mimeApps is Linux-only in home-manager, and
-  # the openers/keymaps below reference Linux-only tools (gimp, vlc, xdg-open,
-  # dragon-drop).
   flake.homeModules.term-yazi-linux = {
     xdg.mimeApps = {
       enable = true;

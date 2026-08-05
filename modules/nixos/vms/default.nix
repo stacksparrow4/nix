@@ -1,8 +1,6 @@
 { inputs, ... }:
 
 {
-  # Windows VMs via nixvirt. Importing this module applies it; the old
-  # `sprrw.vms.enable` flag is gone (importing is enabling).
   flake.nixosModules.vms =
     {
       pkgs,

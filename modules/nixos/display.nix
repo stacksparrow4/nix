@@ -1,9 +1,9 @@
 { moduleWithSystem, ... }:
 
 {
-  # Applies everywhere, including headless hosts.
-  flake.nixosModules.display =
-    { lib, ... }:
+  flake.nixosModules.display = moduleWithSystem (
+    { self', ... }:
+    { pkgs, lib, ... }:
     {
       # https://github.com/kachick/dotfiles/blob/16832e2dbf0c5debe3c14bd0e1fd4e46c667a2b0/nixos/hardware.nix#L19
       services.udev = {
@@ -17,12 +17,7 @@
       };
 
       security.polkit.enable = true;
-    };
 
-  flake.nixosModules.display-graphical = moduleWithSystem (
-    { self', ... }:
-    { pkgs, ... }:
-    {
       environment.systemPackages = with pkgs; [
         wl-clipboard
         acpilight

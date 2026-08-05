@@ -1,4 +1,3 @@
-# Sandboxed wrappers and shims for the odds-and-ends tools.
 {
   perSystem =
     {

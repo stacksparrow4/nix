@@ -15,8 +15,6 @@ in
       inherit pkgs;
       modules = [
         {
-          # No Linux aspects and no sandboxed tools: the sandbox helper is
-          # bubblewrap-based.
           imports = with homeModules; [
             base
             general

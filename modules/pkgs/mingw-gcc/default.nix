@@ -1,5 +1,3 @@
-# The mingw cross gccs, wrapped so that the cross toolchain's environment is
-# sourced when the binaries are invoked outside of a nix shell.
 {
   perSystem =
     { pkgs, ... }:

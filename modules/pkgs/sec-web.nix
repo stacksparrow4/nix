@@ -1,4 +1,3 @@
-# Sandboxed wrappers for the web/OOB tooling.
 {
   perSystem =
     {

@@ -27,9 +27,8 @@ in
 
         {
           imports = with nixosModules; [
-            nest01-hardware
+            ./_hardware-configuration.nix
             base
-            display
             graphical
             gaming
             locale
@@ -43,7 +42,6 @@ in
           home-manager.users.sprrw =
             { pkgs, config, ... }:
             let
-              # Old aseprite, pinned to the last nixpkgs that packaged it.
               asepritePkgs =
                 import
                   (fetchTarball {

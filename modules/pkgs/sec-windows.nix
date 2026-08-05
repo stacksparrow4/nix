@@ -1,4 +1,3 @@
-# Sandboxed wrappers for the Windows/AD tooling.
 {
   perSystem =
     {

@@ -1,4 +1,3 @@
-# metasm_shell, derived from metasploit's pattern_create script.
 {
   perSystem =
     { pkgs, ... }:

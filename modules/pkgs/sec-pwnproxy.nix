@@ -1,4 +1,3 @@
-# Sandboxed wrappers for pwnproxy and friends (all from flake inputs).
 { inputs, ... }:
 
 {

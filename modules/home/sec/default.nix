@@ -1,6 +1,3 @@
-# Aggregate of the headless-safe security aspects. `sec-gui` (binaryninja,
-# ghidra, wireshark, caido) is deliberately *not* in here: the vm host wants
-# everything below without dragging in a GUI stack.
 { config, ... }:
 
 {

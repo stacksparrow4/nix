@@ -10,8 +10,6 @@ let
   homeModules = config.flake.homeModules;
 in
 {
-  # Throwaway headless VM image, built with `build-vm` (see the `sandbox`
-  # aspect). Headless simply means it does not import `graphical`.
   flake.nixosConfigurations.vm = withSystem "x86_64-linux" (
     { pkgs, ... }:
     inputs.nixpkgs.lib.nixosSystem {
@@ -22,7 +20,6 @@ in
         {
           imports = with nixosModules; [
             base
-            display
             locale
             nix-config
             users
@@ -54,7 +51,6 @@ in
               username = "sprrw";
               homeDirectory = "/home/sprrw";
 
-              # The VM has no checkout of its own, so ship one.
               file."nixos".source = ../../.;
             };
           };
