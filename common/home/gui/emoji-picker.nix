@@ -41,6 +41,8 @@
             😳 Flushed
             🫪 Flooshed
             😅 Sweat smile
+            😴 Sleeping
+            😢 Crying
             EOF
             )
 
