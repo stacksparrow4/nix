@@ -21,8 +21,10 @@ in
             base
             general
             scripts
+            sprrw-cli
             nvim
 
+            term-bash
             term-zshrc
             term-yazi
             term-tmux

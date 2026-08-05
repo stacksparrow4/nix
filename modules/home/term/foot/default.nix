@@ -1,6 +1,11 @@
 {
   flake.homeModules.term-foot =
-    { pkgs, config, lib, ... }:
+    {
+      pkgs,
+      config,
+      lib,
+      ...
+    }:
     {
       options.sprrw.term.foot.installTerminfo = lib.mkOption {
         type = lib.types.bool;

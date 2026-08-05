@@ -3,7 +3,12 @@
 {
   flake.homeModules.ai-llama = moduleWithSystem (
     { self', ... }:
-    { pkgs, config, lib, ... }:
+    {
+      pkgs,
+      config,
+      lib,
+      ...
+    }:
     let
       cfg = config.sprrw.ai.llama;
     in

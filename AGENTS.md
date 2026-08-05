@@ -12,7 +12,8 @@ lists to maintain.
   - **`modules/pkgs/`**: one module per package, each setting `perSystem.packages.<name>`
   - **`modules/hosts/`**: one directory per host; builds `flake.nixosConfigurations.<name>`
     (or `flake.homeConfigurations.<name>`) from a list of aspects
-  - **`modules/lib/`**: helpers exposed as `perSystem` module args (e.g. `mkSandbox`)
+  - **`modules/lib/`**: helpers exposed as `perSystem` module args (e.g. `mkSandbox`,
+    `fetchHF`)
   - **`modules/systems.nix`**: supported systems and the `pkgs` / `pkgs-unstable` instances
   - **`modules/home-manager.nix`**: loads home-manager's flake-parts module, which
     declares `flake.homeModules` and `flake.homeConfigurations`
@@ -32,10 +33,18 @@ lists to maintain.
 - **No `specialArgs` pass-thru.** Aspect files that need per-system values
   (`self'`, `pkgs-unstable`) wrap their module in `moduleWithSystem`; everything
   else is captured lexically from the flake-parts module arguments.
-
-## Transitional
-
-`common/` and `hosts/` still hold the pre-dendritic home-manager tree, reached
-via `home-manager.users.sprrw` in the host modules. Converting it to
-`flake.homeModules` is the remaining work; once done, both directories and the
-`home-manager.extraSpecialArgs` blocks in `modules/hosts/*` go away.
+- **Aggregates are just `imports` lists.** `sec`, `term`, `programming`, `gui`,
+  `linux` and `ai` are aspects whose body reads `config.flake.homeModules`.
+  Anything a host wants to opt into separately (`sec-gui`, `programming-sage`,
+  `ai-llama`, …) stays out of its aggregate.
+- **Cross-cutting data options live in `base`.** `sprrw.nixosRepoPath` and
+  `sprrw.term.shellExtra` are read and written by aspects all over the tree, and
+  every host imports `base`, so that is where they are declared.
+- **`_`-prefixed paths are invisible to `import-tree`.** Use that for files that
+  are *not* flake-parts modules: parameterised function files
+  (`modules/home/ai/pi/_pi-exec.nix`) and the nested standalone flake
+  (`modules/hosts/_macbook-vm/`).
+- **`mkOutOfStoreSymlink` targets are repo-relative strings.** They are built
+  from `${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/…`, so moving
+  an asset breaks the symlink at *activation* time, not at eval time. Grep for
+  `nixosRepoPath}/` after moving anything.
