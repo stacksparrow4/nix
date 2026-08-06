@@ -159,7 +159,7 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
 
 const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "save.ts", "goal.ts"];
 const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
-const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
+const DEFAULT_TOOLS: &[&str] = &["write", "edit", "bash", "complete_goal"];
 const BRIDGE_DIR: &str = "/tmp/pi-remote";
 
 /// Start a sandbox serving tool calls from the inside, and wait for its socket to appear.
