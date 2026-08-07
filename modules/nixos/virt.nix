@@ -24,7 +24,7 @@
       };
     };
 
-  flake.nixosModules.host-virt = {
+  flake.nixosModules.workstation-virt = {
     hardware.nvidia-container-toolkit.enable = true;
 
     programs.virt-manager.enable = true;

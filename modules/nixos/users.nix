@@ -1,22 +1,20 @@
 {
-  flake.nixosModules.users =
-    { lib, ... }:
-    {
-      security.sudo.wheelNeedsPassword = lib.mkDefault false;
+  flake.nixosModules.users = {
+    security.sudo.wheelNeedsPassword = false;
 
-      nix.settings.trusted-users = [
-        "root"
-        "@wheel"
+    nix.settings.trusted-users = [
+      "root"
+      "@wheel"
+    ];
+
+    users.users.sprrw = {
+      isNormalUser = true;
+      description = "sprrw";
+      extraGroups = [
+        "networkmanager"
+        "wheel"
+        "podman"
       ];
-
-      users.users.sprrw = {
-        isNormalUser = true;
-        description = "sprrw";
-        extraGroups = [
-          "networkmanager"
-          "wheel"
-          "podman"
-        ];
-      };
     };
+  };
 }

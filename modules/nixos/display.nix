@@ -3,19 +3,8 @@
 {
   flake.nixosModules.display = moduleWithSystem (
     { self', ... }:
-    { pkgs, lib, ... }:
+    { pkgs, ... }:
     {
-      # https://github.com/kachick/dotfiles/blob/16832e2dbf0c5debe3c14bd0e1fd4e46c667a2b0/nixos/hardware.nix#L19
-      services.udev = {
-        enable = true;
-        extraHwdb = lib.mkBefore ''
-          evdev:input:b*v*p*
-            KEYBOARD_KEY_3a=esc
-            KEYBOARD_KEY_58=esc
-            KEYBOARD_KEY_70039=esc
-        '';
-      };
-
       security.polkit.enable = true;
 
       environment.systemPackages = with pkgs; [
@@ -49,6 +38,7 @@
         ];
       };
 
+      # TODO: is dconf needed?
       programs = {
         dconf.enable = true;
       };

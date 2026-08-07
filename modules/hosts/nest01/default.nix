@@ -29,7 +29,7 @@ in
           imports = with nixosModules; [
             ./_hardware-configuration.nix
             base
-            graphical
+            workstation
             gaming
             locale
             nix-config

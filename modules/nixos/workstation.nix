@@ -1,15 +1,14 @@
 { config, ... }:
 
 {
-  # TODO: shouldn't be called graphical, should be called non-headless or something
-  flake.nixosModules.graphical = {
+  flake.nixosModules.workstation = {
     imports = with config.flake.nixosModules; [
       audio
       display
       fonts
       flatpak
       apps
-      host-virt
+      workstation-virt
     ];
 
     programs._1password.enable = true;
@@ -20,8 +19,6 @@
       greetd.enableGnomeKeyring = true;
       swaylock.enableGnomeKeyring = true;
     };
-
-    programs.wireshark.enable = true;
 
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
