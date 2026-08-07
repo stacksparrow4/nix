@@ -2,8 +2,7 @@
   perSystem =
     {
       pkgs,
-      lib,
-      mkSandbox,
+      mkSandboxPkg,
       ...
     }:
     {
@@ -31,11 +30,11 @@
           ];
         };
 
-        vulnx = lib.mkIf pkgs.stdenv.hostPlatform.isLinux (mkSandbox {
+        vulnx = mkSandboxPkg {
           name = "vulnx";
           network = true;
           prog = "${vulnx-unboxed}/bin/vulnx";
-        });
+        };
       };
     };
 }

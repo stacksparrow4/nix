@@ -1,6 +1,10 @@
 {
   perSystem =
-    { pkgs, ... }:
+    {
+      pkgs,
+      mkSandboxPkg,
+      ...
+    }:
     let
       smugglerSrc = pkgs.fetchFromGitHub {
         owner = "defparam";
@@ -19,11 +23,27 @@
       '';
     in
     {
-      packages.smuggler-unwrapped = pkgs.writeShellApplication {
-        name = "smuggler";
-        text = ''
-          ${pkgs.python313}/bin/python3 ${smugglerSrcWithPayloadsLink}/smuggler.py "$@"
-        '';
+      packages = rec {
+        smuggler-unboxed = pkgs.writeShellApplication {
+          name = "smuggler";
+          text = ''
+            ${pkgs.python313}/bin/python3 ${smugglerSrcWithPayloadsLink}/smuggler.py "$@"
+          '';
+        };
+
+        smuggler = mkSandboxPkg {
+          name = "smuggler";
+          sharedPaths = [
+            {
+              hostPath = "$(pwd)/payloads";
+              boxPath = "/payloads";
+              ro = false;
+              type = "dir";
+            }
+          ];
+          network = true;
+          prog = "${smuggler-unboxed}/bin/smuggler";
+        };
       };
     };
 }

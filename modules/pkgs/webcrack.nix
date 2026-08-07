@@ -3,7 +3,7 @@
     {
       pkgs,
       lib,
-      mkSandbox,
+      mkSandboxPkg,
       ...
     }:
     let
@@ -57,11 +57,11 @@
           '';
         });
 
-        webcrack = lib.mkIf pkgs.stdenv.hostPlatform.isLinux (mkSandbox {
+        webcrack = mkSandboxPkg {
           name = "webcrack";
           shareCwd = true;
           prog = "${webcrack-unboxed}/bin/webcrack";
-        });
+        };
       };
     };
 }
