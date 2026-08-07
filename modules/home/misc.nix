@@ -6,7 +6,6 @@
     { pkgs, ... }:
     {
       home.packages = [
-        self'.packages.vimgolf
         self'.packages.shtris
         self'.packages.zbarimg
         self'.packages.twitch-dl

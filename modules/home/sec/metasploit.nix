@@ -7,7 +7,7 @@
     {
       home.packages = [
         pkgs.metasploit
-        self'.packages.msfscripts
+        self'.packages.metasm-shell
       ];
     }
   );
