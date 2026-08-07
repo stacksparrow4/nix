@@ -1,6 +1,11 @@
 {
   perSystem =
-    { pkgs, config, ... }:
+    {
+      pkgs,
+      mkSandboxPkg,
+      config,
+      ...
+    }:
     let
       mkBloodhoundCE =
         impacket:
@@ -29,9 +34,16 @@
         };
     in
     {
-      packages = {
-        bloodhound-ce = mkBloodhoundCE pkgs.python3Packages.impacket;
-        bloodhound-ce-netexec = mkBloodhoundCE config.packages.netexec-impacket;
+      packages = rec {
+        bloodhound-ce-unboxed = mkBloodhoundCE pkgs.python3Packages.impacket;
+        bloodhound-ce = mkSandboxPkg {
+          name = "bloodhound-ce";
+          shareCwd = true;
+          network = true;
+          prog = "${bloodhound-ce-unboxed}/bin/bloodhound-ce-python";
+        };
+
+        bloodhound-ce-netexec-unboxed = mkBloodhoundCE config.packages.netexec-impacket;
       };
     };
 }

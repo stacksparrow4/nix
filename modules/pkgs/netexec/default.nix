@@ -1,6 +1,12 @@
 {
   perSystem =
-    { pkgs, config, lib, ... }:
+    {
+      pkgs,
+      mkSandbox,
+      config,
+      lib,
+      ...
+    }:
     let
       python = pkgs.python313.override {
         self = python;
@@ -11,13 +17,13 @@
           certipy-ad = super.certipy-ad.overridePythonAttrs (old: {
             pythonRelaxDeps = (old.pythonRelaxDeps or [ ]) ++ [ "impacket" ];
           });
-          bloodhound-ce = config.packages.bloodhound-ce-netexec;
+          bloodhound-ce = config.packages.bloodhound-ce-netexec-unboxed;
         };
       };
     in
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        netexec = python.pkgs.buildPythonApplication {
+      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux rec {
+        netexec-unboxed = python.pkgs.buildPythonApplication {
           pname = "netexec";
           version = "1.5.1-dev";
           pyproject = true;
@@ -97,6 +103,21 @@
           disabledTestPaths = [ "tests/test_smb_signing.py" ];
 
           nativeCheckInputs = with python.pkgs; [ pytestCheckHook ] ++ [ pkgs.writableTmpDirAsHomeHook ];
+        };
+
+        netexec = mkSandbox {
+          name = "nxc";
+          sharedPaths = [
+            {
+              hostPath = "$HOME/.nxc";
+              boxPath = "/home/sprrw/.nxc";
+              ro = false;
+              type = "dir";
+            }
+          ];
+          shareCwd = true;
+          network = true;
+          prog = "${netexec-unboxed}/bin/nxc";
         };
       };
     };

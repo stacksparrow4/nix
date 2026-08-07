@@ -15,13 +15,13 @@
           certipy
           bloodyAD
           pwsh
-          bloodhound-ce-python
+          bloodhound-ce
           mingw32-gcc
           mingwW64-gcc
           impacket-sandboxed
           kerbrute
           krbrelayx
-          nxc
+          netexec
           pygpoabuse
           rusthound-ce
         ]);
