@@ -1,54 +1,48 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.general = moduleWithSystem (
-    { self', ... }:
+  flake.homeModules.general =
     { pkgs, ... }:
     {
-      home.packages =
-        (with pkgs; [
-          bat
-          ydiff
-          file
-          xxd
-          killall
-          dig
-          socat
-          unzip
-          zip
-          p7zip
-          uv
-          (python3.withPackages (pypkgs: with pypkgs; [ requests ]))
-          openssl
-          jq
-          jless
-          yq-go
-          wget
-          tealdeer
-          fzf
-          fd
-          ripgrep
-          sshpass
-          nix-search-cli
-          sqlite
-          whois
-          curl # technically already exists in system package, but putting it here allows it to show inside docker which only uses home manager
-          gnupg
-          awscli
-          (writeShellApplication {
-            name = "ssh";
-            text = ''
-              export TERM=xterm-256color
+      home.packages = with pkgs; [
+        bat
+        ydiff
+        file
+        xxd
+        killall
+        dig
+        socat
+        unzip
+        zip
+        p7zip
+        uv
+        (python3.withPackages (pypkgs: with pypkgs; [ requests ]))
+        openssl
+        jq
+        jless
+        yq-go
+        wget
+        tealdeer
+        fzf
+        fd
+        ripgrep
+        sshpass
+        nix-search-cli
+        sqlite
+        whois
+        curl # technically already exists in system package, but putting it here allows it to show inside docker which only uses home manager
+        gnupg
+        awscli
+        (writeShellApplication {
+          name = "ssh";
+          text = ''
+            export TERM=xterm-256color
 
-              ${openssh}/bin/ssh -o WarnWeakCrypto=no "$@"
-            '';
-          })
-        ])
-        ++ (with self'.packages; [
-          sshp
-        ]);
-    }
-  );
+            ${openssh}/bin/ssh -o WarnWeakCrypto=no "$@"
+          '';
+        })
+      ];
+    };
 
   flake.homeModules.general-linux = moduleWithSystem (
     { self', ... }:

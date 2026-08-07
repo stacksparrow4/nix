@@ -1,5 +1,4 @@
 % remote desktop, rdp
-@ windows-variables
 
 # Connect with RDP
 xfreerdp /u:'<user_with_password>' /p:'<password_for_user>' /v:'<ip_or_fqdn>' /dynamic-resolution

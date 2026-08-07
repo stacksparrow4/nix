@@ -1,5 +1,4 @@
 % privesc, windows, powershell
-@ windows-variables
 
 # create PSCredential object
 $password = ConvertTo-SecureString "<password_for_user>" -AsPlainText -Force

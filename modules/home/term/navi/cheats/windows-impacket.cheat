@@ -1,5 +1,4 @@
 % impacket
-@ windows-variables
 
 # Change the owner of an identity
 owneredit.py -action write -new-owner '<user>' -target '<target>' '<domain>'/'<user_with_password>':'<password_for_user>'

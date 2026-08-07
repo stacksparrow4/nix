@@ -35,7 +35,6 @@ $ external_ip: ip -f inet addr show <interface> | awk '/inet / {print $2}' | cut
 $ smb_path: echo '\\'"<external_ip>"'\'"<sharename>"
 
 % secretsdump
-@ windows-variables
 # secretsdump
 secretsdump.py '<user_with_password>:<password_for_user>@<fqdn>'
 
@@ -46,7 +45,6 @@ $ secpath: find . -type f
 $ syspath: find . -type f
 
 % pygpoabuse
-@ windows-variables
 # pygpoabuse
 pygpoabuse.py '<domain>/<user_with_password>:<password_for_user>' -gpo-id '<gpo_id>'
 

@@ -18,7 +18,6 @@ in
           imports = with homeModules; [
             base
             general
-            scripts
             sprrw-cli
             nvim
 

@@ -1,5 +1,4 @@
 % bloodhound
-@ windows-variables
 
 # Start bloodhound server
 (docker volume rm bloodhound_neo4j-data bloodhound_postgres-data; mkdir -p bloodhound && cd bloodhound && wget 'https://raw.githubusercontent.com/SpecterOps/BloodHound/refs/heads/main/examples/docker-compose/docker-compose.yml' && echo 'BLOODHOUND_PORT=8081 BLOODHOUND_TAG=7.4.1 docker compose up -d' > start.sh && chmod +x start.sh && ./start.sh && sleep 3 && docker compose logs | grep -oE '[^"]+Initial Password Set To[^"]+')

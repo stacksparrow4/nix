@@ -10,7 +10,6 @@
         self'.packages.apktool
         self'.packages.jadx
         pkgs.android-tools
-        self'.packages.ipsw
       ];
     }
   );

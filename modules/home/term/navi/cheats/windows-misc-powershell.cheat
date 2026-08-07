@@ -1,5 +1,4 @@
 % misc, powershell
-@ windows-variables
 
 # get file from remote host
 iwr -uri <file_URL> -Outfile <output_filename>

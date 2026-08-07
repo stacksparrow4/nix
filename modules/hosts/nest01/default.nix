@@ -64,7 +64,6 @@ in
                 payloads
                 sprrw-cli
                 sandbox
-                scripts
 
                 term
                 term-yazi-linux

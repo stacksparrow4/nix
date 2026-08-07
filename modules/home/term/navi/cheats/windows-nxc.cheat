@@ -1,5 +1,4 @@
 % nxc, netexec
-@ windows-variables
 
 # netexec
 <nxc>
@@ -25,15 +24,6 @@
 # RID brute
 nxc smb '<ip_or_fqdn>' -u '<user_with_password>' -p '<password_for_user>' --rid-brute 10000 --log rid-brute.log
 
-# RID brute to windows yaml users
-windows-yaml.sh addusers <(cat rid-brute.log | grep SidTypeUser | awk '{print $13}' | awk -F\\ '{print $2}')
-
-# Password spray
-windows-yaml.sh writelist && nxc smb .ips --continue-on-success -u .users -p .passwords
-
-# pass = user spray
-windows-yaml.sh writelist && cat .users | sed -E 's/[^\\]*\\//' > .passwords && nxc smb .ips --continue-on-success -u .users -p .passwords
-
 # LDAP query
 <nxc_ldap> --query '<query>' ""
 
@@ -58,7 +48,6 @@ $ pwshrsshenc: echo '<pwshrssh>' | iconv -t utf-16le | base64 -w 0
 $ pwshexfilflagenc: echo 'gci C:\Users -Include *.txt -Recurse | cat' | iconv -t utf-16le | base64 -w 0
 
 $ proto: nxc --help | grep 'own stuff using' | awk '{print $1}'
-$ auth_method: if [[ -f windows.yaml ]]; then USER='<user_with_auth_method>' yq '.users[] | select(.username == strenv(USER)) | .t = "" | with(select(.password != null); .t = "-p '"'"'" + .password + "'"'"'") | with(select(.password == null and .nt_hash != null); .t = "-H " + .nt_hash) | .t' windows.yaml; fi
 $ nxc_target_and_auth: echo "'<ip_or_fqdn_or_list>' -u '<user_with_auth_method>' <auth_method>"
 $ nxc: echo "nxc <proto> <nxc_target_and_auth>"
 $ nxc_smb: echo "nxc smb <nxc_target_and_auth>"
