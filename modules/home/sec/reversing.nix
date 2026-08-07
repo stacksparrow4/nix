@@ -7,7 +7,7 @@
     {
       home.packages = [
         (pkgs.rizin.withPlugins (plugins: with plugins; [ rz-ghidra ]))
-        self'.packages.webcrack-boxed
+        self'.packages.webcrack
       ];
     }
   );

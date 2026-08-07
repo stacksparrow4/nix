@@ -3,18 +3,10 @@
     {
       pkgs,
       lib,
-      config,
-      mkSandbox,
       ...
     }:
     {
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        webcrack-boxed = mkSandbox {
-          name = "webcrack";
-          shareCwd = true;
-          prog = "${config.packages.webcrack}/bin/webcrack";
-        };
-
         caido = pkgs.writeShellApplication {
           name = "caido";
           text = ''

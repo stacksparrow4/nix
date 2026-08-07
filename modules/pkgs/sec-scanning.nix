@@ -9,12 +9,6 @@
     }:
     {
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        vulnx = mkSandbox {
-          name = "vulnx";
-          network = true;
-          prog = "${config.packages.vulnx-unwrapped}/bin/vulnx";
-        };
-
         smuggler = mkSandbox {
           name = "smuggler";
           sharedPaths = [
