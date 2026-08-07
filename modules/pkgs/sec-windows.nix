@@ -9,32 +9,6 @@
     }:
     {
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        evil-winrm = mkSandbox {
-          name = "evil-winrm";
-          prog = "${pkgs.evil-winrm}/bin/evil-winrm";
-          network = true;
-        };
-
-        certipy = mkSandbox {
-          name = "certipy";
-          prog = "${pkgs.certipy}/bin/certipy";
-          shareCwd = true;
-          network = true;
-        };
-
-        bloodyAD = mkSandbox {
-          name = "bloodyAD";
-          prog = "${pkgs.python312Packages.bloodyad}/bloodyAD";
-          shareCwd = true;
-          network = true;
-        };
-
-        pwsh = mkSandbox {
-          name = "pwsh";
-          prog = "${pkgs.powershell}/bin/pwsh";
-          network = true;
-        };
-
         nxc = mkSandbox {
           name = "nxc";
           sharedPaths = [

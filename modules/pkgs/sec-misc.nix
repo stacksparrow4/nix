@@ -7,26 +7,12 @@
       mkSandbox,
       ...
     }:
-    let
-      cwdOnly =
-        name: prog:
-        mkSandbox {
-          inherit name prog;
-          shareCwd = true;
-        };
-    in
     {
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        apktool = cwdOnly "apktool" "${pkgs.apktool}/bin/apktool";
-        jadx = cwdOnly "jadx" "${pkgs.jadx}/bin/jadx";
-
-        webcrack-boxed = cwdOnly "webcrack" "${config.packages.webcrack}/bin/webcrack";
-
-        hydra = mkSandbox {
-          name = "hydra";
+        webcrack-boxed = mkSandbox {
+          name = "webcrack";
           shareCwd = true;
-          network = true;
-          prog = "${pkgs.thc-hydra}/bin/hydra";
+          prog = "${config.packages.webcrack}/bin/webcrack";
         };
 
         caido = pkgs.writeShellApplication {
