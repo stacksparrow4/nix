@@ -2,7 +2,12 @@
 
 {
   perSystem =
-    { pkgs, config, ... }:
+    {
+      pkgs,
+      config,
+      mkSandboxPkg,
+      ...
+    }:
     let
       craneLib = inputs.crane.mkLib pkgs;
 
@@ -19,18 +24,34 @@
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
     in
     {
-      packages.oob = craneLib.buildPackage (
-        commonArgs
-        // {
-          inherit cargoArtifacts;
+      packages = rec {
+        oob-unboxed = craneLib.buildPackage (
+          commonArgs
+          // {
+            inherit cargoArtifacts;
 
-          nativeBuildInputs = [ pkgs.makeWrapper ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
 
-          postInstall = ''
-            wrapProgram $out/bin/oob \
-              --prefix PATH : ${pkgs.lib.makeBinPath [ interactsh-client ]}
-          '';
-        }
-      );
+            postInstall = ''
+              wrapProgram $out/bin/oob \
+                --prefix PATH : ${pkgs.lib.makeBinPath [ interactsh-client ]}
+            '';
+          }
+        );
+
+        oob = mkSandboxPkg {
+          name = "oob";
+          prog = "${oob-unboxed}/bin/oob";
+          sharedPaths = [
+            {
+              hostPath = "$HOME/.config/interactsh-client/config.yaml";
+              boxPath = "/home/sprrw/.config/interactsh-client/config.yaml";
+              ro = true;
+              type = "file";
+            }
+          ];
+          network = true;
+        };
+      };
     };
 }

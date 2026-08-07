@@ -6,7 +6,6 @@
         mkSandbox =
           {
             name,
-            type ? "bwrap", # bwrap, docker/podman, vm
             outsideBeforeScript ? "",
             prog, # path to the program. Will be called with forwarded arguments
             shareCwd ? false,
@@ -25,7 +24,6 @@
               else
                 builtins.concatStringsSep "\n  " (map (x: "${x} \\") arr);
           in
-          assert type == "bwrap";
           pkgs.writeShellApplication {
             inherit name;
             text = ''

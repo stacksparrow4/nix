@@ -7,8 +7,8 @@
     {
       home.packages = with self'.packages; [
         mitmproxy
-        interactsh-boxed
-        oob-boxed
+        interactsh
+        oob
       ];
     }
   );

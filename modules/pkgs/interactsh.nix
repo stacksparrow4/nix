@@ -1,27 +1,43 @@
 {
   perSystem =
-    { pkgs, ... }:
+    { pkgs, mkSandboxPkg, ... }:
     {
-      packages.interactsh = pkgs.buildGoModule (finalAttrs: {
-        pname = "interactsh";
-        version = "1.3.1-dev";
+      packages = rec {
+        interactsh-unboxed = pkgs.buildGoModule (finalAttrs: {
+          pname = "interactsh";
+          version = "1.3.1-dev";
 
-        src = pkgs.fetchFromGitHub {
-          owner = "projectdiscovery";
-          repo = "interactsh";
-          rev = "9c9b482e6ddfa6e02316972a9da51cc4773e7f60";
-          hash = "sha256-KaJJlIldqX31cyVf67JEZrzsf1oAuxpfh6WHQka4uiE=";
+          src = pkgs.fetchFromGitHub {
+            owner = "projectdiscovery";
+            repo = "interactsh";
+            rev = "9c9b482e6ddfa6e02316972a9da51cc4773e7f60";
+            hash = "sha256-KaJJlIldqX31cyVf67JEZrzsf1oAuxpfh6WHQka4uiE=";
+          };
+
+          vendorHash = "sha256-prpcUG525Z0wui7SO6pOOxya1FmgnXhzRGkGwD44MEo=";
+
+          modRoot = ".";
+          subPackages = [
+            "cmd/interactsh-client"
+            "cmd/interactsh-server"
+          ];
+
+          doCheck = false;
+        });
+
+        interactsh = mkSandboxPkg {
+          name = "interactsh";
+          prog = "${interactsh-unboxed}/bin/interactsh-client";
+          sharedPaths = [
+            {
+              hostPath = "$HOME/.config/interactsh-client/config.yaml";
+              boxPath = "/home/sprrw/.config/interactsh-client/config.yaml";
+              ro = true;
+              type = "file";
+            }
+          ];
+          network = true;
         };
-
-        vendorHash = "sha256-prpcUG525Z0wui7SO6pOOxya1FmgnXhzRGkGwD44MEo=";
-
-        modRoot = ".";
-        subPackages = [
-          "cmd/interactsh-client"
-          "cmd/interactsh-server"
-        ];
-
-        doCheck = false;
-      });
+      };
     };
 }

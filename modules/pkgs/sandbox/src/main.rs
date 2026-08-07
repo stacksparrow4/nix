@@ -198,6 +198,11 @@ fn main() {
             MountType::Dir => std::fs::create_dir_all(&v.host_path)
                 .unwrap_or_else(|err| panic!("failed to create {}: {err}", v.host_path)),
             MountType::File => {
+                if let Some(parent) = Path::new(&v.host_path).parent() {
+                    std::fs::create_dir_all(parent).unwrap_or_else(|err| {
+                        panic!("failed to create directory {:?}: {err}", parent)
+                    });
+                }
                 let _ = std::fs::OpenOptions::new()
                     .append(true)
                     .create(true)
