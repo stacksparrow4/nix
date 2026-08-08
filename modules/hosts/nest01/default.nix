@@ -137,6 +137,10 @@ in
                 file.".config/noctalia/nest01.toml".source =
                   config.lib.file.mkOutOfStoreSymlink "${repo}/noctalia.toml";
               };
+
+              nix.extraOptions = ''
+                builders = ssh-ng://root@ssh.stacksparrow4.xyz aarch64-linux /home/sprrw/.ssh/stacksparrow4
+              '';
             };
         }
 
