@@ -2,7 +2,7 @@
 
 {
   perSystem =
-    { pkgs, config, lib, ... }:
+    { pkgs, pkgs-unstable, lib, ... }:
     let
       craneLib = inputs.crane.mkLib pkgs;
 
@@ -25,7 +25,7 @@
         pi-boxed = pkgs.writeShellApplication {
           name = "pi";
           text = ''
-            ${pi-boxed}/bin/pi ${config.packages.pi}/bin/pi "$@"
+            ${pi-boxed}/bin/pi ${pkgs-unstable.pi-coding-agent}/bin/pi "$@"
           '';
         };
       };

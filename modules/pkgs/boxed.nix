@@ -277,6 +277,12 @@
           ];
           network = true;
         };
+
+        ilspycmd = mkSandbox {
+          name = "ilspycmd";
+          shareCwd = true;
+          prog = "${pkgs.ilspycmd}/bin/ilspycmd";
+        };
       };
     };
 }
