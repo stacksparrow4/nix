@@ -1,0 +1,1 @@
+Optimise the documentation for agent context. Remove incorrect or outdated information. Summarise information where it is too verbose. Only include information that is relevant to the current state of testing.
