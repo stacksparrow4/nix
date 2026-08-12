@@ -287,32 +287,19 @@ fn main() {
             guidelines.push("Avoid recalling information about source available software and instead answer definitively by cloning the source to /tmp and referring to it");
         }
 
-        if all_tools.contains(&"edit".to_string()) {
-            guidelines.push("Use edit for precise changes (edits[].oldText must match exactly)");
-            guidelines.push("When changing multiple separate locations in one file, use one edit call with multiple entries in edits[]");
-            guidelines.push("Each edits[].oldText is matched against the original file, not after earlier edits are applied. Do not emit overlapping or nested edits");
-        }
-
-        if all_tools.contains(&"write".to_string()) {
-            guidelines.push("Use write only for new files or complete rewrites");
-        }
-
         if all_tools.contains(&"command".to_string()) {
-            match target {
-                Target::Remote { universal: true } => guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell"),
-                _ => guidelines.push("Use the command tool for file operations like ls, rg, find"),
-            }
+            guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell");
         }
 
         if brave_search {
             guidelines.push("Perform web searches when you are unsure of current information");
         }
-
-        guidelines.push("Be concise in your responses");
-        guidelines.push("Show file paths clearly when working with files");
+        
+        // TODO: add something that helps indicate that /box is cwd
 
         format!(
-            "You are a helpful coding assistant.\n\nGuidelines:\n{}",
+            "You are a helpful coding assistant.{}{}",
+            if guidelines.is_empty() { "" } else { "\n\nGuidelines:\n" },
             guidelines
                 .into_iter()
                 .map(|g| format!("- {}", g))
