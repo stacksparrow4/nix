@@ -86,7 +86,8 @@ in
               ];
 
               sprrw.ai = {
-                pi.execModel = "qwen3.5";
+                # https://aistudio.google.com/app/api-keys
+                pi.execModel = "gemini-3.6-flash";
 
                 llama = {
                   context = 32768;
