@@ -36,19 +36,16 @@
           ]
         );
 
-      yazi = pkgs.runCommand "yazi" { nativeBuildInputs = [ pkgs.makeWrapper ]; } (
-        ''
-          mkdir -p $out/bin
-          makeWrapper ${pkgs.yazi}/bin/yazi $out/bin/yazi \
+      yazi = pkgs.symlinkJoin {
+        name = "yazi";
+        paths = [ pkgs.yazi ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/yazi \
             --set YAZI_CONFIG_HOME ${yaziConfig} \
             --prefix PATH : ${lib.makeBinPath runtimeDeps}
-        ''
-        + lib.optionalString isLinux ''
-          mkdir -p $out/share
-          ln -s ${pkgs.yazi}/share/applications $out/share/applications
-          ln -s ${pkgs.yazi}/share/pixmaps $out/share/pixmaps
-        ''
-      );
+        '';
+      };
     in
     {
       packages = {
