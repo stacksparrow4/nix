@@ -31,7 +31,6 @@ in
           ];
 
           sprrw = {
-            nvim.sandboxed = false;
             term.tmux.defaultTerm = "ghostty";
           };
         }
