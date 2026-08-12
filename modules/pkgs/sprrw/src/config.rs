@@ -3,8 +3,6 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 
-pub const DEFAULT_FLAKE: &str = "/home/sprrw/nixos";
-
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case", deny_unknown_fields)]
 pub struct FileConfig {
@@ -97,12 +95,14 @@ impl Config {
         let mut override_inputs = file.override_inputs.unwrap_or_default();
         override_inputs.extend(cli_override_inputs);
 
+        let default_flake = format!("{}/nixos", std::env::var("HOME").unwrap());
+
         let build_flake = cli_build_flake
             .or(file.build_flake)
-            .unwrap_or_else(|| PathBuf::from(DEFAULT_FLAKE));
+            .unwrap_or_else(|| PathBuf::from(&default_flake));
         let update_flake = cli_update_flake
             .or(file.update_flake)
-            .unwrap_or_else(|| PathBuf::from(DEFAULT_FLAKE));
+            .unwrap_or_else(|| PathBuf::from(&default_flake));
 
         let add_flakes: BTreeSet<PathBuf> = [build_flake.clone(), update_flake.clone()]
             .into_iter()
