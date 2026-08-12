@@ -35,7 +35,11 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         ));
     }
 
-    if args.wayland {
+    let wayland = args.wayland
+        && std::env::var("XDG_RUNTIME_DIR").is_ok()
+        && std::env::var("WAYLAND_DISPLAY").is_ok();
+
+    if wayland {
         mounts.push(Mount::new(
             &format!(
                 "{}/{}",
@@ -104,7 +108,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         envvars.push(format!("TERM={}", ensure_env("TERM")));
     }
 
-    if args.wayland {
+    if wayland {
         envvars.extend([
             "WAYLAND_DISPLAY=wayland-1".to_string(),
             "XDG_RUNTIME_DIR=/tmp".to_string(),

@@ -44,6 +44,8 @@ in
               programming
               sec
               ai
+
+              sandbox
             ];
 
             home = {
