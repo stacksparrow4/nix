@@ -41,6 +41,7 @@
             ${openssh}/bin/ssh -o WarnWeakCrypto=no "$@"
           '';
         })
+        deploy-rs
       ];
     };
 
