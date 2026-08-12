@@ -81,28 +81,31 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     ]);
 
     let mut envvars: Vec<String> = args.env_vars.clone();
-    envvars.extend([
-        format!(
-            "PATH={}/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
-            if args.reset_env {
-                String::new()
-            } else {
-                format!("{}:", ensure_env("PATH"))
-            }
-        ),
-        "__ETC_PROFILE_SOURCED=1".to_string(),
-        "IN_SPRRW_SANDBOX=1".to_string(),
-        "HOME=/home/sprrw".to_string(),
-        format!("EDITOR={}", ensure_env("EDITOR")),
-        format!("NIX_PATH={}", ensure_env("NIX_PATH")),
-        "COLORTERM=truecolor".to_string(),
-        "TEMPDIR=/tmp".to_string(),
-        "TMPDIR=/tmp".to_string(),
-        "TEMP=/tmp".to_string(),
-        "TMP=/tmp".to_string(),
-    ]);
+    envvars.extend(
+        [
+            format!(
+                "PATH={}/etc/hm-package/home-path/bin:/run/current-system/sw/bin",
+                if args.reset_env {
+                    String::new()
+                } else {
+                    format!("{}:", ensure_env("PATH"))
+                }
+            ),
+            "__ETC_PROFILE_SOURCED=1".to_string(),
+            "IN_SPRRW_SANDBOX=1".to_string(),
+            "HOME=/home/sprrw".to_string(),
+            "COLORTERM=truecolor".to_string(),
+            "TEMPDIR=/tmp".to_string(),
+            "TMPDIR=/tmp".to_string(),
+            "TEMP=/tmp".to_string(),
+            "TMP=/tmp".to_string(),
+        ]
+        .into_iter()
+        .chain(std::env::var("EDITOR").map(|e| format!("EDITOR={}", e)))
+        .chain(std::env::var("NIX_PATH").map(|np| format!("NIX_PATH={}", np))),
+    );
 
-    if args.downgrade_term {
+    if args.downgrade_term || std::env::var("TERM").is_err() {
         envvars.push("TERM=xterm-256color".to_string());
     } else {
         envvars.push(format!("TERM={}", ensure_env("TERM")));
@@ -116,7 +119,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         ]);
     }
 
-    if args.x11 {
+    if args.x11 && std::env::var("DISPLAY").is_ok() {
         envvars.push(format!("DISPLAY={}", ensure_env("DISPLAY")));
     }
 
