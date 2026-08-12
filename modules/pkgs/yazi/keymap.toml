@@ -1,0 +1,11 @@
+[[mgr.prepend_keymap]]
+on = ["<Esc>"]
+run = "quit"
+
+[[mgr.prepend_keymap]]
+on = ["d"]
+run = "remove --permanently"
+
+[[spot.prepend_keymap]]
+on = "q"
+run = "close"

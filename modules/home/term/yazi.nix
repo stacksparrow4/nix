@@ -1,28 +1,22 @@
+{ moduleWithSystem, ... }:
+
 {
-  flake.homeModules.term-yazi = {
-    programs.yazi = {
-      enable = true;
-      shellWrapperName = "y";
+  flake.homeModules.term-yazi = moduleWithSystem (
+    { self', ... }:
+    { ... }:
+    {
+      home.packages = [ self'.packages.yazi ];
 
-      keymap = {
-        mgr.prepend_keymap = [
-          {
-            run = "quit";
-            on = [ "<Esc>" ];
-          }
-          {
-            run = "remove --permanently";
-            on = [ "d" ];
-          }
-        ];
-
-        spot.prepend_keymap = [
-          {
-            on = "q";
-            run = "close";
-          }
-        ];
-      };
-    };
-  };
+      sprrw.term.shellExtra = ''
+        function y() {
+          local tmp="$(mktemp -t "yazi-cwd.XXXXX")"
+          command yazi "$@" --cwd-file="$tmp"
+          if cwd="$(<"$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+            builtin cd -- "$cwd"
+          fi
+          rm -f -- "$tmp"
+        }
+      '';
+    }
+  );
 }

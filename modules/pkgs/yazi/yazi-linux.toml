@@ -1,0 +1,30 @@
+[[open.prepend_rules]]
+mime = "image/*"
+use = "viewimg"
+
+[[open.prepend_rules]]
+mime = "video/*"
+use = "viewvid"
+
+[[open.prepend_rules]]
+url = "*.docx"
+use = "xdgopen"
+
+[[open.prepend_rules]]
+url = "*.odt"
+use = "xdgopen"
+
+[[opener.viewimg]]
+run = "gimp \"$1\""
+orphan = true
+for = "unix"
+
+[[opener.viewvid]]
+run = "vlc \"$1\""
+orphan = true
+for = "unix"
+
+[[opener.xdgopen]]
+run = "xdg-open \"$1\""
+orphan = true
+for = "unix"

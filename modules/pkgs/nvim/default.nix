@@ -49,6 +49,7 @@
               nixd
               nixfmt
               gcc
+              config.packages.yazi
             ]
           )}"
         ];
