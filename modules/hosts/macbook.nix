@@ -31,7 +31,7 @@ in
           ];
 
           sprrw = {
-            term.tmux.defaultTerm = "ghostty";
+            term.tmux.defaultTerm = "xterm-ghostty";
           };
         }
 
