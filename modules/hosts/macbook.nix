@@ -60,6 +60,7 @@ in
             home.packages = with pkgs; [
               sshpass
               shtris
+              deploy-rs
               (writeShellApplication {
                 name = "start-linux-builder";
                 text = ''
