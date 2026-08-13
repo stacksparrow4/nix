@@ -21,6 +21,7 @@ in
             sprrw-cli
             nvim
 
+            term-aliases
             term-bash
             term-zshrc
             term-yazi

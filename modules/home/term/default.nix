@@ -1,16 +1,7 @@
 { config, ... }:
 
 {
-  flake.homeModules.term = {
-    imports = with config.flake.homeModules; [
-      term-bash
-      term-foot
-      term-navi
-      term-tmux
-      term-yazi
-      term-zshrc
-    ];
-
+  flake.homeModules.term-aliases = {
     sprrw.term.shellExtra = ''
       alias ls='ls --color=auto'
 
@@ -67,5 +58,17 @@
 
       alias nixurl='nix store prefetch-file'
     '';
+  };
+
+  flake.homeModules.term = {
+    imports = with config.flake.homeModules; [
+      term-aliases
+      term-bash
+      term-foot
+      term-navi
+      term-tmux
+      term-yazi
+      term-zshrc
+    ];
   };
 }
