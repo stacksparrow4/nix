@@ -150,6 +150,8 @@ in
           {
             nixpkgs.config = import ../../../nixpkgs-config.nix;
 
+            boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
             boot.loader.timeout = lib.mkForce 9999;
 
             swapDevices = [
@@ -165,9 +167,6 @@ in
             };
 
             networking.hostName = "nest01";
-            networking.extraHosts = ''
-              192.9.173.108 kubernetes.default
-            '';
 
             hardware.graphics = {
               enable = true;
