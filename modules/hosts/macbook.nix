@@ -28,7 +28,7 @@ in
             term-tmux
 
             programming-git
-            programming-kubernetes
+            programming-rust
           ];
 
           sprrw = {
