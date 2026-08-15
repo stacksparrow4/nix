@@ -1,6 +1,6 @@
 {
   flake.homeModules.base =
-    { config, lib, ... }:
+    { lib, ... }:
     {
       options.sprrw = {
         nixosRepoPath = lib.mkOption {
@@ -18,8 +18,6 @@
 
       config = {
         home.file.".config/nixpkgs/config.nix".source = ../../nixpkgs-config.nix;
-        home.file.".config/.sprrw-nixos".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}";
 
         news.display = "silent";
 

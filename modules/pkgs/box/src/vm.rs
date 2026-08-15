@@ -1,13 +1,12 @@
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::net::TcpListener;
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
-use rand::seq::IndexedRandom;
-
+use crate::Cli;
+use crate::common::{cwd, exit_code};
 use crate::mount::{BOX_CWD, Mount, MountType, build_stage_script, quote};
-use crate::utils::exit_code;
-use crate::{Cli, cwd};
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     for v in &volume_mounts {
@@ -32,7 +31,12 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
 
     let ro_git = args.ro_git && Path::new("./.git").exists();
 
-    let open_port = pick_open_port();
+    let open_port = {
+        TcpListener::bind("127.0.0.1:0")
+            .ok()
+            .map(|listener| listener.local_addr().unwrap().port())
+            .expect("could not find open port")
+    };
 
     println!("Forwarding SSH to port {open_port}");
     println!("Enter the VM yourself with:");
@@ -71,7 +75,10 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
             "-smp",
             "4",
             "-cdrom",
-            &home_dir().join(".local/vm.iso").to_string_lossy(),
+            &format!(
+                "{}/.local/vm.iso",
+                std::env::var("HOME").expect("HOME is not set")
+            ),
             "-boot",
             "d",
             "-nic",
@@ -128,7 +135,6 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
             .parse::<i32>()
             .expect("failed to parse the qemu pid");
 
-        drop(piddir);
         pid
     };
 
@@ -222,41 +228,4 @@ fn enter_vm(args: &Cli, mounts: &[Mount], open_port: u16) -> Result<i32, String>
         .map_err(|err| err.to_string())?;
 
     Ok(exit_code(&status))
-}
-
-fn pick_open_port() -> u16 {
-    let output = Command::new("ss")
-        .args(["-tan"])
-        .output()
-        .unwrap_or_else(|err| {
-            eprintln!("{err}");
-            std::process::exit(1);
-        });
-
-    let mut used_ports: Vec<u16> = Vec::new();
-    for line in String::from_utf8_lossy(&output.stdout).lines() {
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.len() >= 4 {
-            let addr = parts[3];
-            if let Some((_, port)) = addr.rsplit_once(':')
-                && !port.is_empty()
-                && port.chars().all(|c| c.is_ascii_digit())
-                && let Ok(port) = port.parse::<u16>()
-            {
-                used_ports.push(port);
-            }
-        }
-    }
-
-    let candidates: Vec<u16> = (49152..=65535)
-        .filter(|p| !used_ports.contains(p))
-        .collect();
-
-    *candidates
-        .choose(&mut rand::rng())
-        .expect("no free ephemeral port available")
-}
-
-fn home_dir() -> PathBuf {
-    PathBuf::from(std::env::var_os("HOME").expect("HOME is not set"))
 }
