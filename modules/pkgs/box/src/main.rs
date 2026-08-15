@@ -12,7 +12,7 @@ use mount::{Mount, MountType};
 use utils::exit_code;
 
 #[derive(Parser, Debug)]
-#[command(name = "sandbox", about = "Manage NixOS lightweight sandboxes")]
+#[command(name = "box")]
 struct Cli {
     /// Use bwrap backend (default)
     #[arg(long, group = "backend")]
@@ -69,6 +69,7 @@ struct Cli {
 #[derive(PartialEq, Eq)]
 enum Backend {
     Bwrap,
+    Docker,
     Vm,
 }
 
@@ -116,7 +117,12 @@ fn find_symlinks(path: &Path) -> Vec<String> {
 fn main() {
     let mut args = Cli::parse();
 
-    let backend = if args.vm { Backend::Vm } else { Backend::Bwrap };
+    let backend = match (cfg!(target_os = "linux"), args.vm) {
+        (true, false) => Backend::Bwrap,
+        (true, true) => Backend::Vm,
+        (false, false) => Backend::Docker,
+        _ => panic!("--vm on non-linux systems is not supported")
+    };
 
     if args.ro_git && !args.cwd {
         println!("Cannot specify --ro-git without --cwd");
