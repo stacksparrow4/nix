@@ -43,6 +43,18 @@ impl Mount {
             self.box_path.clone(),
         ]
     }
+
+    pub fn to_docker_args(&self) -> [String; 2] {
+        [
+            "-v".to_string(),
+            format!(
+                "{}:{}:{}",
+                self.host_path,
+                self.box_path,
+                if self.ro { "ro" } else { "rw" }
+            ),
+        ]
+    }
 }
 
 pub fn build_stage_script(mounts: &[Mount], stage: &str, ro_git: bool) -> Vec<String> {

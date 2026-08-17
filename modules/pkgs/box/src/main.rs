@@ -3,6 +3,7 @@ mod mount;
 mod common;
 mod vm;
 mod docker;
+mod container;
 
 use std::path::Path;
 use std::process::Command;
