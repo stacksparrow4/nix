@@ -5,6 +5,7 @@
     { self', ... }:
     { ... }:
     {
+      # TODO: Generate bash autocompletes
       home.packages = [ self'.packages.sprrw ];
     }
   );

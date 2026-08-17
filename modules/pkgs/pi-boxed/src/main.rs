@@ -355,8 +355,6 @@ fn main() {
             None,
             "",
             vec![
-                "-v".to_string(),
-                generate_pi_mirror_volume("auth.json", VolAccess::RW, VolType::File),
             ],
         )
     };
@@ -420,7 +418,6 @@ fn main() {
         "--approve".to_string(),
         "--no-tools".to_string(),
         "--no-extensions".to_string(),
-        "--offline".to_string(),
     ]
     .into_iter()
     .chain(if args.print {
@@ -453,7 +450,9 @@ fn main() {
     let _ = Command::new("box")
         .args(
             [
+                generate_pi_mirror_volume("auth.json", VolAccess::RW, VolType::File),
                 generate_pi_mirror_volume("settings.json", VolAccess::RW, VolType::File),
+                generate_pi_mirror_volume("models-store.json", VolAccess::RW, VolType::File),
                 generate_pi_mirror_volume("models.json", VolAccess::RO, VolType::File),
                 generate_pi_mirror_volume("sessions", VolAccess::RW, VolType::Dir),
                 generate_pi_mirror_volume("skills", VolAccess::RO, VolType::Dir),
