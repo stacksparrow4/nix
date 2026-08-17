@@ -6,12 +6,6 @@
       mkSandboxPkg,
       ...
     }:
-    let
-      interactsh-client = pkgs.runCommand "interactsh" { } ''
-        mkdir -p $out/bin
-        ln -s ${config.packages.interactsh}/bin/interactsh-client $out/bin/interactsh
-      '';
-    in
     {
       packages = rec {
         oob-unboxed =
@@ -21,7 +15,7 @@
           pkgs.runCommand "oob-unboxed" { nativeBuildInputs = with pkgs; [ makeBinaryWrapper ]; } ''
             mkdir -p $out/bin
             makeWrapper ${oobBin}/bin/oob $out/bin/oob \
-              --prefix PATH : ${pkgs.lib.makeBinPath [ interactsh-client ]}
+              --prefix PATH : ${pkgs.lib.makeBinPath [ config.packages.interactsh ]}
           '';
 
         oob = mkSandboxPkg {

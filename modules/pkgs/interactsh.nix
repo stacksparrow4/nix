@@ -26,7 +26,7 @@
         });
 
         interactsh = mkSandboxPkg {
-          name = "interactsh";
+          name = "interactsh-client";
           prog = "${interactsh-unboxed}/bin/interactsh-client";
           sharedPaths = [
             {

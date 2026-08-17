@@ -48,7 +48,7 @@ struct Interaction {
 }
 
 /// The interactsh binary. Always called `interactsh` and resolved via PATH.
-const INTERACTSH_BIN: &str = "interactsh";
+const INTERACTSH_BIN: &str = "interactsh-client";
 
 /// Format an RFC3339 timestamp into a friendly string in the local timezone.
 fn fmt_time(ts: &Option<String>) -> String {
