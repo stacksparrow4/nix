@@ -99,22 +99,6 @@ in
                         hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
                       };
                     }
-                    {
-                      name = "qwen3.6-27b";
-                      path = pkgs.fetchurl {
-                        url = "https://huggingface.co/unsloth/Qwen3.6-27B-GGUF/resolve/main/Qwen3.6-27B-UD-IQ3_XXS.gguf";
-                        hash = "sha256-XVkd0RkY4Zant8nS8C5DkOcmSWDrNUxy1l6BqTMZePU=";
-                      };
-                    }
-                    {
-                      name = "qwen3.6";
-                      path = fetchHF {
-                        repo = "knoopx/Qwen3.6-35B-A3B-NVFP4-GGUF";
-                        filename = "Qwen3.6-35B-A3B-NVFP4.gguf";
-                        revision = "b1bb81d83149a74fc9c7179b539a796d93f18820";
-                        hash = "sha256-wTWOiAjrdpWzZN4w6ExBWAFlaDg5JXglBSTDt/3dGQY=";
-                      };
-                    }
                   ];
                 };
               };
