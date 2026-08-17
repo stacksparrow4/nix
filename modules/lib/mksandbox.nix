@@ -29,7 +29,7 @@
             text = ''
               ${outsideBeforeScript}
 
-              ${config.packages.sandbox}/bin/sandbox \
+              ${config.packages.box}/bin/box \
                 ${backslashify (
                   (if shareCwd then [ "--cwd" ] else [ ])
                   ++ (builtins.concatMap (

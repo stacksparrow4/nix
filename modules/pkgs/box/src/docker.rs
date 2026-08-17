@@ -9,6 +9,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let container_args = get_container_args(args, volume_mounts);
     
     // TODO: Create docker image if not exist (feed from stdin)
+    todo!();
 
     let mut docker_args: Vec<String> = [
         "--rm",
@@ -38,6 +39,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     }
 
     // TODO: add image
+    todo!();
     docker_args.extend(args.exec.clone());
 
     let mut command = Command::new("docker");

@@ -10,6 +10,7 @@
         rust-analyzer
         rustfmt
         clippy
+        crate2nix
       ];
     };
 }
