@@ -98,22 +98,20 @@ pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArg
         [
             format!(
                 "PATH={}",
-                format!(
-                    "{}:{}",
-                    if !args.reset_env
-                        && let Ok(path) = std::env::var("PATH")
-                    {
-                        path
-                    } else {
-                        "".to_string()
-                    },
-                    if let Ok(sprrw_path) = std::env::var("SPRRW_PATH") {
-                        sprrw_path
-                    } else {
-                        "".to_string()
-                    }
-                )
-                .trim_matches(':')
+                std::iter::empty()
+                    .chain(
+                        if !args.reset_env
+                            && let Ok(path) = std::env::var("PATH")
+                        {
+                            Some(path)
+                        } else {
+                            None
+                        }
+                    )
+                    .chain(std::env::var("SPRRW_PATH").ok())
+                    .chain(std::env::var("SPRRW_ADDITIONAL_PATH").ok())
+                    .collect::<Vec<String>>()
+                    .join(":")
             ),
             "IN_SPRRW_SANDBOX=1".to_string(),
             "HOME=/home/sprrw".to_string(),

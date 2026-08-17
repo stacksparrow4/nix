@@ -44,63 +44,76 @@
           "${lib.makeBinPath (
             with pkgs;
             [
+              # General
+              config.packages.yazi
+              # Python
               basedpyright
               ruff
+              # Nix
               nixd
               nixfmt
+              # C
               gcc
-              config.packages.yazi
+              # Rust
+              cargo
+              rustc
+              rustfmt
+              clippy
+              rust-analyzer
+              # JS
+              typescript-language-server
             ]
           )}"
         ];
 
-        plugins =
-          [ sprrwConfig ]
-          ++ (with pkgs.vimPlugins; [
-            blink-cmp
-            bufferline-nvim
-            friendly-snippets
-            gitsigns-nvim
-            img-clip-nvim
-            tokyonight-nvim
-            nvim-lspconfig
-            nvim-treesitter
-            nvim-web-devicons
-            plenary-nvim
-            snacks-nvim
-            telescope-fzf-native-nvim
-            telescope-nvim
-            typst-preview-nvim
-            yazi-nvim
-            trouble-nvim
-            conform-nvim
-            (inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".default)
-          ])
-          ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
-            lua
-            nix
-            c
-            cpp
-            cmake
-            vim
-            vimdoc
-            python
-            rust
-            go
-            yaml
-            json
-            toml
-            javascript
-            typescript
-            markdown
-            typst
-            java
-            javadoc
-            c_sharp
-            caddy
-            nginx
-            ruby
-          ]);
+        plugins = [
+          sprrwConfig
+        ]
+        ++ (with pkgs.vimPlugins; [
+          blink-cmp
+          bufferline-nvim
+          friendly-snippets
+          gitsigns-nvim
+          img-clip-nvim
+          tokyonight-nvim
+          nvim-lspconfig
+          nvim-treesitter
+          nvim-web-devicons
+          plenary-nvim
+          snacks-nvim
+          telescope-fzf-native-nvim
+          telescope-nvim
+          typst-preview-nvim
+          yazi-nvim
+          trouble-nvim
+          conform-nvim
+          (inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".default)
+        ])
+        ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
+          lua
+          nix
+          c
+          cpp
+          cmake
+          vim
+          vimdoc
+          python
+          rust
+          go
+          yaml
+          json
+          toml
+          javascript
+          typescript
+          markdown
+          typst
+          java
+          javadoc
+          c_sharp
+          caddy
+          nginx
+          ruby
+        ]);
       };
     in
     {

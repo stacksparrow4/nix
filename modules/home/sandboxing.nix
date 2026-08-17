@@ -6,7 +6,13 @@
     { pkgs, config, ... }:
     {
       home.packages = [
-        self'.packages.box
+        (pkgs.writeShellApplication {
+          name = "box";
+          text = ''
+            SPRRW_ADDITIONAL_PATH="$(readlink /etc/static/hm-package)/home-path/bin:$(readlink /run/current-system/sw)/bin" \
+              ${self'.packages.box}/bin/box "$@"
+          '';
+        })
         (pkgs.writeShellApplication {
           name = "build-vm";
           text = ''

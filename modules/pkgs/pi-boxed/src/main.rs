@@ -166,7 +166,7 @@ const BRIDGE_DIR: &str = "/tmp/pi-remote";
 fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Child) {
     let dir = tempdir().expect("Failed to create temporary bridge dir");
 
-    let mut proc = Command::new("sandbox")
+    let mut proc = Command::new("box")
         .arg("-v")
         .arg(format!("{}:{}:rw:dir", dir.path().display(), BRIDGE_DIR))
         .args(if no_network {
@@ -363,7 +363,7 @@ fn main() {
 
     let (vm_proc, host_template) = match target {
         Target::Vm => {
-            let mut proc = Command::new("sandbox")
+            let mut proc = Command::new("box")
                 .arg("--vm")
                 .args(&sandbox_args)
                 .stdin(Stdio::piped())
@@ -450,7 +450,7 @@ fn main() {
     let joined_pi_cmd = shlex::try_join(pi_cmd.iter().map(|s| s.as_str()))
         .expect("Failed to create shell script for pi_cmd");
 
-    let _ = Command::new("sandbox")
+    let _ = Command::new("box")
         .args(
             [
                 generate_pi_mirror_volume("settings.json", VolAccess::RW, VolType::File),
