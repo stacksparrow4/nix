@@ -1,5 +1,3 @@
-{ inputs, ... }:
-
 {
   perSystem =
     {
@@ -9,35 +7,22 @@
       ...
     }:
     let
-      craneLib = inputs.crane.mkLib pkgs;
-
       interactsh-client = pkgs.runCommand "interactsh" { } ''
         mkdir -p $out/bin
         ln -s ${config.packages.interactsh}/bin/interactsh-client $out/bin/interactsh
       '';
-
-      commonArgs = {
-        src = craneLib.cleanCargoSource ./.;
-        strictDeps = true;
-      };
-
-      cargoArtifacts = craneLib.buildDepsOnly commonArgs;
     in
     {
       packages = rec {
-        oob-unboxed = craneLib.buildPackage (
-          commonArgs
-          // {
-            inherit cargoArtifacts;
-
-            nativeBuildInputs = [ pkgs.makeWrapper ];
-
-            postInstall = ''
-              wrapProgram $out/bin/oob \
-                --prefix PATH : ${pkgs.lib.makeBinPath [ interactsh-client ]}
-            '';
-          }
-        );
+        oob-unboxed =
+          let
+            oobBin = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
+          in
+          pkgs.runCommand "oob-unboxed" { nativeBuildInputs = with pkgs; [ makeBinaryWrapper ]; } ''
+            mkdir -p $out/bin
+            makeWrapper ${oobBin}/bin/oob $out/bin/oob \
+              --prefix PATH : ${pkgs.lib.makeBinPath [ interactsh-client ]}
+          '';
 
         oob = mkSandboxPkg {
           name = "oob";

@@ -1,33 +1,23 @@
-{ inputs, ... }:
-
 {
   perSystem =
-    { pkgs, pkgs-unstable, lib, ... }:
-    let
-      craneLib = inputs.crane.mkLib pkgs;
-
-      commonArgs = {
-        src = craneLib.cleanCargoSource ./.;
-        strictDeps = true;
-      };
-
-      cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-
-      pi-boxed = craneLib.buildPackage (
-        commonArgs
-        // {
-          inherit cargoArtifacts;
-        }
-      );
-    in
+    {
+      pkgs,
+      pkgs-unstable,
+      lib,
+      ...
+    }:
     {
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        pi-boxed = pkgs.writeShellApplication {
-          name = "pi";
-          text = ''
-            ${pi-boxed}/bin/pi ${pkgs-unstable.pi-coding-agent}/bin/pi "$@"
-          '';
-        };
+        pi-boxed =
+          let
+            pi-boxed = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
+          in
+          pkgs.writeShellApplication {
+            name = "pi";
+            text = ''
+              ${pi-boxed}/bin/pi ${pkgs-unstable.pi-coding-agent}/bin/pi "$@"
+            '';
+          };
       };
     };
 }

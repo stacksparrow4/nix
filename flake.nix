@@ -17,8 +17,6 @@
     };
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
 
-    crane.url = "github:ipetkov/crane";
-
     nvim-http-client = {
       url = "github:stacksparrow4/nvim-http-client?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";
