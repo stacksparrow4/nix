@@ -61,13 +61,15 @@
               name = "box-packages";
               pathsToLink = [ "/bin" ];
               paths = with pkgs; [
-                # TODO: This can be overridden to contain lots more stuff when using nixos
                 coreutils
                 bash
                 curl
                 wget
                 dig
                 git
+                findutils
+                gnugrep
+                ripgrep
               ];
             };
             terminfo = "${pkgs.foot.terminfo}/share/terminfo";

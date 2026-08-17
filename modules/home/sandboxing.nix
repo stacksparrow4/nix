@@ -6,7 +6,7 @@
     { pkgs, config, ... }:
     {
       home.packages = [
-        self'.packages.sandbox
+        self'.packages.box
         (pkgs.writeShellApplication {
           name = "build-vm";
           text = ''

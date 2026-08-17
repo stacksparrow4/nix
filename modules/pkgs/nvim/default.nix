@@ -133,7 +133,7 @@
                     vim_args+=("$@")
                   fi
 
-                  (cd "$share_dir" && ${config.packages.sandbox}/bin/sandbox --cwd --wayland --ro-git -- ${nvim-unboxed}/bin/nvim "''${vim_args[@]}")
+                  (cd "$share_dir" && ${config.packages.box}/bin/box --cwd --wayland --ro-git -- ${nvim-unboxed}/bin/nvim "''${vim_args[@]}")
                 fi
               '';
             })
