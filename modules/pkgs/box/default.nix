@@ -44,6 +44,8 @@
               nameserver 1.1.1.1
               EOF
 
+              mkdir $out/fonts
+
               cat <<EOF > $out/hosts
               127.0.0.1 localhost
               ::1 localhost
