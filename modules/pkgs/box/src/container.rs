@@ -122,6 +122,7 @@ pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArg
             "TMPDIR=/tmp".to_string(),
             "TEMP=/tmp".to_string(),
             "TMP=/tmp".to_string(),
+            "SHELL=/bin/sh".to_string(), // TODO: should this be bash?
         ]
         .into_iter()
         .chain(std::env::var("EDITOR").map(|e| format!("EDITOR={}", e)))
