@@ -28,8 +28,8 @@
               shadow:    files
               sudoers:   files
 
-              hosts:     files
-              networks:  files
+              hosts:     files dns
+              networks:  files dns
 
               ethers:    files
               services:  files
@@ -49,7 +49,9 @@
               ::1 localhost
               EOF
               
-              ln -s ${pkgs.cacert}/etc/ssl $out/ssl
+              mkdir -p $out/ssl/certs
+              ln -s ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt $out/ssl/certs/ca-bundle.crt
+              ln -s ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt $out/ssl/certs/ca-certificates.crt
             '';
             usr = pkgs.runCommand "box-usr" {} ''
               mkdir -p $out/bin
@@ -59,9 +61,16 @@
               name = "box-packages";
               pathsToLink = [ "/bin" ];
               paths = with pkgs; [
+                # TODO: This can be overridden to contain lots more stuff when using nixos
                 coreutils
+                bash
+                curl
+                wget
+                dig
+                git
               ];
             };
+            terminfo = "${pkgs.foot.terminfo}/share/terminfo";
           in
           pkgs.runCommand "box" { nativeBuildInputs = with pkgs; [ makeBinaryWrapper ]; } ''
             mkdir -p $out/bin
@@ -69,7 +78,8 @@
               --set SPRRW_BIN ${bin} \
               --set SPRRW_ETC ${etc} \
               --set SPRRW_USR ${usr} \
-              --set SPRRW_PATH ${packages}/bin
+              --set SPRRW_PATH ${packages}/bin \
+              --set SPRRW_TERMINFO ${terminfo}
           '';
       };
     };

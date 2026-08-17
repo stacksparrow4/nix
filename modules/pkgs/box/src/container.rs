@@ -1,6 +1,9 @@
 use std::path::Path;
 
-use crate::{common::{Cli, cwd, find_symlinks}, mount::{BOX_CWD, Mount, MountType}};
+use crate::{
+    common::{Cli, cwd, find_symlinks},
+    mount::{BOX_CWD, Mount, MountType},
+};
 
 pub struct ContainerArgs {
     pub mounts: Vec<Mount>,
@@ -125,18 +128,29 @@ pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArg
         .chain(std::env::var("NIX_PATH").map(|np| format!("NIX_PATH={}", np))),
     );
 
-    envvars.push(format!(
-        "TERM={}",
+    envvars.extend(
         if !args.downgrade_term
             && let Ok(term) = std::env::var("TERM")
         {
-            term
+            vec![
+                format!("TERM={}", term),
+                format!("TERMINFO={}", get_nix_argument("SPRRW_TERMINFO")),
+                format!("TERMINFO_DIRS={}", get_nix_argument("SPRRW_TERMINFO")),
+            ]
         } else {
-            "xterm-256color".to_string()
-        }
-    ));
+            vec!["TERM=xterm-256color".to_string()]
+        },
+    );
 
-    let cwd = if args.cwd || args.ro_cwd { BOX_CWD } else { "/home/sprrw" };
+    let cwd = if args.cwd || args.ro_cwd {
+        BOX_CWD
+    } else {
+        "/home/sprrw"
+    };
 
-    ContainerArgs { mounts, envvars, workdir: cwd.to_string() }
+    ContainerArgs {
+        mounts,
+        envvars,
+        workdir: cwd.to_string(),
+    }
 }
