@@ -62,6 +62,9 @@
               rust-analyzer
               # JS
               typescript-language-server
+              # Typst
+              tinymist
+              typstyle
             ]
           )}"
         ];

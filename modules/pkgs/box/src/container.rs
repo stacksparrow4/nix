@@ -92,6 +92,10 @@ pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArg
         // ),
     ]);
 
+    if Path::new("/etc/resolv.conf").exists() {
+        mounts.push(Mount::new("/etc/resolv.conf", "/etc/resolv.conf", MountType::File, true));
+    }
+
     envvars.extend(
         [
             format!(
