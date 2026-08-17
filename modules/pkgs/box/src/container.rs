@@ -12,10 +12,8 @@ pub struct ContainerArgs {
 }
 
 fn get_nix_argument(argname: &str) -> String {
-    std::env::var(argname).expect(&format!(
-        "failed to set mandatory Nix supplied arg {}",
-        argname
-    ))
+    std::env::var(argname)
+        .unwrap_or_else(|_| panic!("failed to set mandatory Nix supplied arg {}", argname))
 }
 
 pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArgs {
