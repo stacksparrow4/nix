@@ -19,112 +19,123 @@
         '';
       };
 
-      nvim-unboxed = pkgs.wrapNeovimUnstable pkgs.neovim-unwrapped {
-        wrapRc = true;
+      mkNvim =
+        {
+          additionalPlugins ? [ ],
+          additionalLua ? [ ],
+        }:
+        (pkgs.wrapNeovimUnstable pkgs.neovim-unwrapped {
+          wrapRc = true;
 
-        withPython3 = false;
-        withRuby = false;
+          withPython3 = false;
+          withRuby = false;
 
-        luaRcContent = ''
-          require("config")
-          require("plugins")
-          require("lsps")
-          require("keymaps")
-        '';
+          luaRcContent = ''
+            require("config")
+            require("plugins")
+            require("lsps")
+            require("keymaps")
+          ''
+          + "\n"
+          + additionalLua;
 
-        wrapperArgs = [
-          # Some treesitter parsers need this library
-          "--suffix"
-          "LD_LIBRARY_PATH"
-          ":"
-          "${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]}"
-          "--suffix"
-          "PATH"
-          ":"
-          "${lib.makeBinPath (
-            with pkgs;
+          wrapperArgs = [
+            # Some treesitter parsers need this library
+            "--suffix"
+            "LD_LIBRARY_PATH"
+            ":"
+            "${lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ]}"
+            "--suffix"
+            "PATH"
+            ":"
+            "${lib.makeBinPath (
+              with pkgs;
+              [
+                # General
+                config.packages.yazi
+                # Python
+                basedpyright
+                ruff
+                # Nix
+                nixd
+                nixfmt
+                # C
+                gcc
+                # Rust
+                cargo
+                rustc
+                rustfmt
+                clippy
+                rust-analyzer
+                # JS
+                typescript-language-server
+                # Typst
+                tinymist
+                typstyle
+              ]
+            )}"
+          ];
+
+          plugins = [
+            sprrwConfig
+          ]
+          ++ (
+            with pkgs.vimPlugins;
             [
-              # General
-              config.packages.yazi
-              # Python
-              basedpyright
-              ruff
-              # Nix
-              nixd
-              nixfmt
-              # C
-              gcc
-              # Rust
-              cargo
-              rustc
-              rustfmt
-              clippy
-              rust-analyzer
-              # JS
-              typescript-language-server
-              # Typst
-              tinymist
-              typstyle
+              blink-cmp
+              bufferline-nvim
+              friendly-snippets
+              gitsigns-nvim
+              img-clip-nvim
+              tokyonight-nvim
+              nvim-lspconfig
+              nvim-treesitter
+              nvim-web-devicons
+              plenary-nvim
+              snacks-nvim
+              telescope-fzf-native-nvim
+              telescope-nvim
+              typst-preview-nvim
+              yazi-nvim
+              trouble-nvim
+              conform-nvim
+              (inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".default)
             ]
-          )}"
-        ];
+            ++ additionalPlugins
+          )
+          ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
+            lua
+            nix
+            c
+            cpp
+            cmake
+            vim
+            vimdoc
+            python
+            rust
+            go
+            yaml
+            json
+            toml
+            javascript
+            typescript
+            markdown
+            typst
+            java
+            javadoc
+            c_sharp
+            caddy
+            nginx
+            ruby
+          ]);
+        })
+        // {
+          configure = mkNvim;
+        };
 
-        plugins = [
-          sprrwConfig
-        ]
-        ++ (with pkgs.vimPlugins; [
-          blink-cmp
-          bufferline-nvim
-          friendly-snippets
-          gitsigns-nvim
-          img-clip-nvim
-          tokyonight-nvim
-          nvim-lspconfig
-          nvim-treesitter
-          nvim-web-devicons
-          plenary-nvim
-          snacks-nvim
-          telescope-fzf-native-nvim
-          telescope-nvim
-          typst-preview-nvim
-          yazi-nvim
-          trouble-nvim
-          conform-nvim
-          (inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".default)
-        ])
-        ++ (with pkgs.vimPlugins.nvim-treesitter-parsers; [
-          lua
-          nix
-          c
-          cpp
-          cmake
-          vim
-          vimdoc
-          python
-          rust
-          go
-          yaml
-          json
-          toml
-          javascript
-          typescript
-          markdown
-          typst
-          java
-          javadoc
-          c_sharp
-          caddy
-          nginx
-          ruby
-        ]);
-      };
-    in
-    {
-      packages = {
-        inherit nvim-unboxed;
-      }
-      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        nvim = pkgs.symlinkJoin {
+      mkNvimBoxed =
+        nvim-unboxed:
+        (pkgs.symlinkJoin {
           name = "nvim";
           paths = [
             (pkgs.writeShellApplication {
@@ -158,7 +169,19 @@
               ln -s ${nvim-unboxed}/bin/nvim $out/bin/nvim-unsandboxed
             '')
           ];
+        })
+        // {
+          configure = args: mkNvimBoxed (mkNvim args);
         };
+
+      nvim-unboxed = mkNvim { };
+    in
+    {
+      packages = {
+        inherit nvim-unboxed;
+      }
+      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        nvim = mkNvimBoxed nvim-unboxed;
       };
     };
 }
