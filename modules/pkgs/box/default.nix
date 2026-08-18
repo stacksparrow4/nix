@@ -76,7 +76,7 @@
             };
             terminfo = "${pkgs.foot.terminfo}/share/terminfo";
           in
-          pkgs.runCommand "box" { nativeBuildInputs = with pkgs; [ makeBinaryWrapper ]; } ''
+          pkgs.runCommand "box" { nativeBuildInputs = with pkgs; [ makeWrapper ]; } ''
             mkdir -p $out/bin
             makeWrapper ${rustBin}/bin/box $out/bin/box \
               --set SPRRW_BIN ${bin} \
