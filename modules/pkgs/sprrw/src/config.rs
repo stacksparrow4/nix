@@ -6,11 +6,11 @@ use serde::Deserialize;
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case", deny_unknown_fields)]
 pub struct FileConfig {
-    #[serde(alias = "build_flake", alias = "buildFlake")]
+    #[serde(alias = "build_flake")]
     pub build_flake: Option<PathBuf>,
 
-    #[serde(alias = "update_flake", alias = "updateFlake")]
-    pub update_flake: Option<PathBuf>,
+    #[serde(alias = "update_flakes")]
+    pub update_flakes: Option<Vec<PathBuf>>,
 
     #[serde(alias = "override_inputs", alias = "overrideInputs")]
     pub override_inputs: Option<BTreeMap<String, String>>,
@@ -49,7 +49,7 @@ impl FileConfig {
 #[derive(Debug)]
 pub struct Config {
     pub build_flake: PathBuf,
-    pub update_flake: PathBuf,
+    pub update_flakes: Vec<PathBuf>,
     pub add_flakes: BTreeSet<PathBuf>,
     pub override_inputs: BTreeMap<String, String>,
 }
@@ -88,7 +88,7 @@ fn local_git_flake_path(value: &str) -> Option<PathBuf> {
 impl Config {
     pub fn resolve(
         cli_build_flake: Option<PathBuf>,
-        cli_update_flake: Option<PathBuf>,
+        cli_update_flakes: Vec<PathBuf>,
         cli_override_inputs: Vec<(String, String)>,
         file: FileConfig,
     ) -> Result<Self, String> {
@@ -100,12 +100,16 @@ impl Config {
         let build_flake = cli_build_flake
             .or(file.build_flake)
             .unwrap_or_else(|| PathBuf::from(&default_flake));
-        let update_flake = cli_update_flake
-            .or(file.update_flake)
-            .unwrap_or_else(|| PathBuf::from(&default_flake));
+        let update_flakes = if !cli_update_flakes.is_empty() {
+            cli_update_flakes
+        } else {
+            file.update_flakes
+                .filter(|flakes| !flakes.is_empty())
+                .unwrap_or_else(|| vec![PathBuf::from(&default_flake)])
+        };
 
-        let add_flakes: BTreeSet<PathBuf> = [build_flake.clone(), update_flake.clone()]
-            .into_iter()
+        let add_flakes: BTreeSet<PathBuf> = std::iter::once(build_flake.clone())
+            .chain(update_flakes.iter().cloned())
             .chain(
                 override_inputs
                     .values()
@@ -116,7 +120,7 @@ impl Config {
         let config = Self {
             override_inputs,
             build_flake,
-            update_flake,
+            update_flakes,
             add_flakes,
         };
 

@@ -20,9 +20,9 @@ struct Cli {
     #[arg(long, global = true, value_name = "PATH")]
     build_flake: Option<PathBuf>,
 
-    /// Absolute path to the flake to update
-    #[arg(long, global = true, value_name = "PATH")]
-    update_flake: Option<PathBuf>,
+    /// Absolute path to a flake to update (repeatable)
+    #[arg(long = "update-flake", global = true, value_name = "PATH")]
+    update_flakes: Vec<PathBuf>,
 
     /// Override a flake input as NAME=VALUE (repeatable)
     #[arg(
@@ -56,7 +56,7 @@ fn main() {
 
 fn run(cli: Cli) -> Result<(), String> {
     let file = FileConfig::load()?;
-    let config = Config::resolve(cli.build_flake, cli.update_flake, cli.override_inputs, file)?;
+    let config = Config::resolve(cli.build_flake, cli.update_flakes, cli.override_inputs, file)?;
 
     match cli.command {
         Cmd::Build => build(&config),
@@ -115,22 +115,19 @@ fn append_override_inputs(cmd: &mut Command, config: &Config) {
 }
 
 fn update(config: &Config) -> Result<(), String> {
-    let pkgs_dir = config.update_flake.join("pkgs");
-    let pkgs_update = pkgs_dir.join("update.sh");
-    if pkgs_update.is_file() {
-        println!(":: running {}", pkgs_update.display());
-        run_cmd(Command::new(&pkgs_update).current_dir(&pkgs_dir))?;
+    for update_flake in &config.update_flakes {
+        println!(":: nix flake update in {}", update_flake.display());
+        run_cmd(
+            Command::new("nix")
+                .current_dir(update_flake)
+                .arg("flake")
+                .arg("update")
+                .arg("--flake")
+                .arg(update_flake),
+        )?;
     }
 
-    println!(":: nix flake update in {}", config.update_flake.display());
-    run_cmd(
-        Command::new("nix")
-            .current_dir(&config.update_flake)
-            .arg("flake")
-            .arg("update")
-            .arg("--flake")
-            .arg(&config.update_flake),
-    )
+    Ok(())
 }
 
 fn trim_history() -> Result<(), String> {
