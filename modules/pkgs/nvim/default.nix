@@ -22,7 +22,7 @@
       mkNvim =
         {
           additionalPlugins ? [ ],
-          additionalLua ? [ ],
+          additionalLua ? "",
         }:
         (pkgs.wrapNeovimUnstable pkgs.neovim-unwrapped {
           wrapRc = true;
