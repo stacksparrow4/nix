@@ -300,8 +300,6 @@ fn main() {
             guidelines.push("Perform web searches when you are unsure of current information");
         }
 
-        // TODO: add something that helps indicate that /box is cwd
-
         format!(
             "You are a helpful coding assistant.{}{}",
             if guidelines.is_empty() { "" } else { "\n\nGuidelines:\n" },
@@ -385,7 +383,7 @@ fn main() {
                 .expect("Failed to extract SSH port")[1];
 
             let starter = if args.cwd || args.ro_cwd {
-                "'cd /box &&' "
+                "'cd /home/sprrw/box &&' "
             } else {
                 ""
             };

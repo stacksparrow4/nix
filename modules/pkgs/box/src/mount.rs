@@ -1,4 +1,4 @@
-pub const BOX_CWD: &str = "/box";
+pub const BOX_CWD: &str = "/home/sprrw/box";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MountType {

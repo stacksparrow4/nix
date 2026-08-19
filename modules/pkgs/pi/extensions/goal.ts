@@ -75,7 +75,7 @@ export default function goalExtension(pi: ExtensionAPI) {
   pi.registerCommand("crits", {
     description: "Find critical vulnerabilities in a codebase",
     handler: async (_args, ctx) => {
-      const presetGoal = `Find a unique (known findings are listed in KNOWN_FINDINGS.md) critical vulnerability in the codebase. Verify identified vulnerabilities end to end by tracing code flow. Clone third party modules to refer to the source authoritatively instead of recalling from memory. Keep track of progress in PROGRESS.md.`;
+      const presetGoal = `Find a unique (known findings are listed in KNOWN-FINDINGS.md) critical vulnerability in the codebase. Verify identified vulnerabilities end to end by tracing code flow. Clone third party modules to refer to the source authoritatively instead of recalling from memory. Keep track of progress in PROGRESS.md.`;
       startGoal(presetGoal, ctx);
     },
   });

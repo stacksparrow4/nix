@@ -23,7 +23,7 @@ pub struct Cli {
     #[arg(long = "ro-cwd")]
     pub ro_cwd: bool,
 
-    /// Make /box/.git in the sandbox read only
+    /// Make .git in the sandbox read only
     #[arg(short = 'g', long = "ro-git")]
     pub ro_git: bool,
 
