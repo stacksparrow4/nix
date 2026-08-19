@@ -4,6 +4,7 @@
       pkgs,
       pkgs-unstable,
       lib,
+      config,
       ...
     }:
     {
@@ -24,6 +25,8 @@
               export SPRRW_SKILLS=${./skills}
               export SPRRW_EXTENSIONS=${./extensions}
               export SPRRW_PROMPTS=${./prompts}
+
+              export PATH="${config.packages.box}/bin:$PATH"
 
               ${pi}/bin/pi "$@"
             '';

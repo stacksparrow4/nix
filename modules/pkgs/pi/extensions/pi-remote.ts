@@ -23,7 +23,7 @@ import { Type } from "typebox";
 const SOCKET_PATH = "/tmp/pi-remote/pi.sock";
 const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
 const READ_AGENTS_MD = process.env.PI_READ_AGENTS_MD === "1";
-const TOOL_NAME = FULL_REMOTE ? "bash" : "command";
+const TOOL_NAME = FULL_REMOTE ? "bash" : "Command";
 const DEFAULT_TIMEOUT_SECONDS = 10;
 const REMOTE_FILE_OP_TIMEOUT_SECONDS = 30;
 
