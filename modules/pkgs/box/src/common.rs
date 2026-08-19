@@ -7,13 +7,13 @@ use std::process::ExitStatus;
 #[derive(Parser, Debug)]
 #[command(name = "box")]
 pub struct Cli {
-    /// Use bwrap backend (default)
-    #[arg(long, group = "backend")]
-    pub bwrap: bool,
-
     /// Use VM backend
     #[arg(long, group = "backend")]
     pub vm: bool,
+
+    /// Use Docker backend (automatic on Mac)
+    #[arg(long, group = "backend")]
+    pub docker: bool,
 
     /// Share the current working directory
     #[arg(short = 'c', long)]

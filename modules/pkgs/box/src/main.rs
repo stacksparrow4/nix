@@ -100,11 +100,11 @@ fn main() {
         }
     }
 
-    let run = match (cfg!(target_os = "linux"), args.vm) {
-        (true, false) => bwrap::run,
-        (true, true) => vm::run,
-        (false, false) => docker::run,
-        (false, true) => panic!("--vm on non-linux systems is not supported"),
+    let run = match (cfg!(target_os = "linux"), args.vm, args.docker) {
+        (true, false, false) => bwrap::run,
+        (true, true, false) => vm::run,
+        (_, false, _) => docker::run,
+        _ => panic!("invalid backends supplied"),
     };
 
     run(&args, volume_mounts);
