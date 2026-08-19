@@ -26,7 +26,7 @@
               export SPRRW_EXTENSIONS=${./extensions}
               export SPRRW_PROMPTS=${./prompts}
 
-              export PATH="${config.packages.box}/bin:$PATH"
+              export PATH="${pkgs.lib.makeBinPath [ config.packages.box pkgs.nodejs ]}/bin:$PATH"
 
               ${pi}/bin/pi "$@"
             '';
