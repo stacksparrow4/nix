@@ -290,6 +290,35 @@ rec {
         };
         resolvedDefaultFeatures = [ "color" "error-context" "help" "std" "suggestions" "usage" ];
       };
+      "clap_complete" = rec {
+        crateName = "clap_complete";
+        version = "4.6.9";
+        edition = "2024";
+        sha256 = "06bagfajlrnrwjcbrqcm99np0n9mdxwxv6n8bgib1fxx4c2avqiv";
+        dependencies = [
+          {
+            name = "clap";
+            packageId = "clap";
+            usesDefaultFeatures = false;
+            features = [ "std" ];
+          }
+        ];
+        devDependencies = [
+          {
+            name = "clap";
+            packageId = "clap";
+            usesDefaultFeatures = false;
+            features = [ "std" "derive" "help" ];
+          }
+        ];
+        features = {
+          "debug" = [ "clap/debug" ];
+          "unstable-doc" = [ "unstable-dynamic" ];
+          "unstable-dynamic" = [ "dep:clap_lex" "dep:shlex" "dep:is_executable" "clap/unstable-ext" ];
+          "unstable-shell-tests" = [ "dep:completest" "dep:completest-pty" ];
+        };
+        resolvedDefaultFeatures = [ "default" ];
+      };
       "clap_derive" = rec {
         crateName = "clap_derive";
         version = "4.6.4";
@@ -596,6 +625,10 @@ rec {
             name = "clap";
             packageId = "clap";
             features = [ "derive" ];
+          }
+          {
+            name = "clap_complete";
+            packageId = "clap_complete";
           }
           {
             name = "serde";

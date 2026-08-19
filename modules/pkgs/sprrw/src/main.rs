@@ -3,7 +3,8 @@ mod config;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete::Shell;
 
 use config::{Config, FileConfig, parse_override_input};
 
@@ -43,6 +44,10 @@ enum Cmd {
     Build,
     /// Update the update flake's inputs, then build
     Update,
+    /// Print shell completions
+    Completions {
+        shell: Shell,
+    },
 }
 
 fn main() {
@@ -56,13 +61,24 @@ fn main() {
 
 fn run(cli: Cli) -> Result<(), String> {
     let file = FileConfig::load()?;
-    let config = Config::resolve(cli.build_flake, cli.update_flakes, cli.override_inputs, file)?;
+    let config = Config::resolve(
+        cli.build_flake,
+        cli.update_flakes,
+        cli.override_inputs,
+        file,
+    )?;
 
     match cli.command {
         Cmd::Build => build(&config),
         Cmd::Update => {
             update(&config)?;
             build(&config)
+        }
+        Cmd::Completions { shell } => {
+            let mut cmd = Cli::command();
+            let name = cmd.get_name().to_string();
+            clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
+            Ok(())
         }
     }
 }
