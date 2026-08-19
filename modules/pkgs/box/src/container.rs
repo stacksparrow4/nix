@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
 use crate::{
     common::{Cli, cwd, find_symlinks},
@@ -93,7 +93,12 @@ pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArg
     ]);
 
     if Path::new("/etc/resolv.conf").exists() {
-        mounts.push(Mount::new("/etc/resolv.conf", "/etc/resolv.conf", MountType::File, true));
+        mounts.push(Mount::new(
+            "/etc/resolv.conf",
+            "/etc/resolv.conf",
+            MountType::File,
+            true,
+        ));
     }
     if Path::new("/etc/fonts").exists() {
         mounts.push(Mount::new("/etc/fonts", "/etc/fonts", MountType::Dir, true));
@@ -115,6 +120,16 @@ pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArg
                     )
                     .chain(std::env::var("SPRRW_PATH").ok())
                     .chain(std::env::var("SPRRW_ADDITIONAL_PATH").ok())
+                    .chain(
+                        fs::read_link("/etc/static/hm-package")
+                            .ok()
+                            .map(|pb| format!("{}/home-path/bin", pb.to_string_lossy()))
+                    )
+                    .chain(
+                        fs::read_link("/run/current-system/sw")
+                            .ok()
+                            .map(|pb| format!("{}/bin", pb.to_string_lossy()))
+                    )
                     .collect::<Vec<String>>()
                     .join(":")
             ),
