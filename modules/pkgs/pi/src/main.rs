@@ -96,11 +96,6 @@ struct Args {
     #[arg(long, hide = true)]
     internal_serve: Option<String>,
 
-    /// Real pi location, used internally by Nix. You shouldn't need to supply this option, it will
-    /// be added automatically
-    #[arg(required_unless_present = "internal_serve", hide = true)]
-    internal_real_pi_location: Option<String>,
-
     /// Positional arguments for Pi
     args: Vec<String>,
 }
@@ -121,12 +116,9 @@ enum VolAccess {
     RW,
 }
 
-fn generate_home_volume(host_path: &str, box_path: &str, a: VolAccess, t: VolType) -> String {
+fn generate_absolute_volume(host_path: &str, box_path: &str, a: VolAccess, t: VolType) -> String {
     format!(
-        "{}/{}:/home/sprrw/{}:{}:{}",
-        env::home_dir()
-            .expect("Could not find home directory")
-            .to_string_lossy(),
+        "{}:{}:{}:{}",
         host_path,
         box_path,
         match a {
@@ -137,6 +129,21 @@ fn generate_home_volume(host_path: &str, box_path: &str, a: VolAccess, t: VolTyp
             VolType::File => "file",
             VolType::Dir => "dir",
         }
+    )
+}
+
+fn generate_home_volume(host_path: &str, box_path: &str, a: VolAccess, t: VolType) -> String {
+    generate_absolute_volume(
+        &format!(
+            "{}/{}",
+            env::home_dir()
+                .expect("Could not find home directory")
+                .to_string_lossy(),
+            host_path
+        ),
+        &format!("/home/sprrw/{}", box_path),
+        a,
+        t,
     )
 }
 
@@ -157,7 +164,7 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
     generate_pi_volume(fname, fname, a, t)
 }
 
-const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "save.ts", "goal.ts"];
+const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "save.ts", "goal.ts", "crits.ts"];
 const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
 const BRIDGE_DIR: &str = "/tmp/pi-remote";
@@ -208,9 +215,7 @@ fn main() {
         serve_local(socket_path);
     }
 
-    let real_pi_location = args
-        .internal_real_pi_location
-        .expect("Missing real pi location");
+    let real_pi_location = std::env::var("SPRRW_PI").unwrap();
 
     let target = match (
         args.remote.as_deref(),
@@ -294,7 +299,7 @@ fn main() {
         if brave_search {
             guidelines.push("Perform web searches when you are unsure of current information");
         }
-        
+
         // TODO: add something that helps indicate that /box is cwd
 
         format!(
@@ -351,12 +356,7 @@ fn main() {
             ],
         )
     } else {
-        (
-            None,
-            "",
-            vec![
-            ],
-        )
+        (None, "", vec![])
     };
 
     let (vm_proc, host_template) = match target {
@@ -455,8 +455,9 @@ fn main() {
                 generate_pi_mirror_volume("models-store.json", VolAccess::RW, VolType::File),
                 generate_pi_mirror_volume("models.json", VolAccess::RO, VolType::File),
                 generate_pi_mirror_volume("sessions", VolAccess::RW, VolType::Dir),
-                generate_pi_mirror_volume("skills", VolAccess::RO, VolType::Dir),
-                generate_pi_mirror_volume("extensions", VolAccess::RO, VolType::Dir),
+                generate_absolute_volume(&std::env::var("SPRRW_SKILLS").unwrap(), "/home/sprrw/.pi/agent/skills", VolAccess::RO, VolType::Dir),
+                generate_absolute_volume(&std::env::var("SPRRW_EXTENSIONS").unwrap(), "/home/sprrw/.pi/agent/extensions", VolAccess::RO, VolType::Dir),
+                generate_absolute_volume(&std::env::var("SPRRW_PROMPTS").unwrap(), "/home/sprrw/.pi/agent/prompts", VolAccess::RO, VolType::Dir),
             ]
             .into_iter()
             .flat_map(|v| vec!["-v".to_string(), v]),

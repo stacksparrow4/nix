@@ -29,15 +29,6 @@
           providers = cfg.extraModels;
         };
 
-        home.file.".pi/agent/skills".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/home/ai/pi/skills";
-
-        home.file.".pi/agent/extensions".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/home/ai/pi/extensions";
-
-        home.file.".pi/agent/prompts".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/home/ai/pi/prompts";
-
         systemd.user = lib.mkIf pkgs.stdenv.isLinux {
           services.pi-clean-sessions = {
             Unit.Description = "Clear pi session logs older than 1 week";
@@ -58,7 +49,7 @@
         };
 
         home.packages = [
-          self'.packages.pi-boxed
+          self'.packages.pi
           (import ./_pi-convert.nix {
             inherit pkgs;
             model = cfg.execModel;
