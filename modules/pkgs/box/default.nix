@@ -46,6 +46,8 @@
 
               mkdir $out/fonts
 
+              echo box > $out/hostname
+
               cat <<EOF > $out/hosts
               127.0.0.1 localhost
               ::1 localhost

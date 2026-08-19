@@ -22,7 +22,8 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .stdin
         .take()
         .unwrap()
-        .write_all(b"FROM ubuntu\nRUN useradd -m -s /bin/sh sprrw")
+        // TODO: should this match uid/gid
+        .write_all(b"FROM alpine\nRUN adduser -s /bin/sh -G users -u 1000 -D sprrw\nUSER sprrw")
         .expect("failed to write data to docker build");
     docker_build.wait().expect("docker build failed");
 
@@ -30,6 +31,19 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .iter()
         .map(|a| a.to_string())
         .collect();
+
+    if Command::new("docker")
+        .arg("version")
+        .output()
+        .map(|out| {
+            String::from_utf8_lossy(&out.stdout)
+                .to_lowercase()
+                .contains("podman")
+        })
+        .unwrap_or(false)
+    {
+        docker_args.push("--userns=keep-id".to_string());
+    }
 
     if args.no_network {
         docker_args.extend(["--network".to_string(), "none".to_string()]);
