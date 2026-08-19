@@ -72,6 +72,7 @@
                 findutils
                 gnugrep
                 ripgrep
+                python3
               ];
             };
             terminfo = "${pkgs.foot.terminfo}/share/terminfo";
