@@ -18,24 +18,24 @@ Objective: ${objective}
 
 Choose the next concrete action toward the objective and avoid repeating work that is already done.
 
-Before deciding the goal is achieved, verify against real evidence (files, command output, test results) that every requirement is met. Treat uncertainty as not done. When — and only when — the objective is fully achieved, call CompleteGoal. Do not call CompleteGoal for any other reason.`;
+Before deciding the goal is achieved, verify against real evidence (files, command output, test results) that every requirement is met. Treat uncertainty as not done. When — and only when — the objective is fully achieved, call complete_goal. Do not call complete_goal for any other reason.`;
 }
 
 export default function goalExtension(pi: ExtensionAPI) {
-  // Only load CompleteGoal tool when /goal is used to avoid polluting context
+  // Only load complete_goal tool when /goal is used to avoid polluting context
   // This causes a cache invalidation (increasing token cost), however as i use goal early on its fine.
   function ensureToolRegistered() {
     if (toolRegistered) return;
     toolRegistered = true;
     pi.registerTool({
-      name: "CompleteGoal",
+      name: "complete_goal",
       label: "Complete Goal",
       description:
         "Mark the current active goal complete. Call this only once the goal's objective is fully achieved and verified.",
       promptSnippet: "Mark the current goal complete after verifying the objective is fully achieved",
       promptGuidelines: [
-        "Use CompleteGoal only when the current goal objective is fully achieved and verified against concrete evidence.",
-        "Do not call CompleteGoal to pause, abandon, or stop a goal for any other reason.",
+        "Use complete_goal only when the current goal objective is fully achieved and verified against concrete evidence.",
+        "Do not call complete_goal to pause, abandon, or stop a goal for any other reason.",
       ],
       parameters: Type.Object({}),
       async execute() {

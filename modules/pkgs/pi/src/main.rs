@@ -255,7 +255,7 @@ fn main() {
             DEFAULT_TOOLS.iter().map(|t| t.to_string()).collect()
         })
         .chain(if brave_search {
-            Some("WebSearch".to_string())
+            Some("web_search".to_string())
         } else {
             None
         })

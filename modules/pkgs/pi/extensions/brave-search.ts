@@ -30,12 +30,12 @@ interface SearchDetails {
 
 export default function(pi: ExtensionAPI) {
   pi.registerTool({
-    name: "WebSearch",
+    name: "web_search",
     label: "Brave Search",
     description: `Search the web via Brave Search (the 'bx' CLI). Output is JSON, truncated to ${DEFAULT_MAX_LINES} lines or ${formatSize(
       DEFAULT_MAX_BYTES,
     )} (whichever is hit first); if truncated, full output is saved to a temp file.`,
-    promptSnippet: "Search the web with the WebSearch tool",
+    promptSnippet: "Search the web with the web_search tool",
     parameters: SearchParams,
 
     async execute(_toolCallId, params, signal, _onUpdate, _ctx) {
@@ -54,7 +54,7 @@ export default function(pi: ExtensionAPI) {
         const stderr = typeof err?.stderr === "string" ? err.stderr.trim() : "";
         const msg = stderr || err?.message || "unknown error";
         return {
-          content: [{ type: "text", text: `WebSearch failed: ${msg}` }],
+          content: [{ type: "text", text: `web_search failed: ${msg}` }],
           details: { query: params.query, error: msg } as SearchDetails,
         };
       }
