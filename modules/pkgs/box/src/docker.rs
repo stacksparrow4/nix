@@ -9,7 +9,6 @@ use crate::mount::Mount;
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let container_args = get_container_args(args, volume_mounts);
 
-    // TODO: skip if already built?
     let mut docker_build = Command::new("docker")
         .args(["build", "-f", "-", "-t", "sprrw-sandbox"])
         .stdin(Stdio::piped())
