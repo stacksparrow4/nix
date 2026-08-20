@@ -97,3 +97,9 @@ pub fn exit_code(status: &ExitStatus) -> i32 {
         None => -status.signal().unwrap_or(1),
     }
 }
+
+pub fn get_nix_argument(argname: &str) -> String {
+    std::env::var(argname)
+        .unwrap_or_else(|_| panic!("failed to set mandatory Nix supplied arg {}", argname))
+}
+

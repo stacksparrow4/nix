@@ -1,13 +1,31 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
+use nix::unistd::getuid;
+
 use crate::Cli;
 use crate::common::exit_code;
 use crate::container::get_container_args;
 use crate::mount::Mount;
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
-    let container_args = get_container_args(args, volume_mounts);
+    // apk doesn't work cause no sudo. Wonder how I can get around this while
+    // maintining rootfull/rootless docker portability...
+    let container_args = get_container_args(
+        args,
+        volume_mounts,
+        [
+            "/usr/local/sbin",
+            "/usr/local/bin",
+            "/usr/sbin",
+            "/usr/bin",
+            "/sbin",
+            "/bin",
+        ]
+        .into_iter()
+        .map(|x| x.to_string())
+        .collect(),
+    );
 
     let mut docker_build = Command::new("docker")
         .args(["build", "-f", "-", "-t", "sprrw-sandbox"])
@@ -21,8 +39,13 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .stdin
         .take()
         .unwrap()
-        // TODO: should this match uid/gid
-        .write_all(b"FROM alpine\nRUN adduser -s /bin/sh -G users -u 1000 -D sprrw\nUSER sprrw")
+        .write_all(
+            &format!(
+                "FROM alpine\nRUN adduser -s /bin/sh -G users -u {} -D sprrw\nUSER sprrw",
+                getuid()
+            )
+            .into_bytes(),
+        )
         .expect("failed to write data to docker build");
     docker_build.wait().expect("docker build failed");
 

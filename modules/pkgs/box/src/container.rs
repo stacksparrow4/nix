@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use crate::{
-    common::{Cli, cwd, find_symlinks},
+    common::{Cli, cwd, find_symlinks, get_nix_argument},
     mount::{BOX_CWD, Mount, MountType},
 };
 
@@ -11,12 +11,11 @@ pub struct ContainerArgs {
     pub workdir: String,
 }
 
-fn get_nix_argument(argname: &str) -> String {
-    std::env::var(argname)
-        .unwrap_or_else(|_| panic!("failed to set mandatory Nix supplied arg {}", argname))
-}
-
-pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArgs {
+pub fn get_container_args(
+    args: &Cli,
+    volume_mounts: Vec<Mount>,
+    extra_path: Vec<String>,
+) -> ContainerArgs {
     let mut mounts: Vec<Mount> = if let Ok(hm_files_path) = std::env::var("SPRRW_HOME_FILES") {
         find_symlinks(Path::new(&hm_files_path))
             .iter()
@@ -79,31 +78,6 @@ pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArg
         envvars.push(format!("DISPLAY={}", display));
     }
 
-    mounts.extend([
-        Mount::new(&get_nix_argument("SPRRW_BIN"), "/bin", MountType::Dir, true),
-        Mount::new(&get_nix_argument("SPRRW_ETC"), "/etc", MountType::Dir, true),
-        Mount::new(&get_nix_argument("SPRRW_USR"), "/usr", MountType::Dir, true),
-        // TODO: Make nix-ld work inside the box and fix this
-        // Mount::new(
-        //     &get_nix_argument("SPRRW_LIB64"),
-        //     "/lib64",
-        //     MountType::Dir,
-        //     true,
-        // ),
-    ]);
-
-    if Path::new("/etc/resolv.conf").exists() {
-        mounts.push(Mount::new(
-            "/etc/resolv.conf",
-            "/etc/resolv.conf",
-            MountType::File,
-            true,
-        ));
-    }
-    if Path::new("/etc/fonts").exists() {
-        mounts.push(Mount::new("/etc/fonts", "/etc/fonts", MountType::Dir, true));
-    }
-
     envvars.extend(
         [
             format!(
@@ -130,6 +104,7 @@ pub fn get_container_args(args: &Cli, volume_mounts: Vec<Mount>) -> ContainerArg
                             .ok()
                             .map(|pb| format!("{}/bin", pb.to_string_lossy()))
                     )
+                    .chain(extra_path)
                     .collect::<Vec<String>>()
                     .join(":")
             ),

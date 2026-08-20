@@ -1,12 +1,38 @@
+use std::path::Path;
 use std::process::Command;
 
 use crate::Cli;
-use crate::common::exit_code;
+use crate::common::{exit_code, get_nix_argument};
 use crate::container::get_container_args;
-use crate::mount::Mount;
+use crate::mount::{Mount, MountType};
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
-    let container_args = get_container_args(args, volume_mounts);
+    let mut container_args = get_container_args(args, volume_mounts, vec![]);
+
+    container_args.mounts.extend([
+        Mount::new(&get_nix_argument("SPRRW_BIN"), "/bin", MountType::Dir, true),
+        Mount::new(&get_nix_argument("SPRRW_ETC"), "/etc", MountType::Dir, true),
+        Mount::new(&get_nix_argument("SPRRW_USR"), "/usr", MountType::Dir, true),
+        // TODO: Make nix-ld work inside the box and fix this
+        // Mount::new(
+        //     &get_nix_argument("SPRRW_LIB64"),
+        //     "/lib64",
+        //     MountType::Dir,
+        //     true,
+        // ),
+    ]);
+
+    if Path::new("/etc/resolv.conf").exists() {
+        container_args.mounts.push(Mount::new(
+            "/etc/resolv.conf",
+            "/etc/resolv.conf",
+            MountType::File,
+            true,
+        ));
+    }
+    if Path::new("/etc/fonts").exists() {
+        container_args.mounts.push(Mount::new("/etc/fonts", "/etc/fonts", MountType::Dir, true));
+    }
 
     let mut subprocess_args: Vec<String> = [
         "--unshare-all",
