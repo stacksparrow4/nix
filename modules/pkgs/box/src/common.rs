@@ -59,7 +59,6 @@ pub struct Cli {
     pub exec: Vec<String>,
 }
 
-
 pub fn find_symlinks(path: &Path) -> Vec<String> {
     let mut found = Vec::new();
 
@@ -102,4 +101,3 @@ pub fn get_nix_argument(argname: &str) -> String {
     std::env::var(argname)
         .unwrap_or_else(|_| panic!("failed to set mandatory Nix supplied arg {}", argname))
 }
-

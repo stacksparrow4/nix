@@ -110,7 +110,7 @@
           sharedPaths = [
             {
               hostPath = "$HOME/.nxc";
-              boxPath = "/home/sprrw/.nxc";
+              boxPath = "~/.nxc";
               ro = false;
               type = "dir";
             }

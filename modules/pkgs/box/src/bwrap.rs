@@ -31,7 +31,9 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         ));
     }
     if Path::new("/etc/fonts").exists() {
-        container_args.mounts.push(Mount::new("/etc/fonts", "/etc/fonts", MountType::Dir, true));
+        container_args
+            .mounts
+            .push(Mount::new("/etc/fonts", "/etc/fonts", MountType::Dir, true));
     }
 
     let mut subprocess_args: Vec<String> = [
@@ -59,9 +61,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     }
 
     subprocess_args.push("--chdir".to_string());
-    subprocess_args.push(
-        container_args.workdir
-    );
+    subprocess_args.push(container_args.workdir);
 
     for m in container_args.mounts.iter() {
         subprocess_args.extend(m.to_bwrap_args());

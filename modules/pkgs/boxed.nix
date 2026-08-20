@@ -13,7 +13,7 @@
           sharedPaths = [
             {
               hostPath = "$HOME/.config/brave-search";
-              boxPath = "/home/sprrw/.config/brave-search";
+              boxPath = "~/.config/brave-search";
               ro = false;
               type = "dir";
             }
@@ -184,13 +184,13 @@
             sharedPaths = [
               {
                 hostPath = "${nucleiTemplates}";
-                boxPath = "/home/sprrw/.local/nuclei-templates";
+                boxPath = "~/.local/nuclei-templates";
                 ro = true;
                 type = "dir";
               }
               {
                 hostPath = "$HOME/.config/nuclei";
-                boxPath = "/home/sprrw/.config/nuclei";
+                boxPath = "~/.config/nuclei";
                 ro = false;
                 type = "dir";
               }
@@ -270,7 +270,7 @@
           sharedPaths = [
             {
               hostPath = "$HOME/.mitmproxy";
-              boxPath = "/home/sprrw/.mitmproxy";
+              boxPath = "~/.mitmproxy";
               ro = false;
               type = "dir";
             }

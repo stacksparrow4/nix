@@ -24,7 +24,7 @@
           sharedPaths = [
             {
               hostPath = "$HOME/.mitmproxy";
-              boxPath = "/home/sprrw/.mitmproxy";
+              boxPath = "~/.mitmproxy";
               ro = false;
               type = "dir";
             }

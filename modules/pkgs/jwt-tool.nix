@@ -64,7 +64,7 @@
           sharedPaths = [
             {
               hostPath = "$HOME/.jwt_tool";
-              boxPath = "/home/sprrw/.jwt_tool";
+              boxPath = "~/.jwt_tool";
               ro = false;
               type = "dir";
             }

@@ -64,7 +64,6 @@
                 # Rust
                 cargo
                 rustc
-                rustfmt
                 clippy
                 rust-analyzer
                 # JS

@@ -1,16 +1,16 @@
 mod bwrap;
-mod mount;
 mod common;
-mod vm;
-mod docker;
 mod container;
+mod docker;
+mod mount;
+mod vm;
 
 use std::path::Path;
 use std::process::Command;
 
 use clap::Parser;
-use mount::{Mount, MountType};
 use common::exit_code;
+use mount::{Mount, MountType};
 
 use crate::common::Cli;
 
@@ -30,7 +30,7 @@ fn main() {
     if args.exec.is_empty() {
         args.exec = vec!["bash".to_string()];
     }
-    
+
     if std::env::var("IN_SPRRW_SANDBOX").is_ok() {
         let status = Command::new(&args.exec[0])
             .args(&args.exec[1..])
@@ -45,15 +45,14 @@ fn main() {
     let volume_mounts: Vec<Mount> = args.volumes.iter().map(|v| {
         let components: Vec<&str> = v.split(':').collect();
 
-        Mount {
-            host_path: components[0].to_string(),
-            box_path: components[1].to_string(),
-            mount_type: if let Some(mount_type) = components.get(3) {
+        Mount::new(components[0],
+            components[1],
+            if let Some(mount_type) = components.get(3) {
                 MountType::parse(mount_type).expect("invalid type for the mount {v} : {mount_type}")
             } else {
                 MountType::Unknown
             },
-            ro: if components.len() >= 3 {
+            if components.len() >= 3 {
                 match components[2] {
                     "ro" => true,
                     "rw" => false,
@@ -66,7 +65,7 @@ fn main() {
                 "the mount {v} is missing a box path, expected the form hostpath:boxpath:ro/rw:type"
                 );
             },
-        }
+        )
     }).collect();
 
     for v in volume_mounts.iter() {

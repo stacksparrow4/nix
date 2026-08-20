@@ -1,4 +1,5 @@
 pub const BOX_CWD: &str = "/home/sprrw/box";
+pub const BOX_HOME: &str = "/home/sprrw";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MountType {
@@ -24,15 +25,20 @@ pub struct Mount {
     pub box_path: String,
     pub mount_type: MountType,
     pub ro: bool,
+    _private: (),
 }
 
 impl Mount {
     pub fn new(host_path: &str, box_path: &str, mount_type: MountType, ro: bool) -> Self {
         Self {
             host_path: host_path.to_string(),
-            box_path: box_path.to_string(),
+            box_path: match box_path.strip_prefix("~/") {
+                Some(rest) => format!("{}/{}", BOX_HOME, rest),
+                None => box_path.to_string(),
+            },
             mount_type,
             ro,
+            _private: (),
         }
     }
 
