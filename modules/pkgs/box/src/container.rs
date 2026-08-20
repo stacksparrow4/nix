@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use crate::{
     common::{Cli, cwd, find_symlinks, get_nix_argument},
-    mount::{BOX_CWD, Mount, MountType},
+    mount::{BOX_CWD, BOX_HOME, Mount, MountType},
 };
 
 pub struct ContainerArgs {
@@ -21,7 +21,7 @@ pub fn get_container_args(
             .iter()
             .map(|f| {
                 let relative = f.strip_prefix(&format!("{}/", hm_files_path)).unwrap_or(f);
-                Mount::new(f, &format!("/home/sprrw/{relative}"), MountType::File, true)
+                Mount::new(f, &format!("{}/{}", BOX_HOME, relative), MountType::File, true)
             })
             .collect()
     } else {
@@ -109,7 +109,7 @@ pub fn get_container_args(
                     .join(":")
             ),
             "IN_SPRRW_SANDBOX=1".to_string(),
-            "HOME=/home/sprrw".to_string(),
+            format!("HOME={}", BOX_HOME),
             "COLORTERM=truecolor".to_string(),
             "TEMPDIR=/tmp".to_string(),
             "TMPDIR=/tmp".to_string(),
@@ -139,7 +139,7 @@ pub fn get_container_args(
     let cwd = if args.cwd || args.ro_cwd {
         BOX_CWD
     } else {
-        "/home/sprrw"
+        BOX_HOME
     };
 
     ContainerArgs {

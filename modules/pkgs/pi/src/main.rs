@@ -141,7 +141,7 @@ fn generate_home_volume(host_path: &str, box_path: &str, a: VolAccess, t: VolTyp
                 .to_string_lossy(),
             host_path
         ),
-        &format!("/home/sprrw/{}", box_path),
+        &format!("~/{}", box_path),
         a,
         t,
     )
@@ -383,7 +383,7 @@ fn main() {
                 .expect("Failed to extract SSH port")[1];
 
             let starter = if args.cwd || args.ro_cwd {
-                "'cd /home/sprrw/box &&' "
+                "'cd ~/box &&' "
             } else {
                 ""
             };
@@ -431,7 +431,7 @@ fn main() {
     .chain(all_extensions.into_iter().flat_map(|e| {
         vec![
             "-e".to_string(),
-            format!("/home/sprrw/.pi/agent/extensions/{}", e),
+            format!("~/.pi/agent/extensions/{}", e),
         ]
     }))
     .chain(["--system-prompt".to_string(), system])
@@ -455,19 +455,19 @@ fn main() {
                 generate_pi_mirror_volume("sessions", VolAccess::RW, VolType::Dir),
                 generate_absolute_volume(
                     &std::env::var("SPRRW_SKILLS").unwrap(),
-                    "/home/sprrw/.pi/agent/skills",
+                    "~/.pi/agent/skills",
                     VolAccess::RO,
                     VolType::Dir,
                 ),
                 generate_absolute_volume(
                     &std::env::var("SPRRW_EXTENSIONS").unwrap(),
-                    "/home/sprrw/.pi/agent/extensions",
+                    "~/.pi/agent/extensions",
                     VolAccess::RO,
                     VolType::Dir,
                 ),
                 generate_absolute_volume(
                     &std::env::var("SPRRW_PROMPTS").unwrap(),
-                    "/home/sprrw/.pi/agent/prompts",
+                    "~/.pi/agent/prompts",
                     VolAccess::RO,
                     VolType::Dir,
                 ),

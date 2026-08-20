@@ -4,7 +4,7 @@ use std::process::Command;
 use crate::Cli;
 use crate::common::{exit_code, get_nix_argument};
 use crate::container::get_container_args;
-use crate::mount::{Mount, MountType};
+use crate::mount::{BOX_HOME, Mount, MountType};
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let mut container_args = get_container_args(args, volume_mounts, vec![]);
@@ -47,7 +47,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         "--dev",
         "/dev",
         "--dir",
-        "/home/sprrw",
+        BOX_HOME,
         "--ro-bind",
         "/nix/store",
         "/nix/store",
