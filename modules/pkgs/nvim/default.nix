@@ -66,6 +66,7 @@
                 rustc
                 clippy
                 rust-analyzer
+                rustfmt
                 # JS
                 typescript-language-server
                 # Typst

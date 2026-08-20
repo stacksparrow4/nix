@@ -453,9 +453,24 @@ fn main() {
                 generate_pi_mirror_volume("models-store.json", VolAccess::RW, VolType::File),
                 generate_pi_mirror_volume("models.json", VolAccess::RO, VolType::File),
                 generate_pi_mirror_volume("sessions", VolAccess::RW, VolType::Dir),
-                generate_absolute_volume(&std::env::var("SPRRW_SKILLS").unwrap(), "/home/sprrw/.pi/agent/skills", VolAccess::RO, VolType::Dir),
-                generate_absolute_volume(&std::env::var("SPRRW_EXTENSIONS").unwrap(), "/home/sprrw/.pi/agent/extensions", VolAccess::RO, VolType::Dir),
-                generate_absolute_volume(&std::env::var("SPRRW_PROMPTS").unwrap(), "/home/sprrw/.pi/agent/prompts", VolAccess::RO, VolType::Dir),
+                generate_absolute_volume(
+                    &std::env::var("SPRRW_SKILLS").unwrap(),
+                    "/home/sprrw/.pi/agent/skills",
+                    VolAccess::RO,
+                    VolType::Dir,
+                ),
+                generate_absolute_volume(
+                    &std::env::var("SPRRW_EXTENSIONS").unwrap(),
+                    "/home/sprrw/.pi/agent/extensions",
+                    VolAccess::RO,
+                    VolType::Dir,
+                ),
+                generate_absolute_volume(
+                    &std::env::var("SPRRW_PROMPTS").unwrap(),
+                    "/home/sprrw/.pi/agent/prompts",
+                    VolAccess::RO,
+                    VolType::Dir,
+                ),
             ]
             .into_iter()
             .flat_map(|v| vec!["-v".to_string(), v]),
