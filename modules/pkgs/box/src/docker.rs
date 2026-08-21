@@ -1,7 +1,4 @@
-use std::io::Write;
-use std::process::{Command, Stdio};
-
-use nix::unistd::getuid;
+use std::process::Command;
 
 use crate::Cli;
 use crate::common::exit_code;
@@ -9,8 +6,6 @@ use crate::container::get_container_args;
 use crate::mount::Mount;
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
-    // apk doesn't work cause no sudo. Wonder how I can get around this while
-    // maintining rootfull/rootless docker portability...
     let container_args = get_container_args(
         args,
         volume_mounts,
@@ -27,45 +22,10 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .collect(),
     );
 
-    let mut docker_build = Command::new("docker")
-        .args(["build", "-f", "-", "-t", "sprrw-sandbox"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .expect("failed to spawn docker process");
-
-    docker_build
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(
-            &format!(
-                "FROM alpine\nRUN adduser -s /bin/sh -G users -u {} -D sprrw\nUSER sprrw",
-                getuid()
-            )
-            .into_bytes(),
-        )
-        .expect("failed to write data to docker build");
-    docker_build.wait().expect("docker build failed");
-
     let mut docker_args: Vec<String> = ["--rm", "-it", "-v", "/nix/store:/nix/store:ro"]
         .iter()
         .map(|a| a.to_string())
         .collect();
-
-    if Command::new("docker")
-        .arg("version")
-        .output()
-        .map(|out| {
-            String::from_utf8_lossy(&out.stdout)
-                .to_lowercase()
-                .contains("podman")
-        })
-        .unwrap_or(false)
-    {
-        docker_args.push("--userns=keep-id".to_string());
-    }
 
     if args.no_network {
         docker_args.extend(["--network".to_string(), "none".to_string()]);
@@ -82,7 +42,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         docker_args.extend(["-e".to_string(), e.to_string()]);
     }
 
-    docker_args.push("sprrw-sandbox".to_string());
+    docker_args.push("alpine:latest".to_string());
     docker_args.extend(args.exec.clone());
 
     let mut command = Command::new("docker");

@@ -36,10 +36,16 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
             .push(Mount::new("/etc/fonts", "/etc/fonts", MountType::Dir, true));
     }
 
+    container_args.envvars.push("USER=root".to_string());
+
     let mut subprocess_args: Vec<String> = [
         "--unshare-all",
         "--as-pid-1",
         "--die-with-parent",
+        "--uid",
+        "0",
+        "--gid",
+        "0",
         "--tmpfs",
         "/tmp",
         "--proc",

@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.6.1", features = ["derive"] }
 libc = "0.2"
-nix = { version = "0.31.3", features = ["user"] }
 rand = "0.9"
 shlex = "2.0.1"
 tempfile = "3.27.0"
