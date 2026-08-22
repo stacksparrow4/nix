@@ -6,6 +6,7 @@
       pkgs,
       config,
       lib,
+      inputs',
       ...
     }:
     let
@@ -82,7 +83,7 @@
           ++ (
             with pkgs.vimPlugins;
             [
-              blink-cmp
+              inputs'.blink-cmp.packages.default
               bufferline-nvim
               friendly-snippets
               gitsigns-nvim

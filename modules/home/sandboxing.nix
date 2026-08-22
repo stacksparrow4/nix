@@ -6,13 +6,8 @@
     { pkgs, config, ... }:
     {
       home.packages = [
-        (pkgs.writeShellApplication {
-          name = "box";
-          text = ''
-            SPRRW_ADDITIONAL_PATH="$(readlink /etc/static/hm-package)/home-path/bin:$(readlink /run/current-system/sw)/bin" \
-              ${self'.packages.box}/bin/box "$@"
-          '';
-        })
+        self'.packages.box
+      ] ++ (if pkgs.stdenv.hostPlatform.isLinux then [
         (pkgs.writeShellApplication {
           name = "build-vm";
           text = ''
@@ -50,7 +45,7 @@
             sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password localhost -p "$target"
           '';
         })
-      ];
+      ] else []);
 
       sprrw.term.shellExtra = ''
         alias b='box'

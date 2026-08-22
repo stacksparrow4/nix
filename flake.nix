@@ -17,6 +17,11 @@
     };
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
 
+    blink-cmp = {
+      url = "github:saghen/blink.cmp";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nvim-http-client = {
       url = "github:stacksparrow4/nvim-http-client?ref=main";
       inputs.nixpkgs.follows = "nixpkgs";

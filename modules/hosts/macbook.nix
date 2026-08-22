@@ -37,26 +37,26 @@ in
         }
 
         (
-          { pkgs, ... }:
+          { pkgs, config, ... }:
           {
             home = {
               username = "dan";
               homeDirectory = "/Users/dan";
             };
 
-            programs.ghostty = {
-              enable = true;
-              package = null;
-              settings = {
-                env = "TERMINFO_DIRS=/Users/dan/.terminfo";
-                command = "${pkgs.tmux}/bin/tmux";
-                app-notifications = "no-clipboard-copy";
-                macos-option-as-alt = true;
-              };
-            };
+            # Ghostty
+            # ~/Library/Application Support/com.mitchellh.ghostty/config
+            #
+            # app-notifications = no-clipboard-copy
+            # env = TERMINFO_DIRS=/Users/dan/.terminfo
+            # macos-option-as-alt = true
 
-            home.file.".terminfo".source = "${pkgs.ghostty.terminfo}/share/terminfo"; # Surely Linux terminfo is the same as Mac terminfo?
-              # config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";
+            home.file."Library/Application Support/com.mitchellh.ghostty/config".text = ''
+              command = ${pkgs.tmux}/bin/tmux
+            '';
+
+            home.file.".terminfo".source =
+              config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";
 
             home.packages = with pkgs; [
               sshpass
