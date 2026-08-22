@@ -183,7 +183,7 @@ fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Ch
         })
         .args(sandbox_args)
         .arg("--")
-        .arg(env::current_exe().expect("Failed to locate own executable"))
+        .arg(std::env::var("SPRRW_PI_WRAPPER_LINUX").unwrap())
         .arg("--internal-serve")
         .arg(format!("{}/{}", BRIDGE_DIR, SOCKET_NAME))
         .stdin(Stdio::null())
@@ -428,12 +428,11 @@ fn main() {
     } else {
         vec!["--tools".to_string(), all_tools.join(",")]
     })
-    .chain(all_extensions.into_iter().flat_map(|e| {
-        vec![
-            "-e".to_string(),
-            format!("~/.pi/agent/extensions/{}", e),
-        ]
-    }))
+    .chain(
+        all_extensions
+            .into_iter()
+            .flat_map(|e| vec!["-e".to_string(), format!("~/.pi/agent/extensions/{}", e)]),
+    )
     .chain(["--system-prompt".to_string(), system])
     .chain(
         args.models
