@@ -129,13 +129,11 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
             std::process::exit(1);
         }
 
-        let pid = std::fs::read_to_string(&pidfile_path)
+        std::fs::read_to_string(&pidfile_path)
             .expect("failed to read the qemu pid file")
             .trim()
             .parse::<i32>()
-            .expect("failed to parse the qemu pid");
-
-        pid
+            .expect("failed to parse the qemu pid")
     };
 
     println!("Process id {qemu_pid}");
