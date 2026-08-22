@@ -37,7 +37,7 @@ in
         }
 
         (
-          { pkgs, config, ... }:
+          { pkgs, ... }:
           {
             home = {
               username = "dan";
@@ -55,8 +55,8 @@ in
               };
             };
 
-            home.file.".terminfo".source =
-              config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";
+            home.file.".terminfo".source = "${pkgs.ghostty.terminfo}/share/terminfo"; # Surely Linux terminfo is the same as Mac terminfo?
+              # config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";
 
             home.packages = with pkgs; [
               sshpass
