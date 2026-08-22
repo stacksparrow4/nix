@@ -498,7 +498,8 @@ fn main() {
         .expect("Failed to launch sandboxed pi");
 
     if let Some(mut tool_proc) = tool_proc {
-        let _ = tool_proc.kill();
+        // Use sigterm instead of kill to allow box --docker to cleanup
+        unsafe { libc::kill(tool_proc.id() as i32, libc::SIGTERM) };
         let _ = tool_proc.wait();
     }
 

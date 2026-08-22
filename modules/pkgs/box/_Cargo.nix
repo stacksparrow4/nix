@@ -256,6 +256,10 @@ rec {
             packageId = "shlex";
           }
           {
+            name = "signal-hook";
+            packageId = "signal-hook";
+          }
+          {
             name = "tempfile";
             packageId = "tempfile";
           }
@@ -442,7 +446,7 @@ rec {
           "default" = [ "std" ];
           "std" = [ "libc/std" ];
         };
-        resolvedDefaultFeatures = [ "std" ];
+        resolvedDefaultFeatures = [ "default" "std" ];
       };
       "fastrand" = rec {
         crateName = "fastrand";
@@ -987,6 +991,57 @@ rec {
           "default" = [ "std" ];
         };
         resolvedDefaultFeatures = [ "default" "std" ];
+      };
+      "signal-hook" = rec {
+        crateName = "signal-hook";
+        version = "0.4.4";
+        edition = "2018";
+        sha256 = "0gdm8kmi1mcd30gkxcwagxiqiasq0fhdlvrfsnybv3chln6c585j";
+        libName = "signal_hook";
+        authors = [
+          "Michal 'vorner' Vaner <vorner@vorner.cz>"
+          "Thomas Himmelstoss <thimm@posteo.de>"
+        ];
+        dependencies = [
+          {
+            name = "libc";
+            packageId = "libc";
+          }
+          {
+            name = "signal-hook-registry";
+            packageId = "signal-hook-registry";
+          }
+        ];
+        features = {
+          "cc" = [ "dep:cc" ];
+          "default" = [ "channel" "iterator" ];
+          "extended-siginfo" = [ "channel" "iterator" "extended-siginfo-raw" ];
+          "extended-siginfo-raw" = [ "cc" ];
+          "iterator" = [ "channel" ];
+        };
+        resolvedDefaultFeatures = [ "channel" "default" "iterator" ];
+      };
+      "signal-hook-registry" = rec {
+        crateName = "signal-hook-registry";
+        version = "1.4.8";
+        edition = "2015";
+        sha256 = "06vc7pmnki6lmxar3z31gkyg9cw7py5x9g7px70gy2hil75nkny4";
+        libName = "signal_hook_registry";
+        authors = [
+          "Michal 'vorner' Vaner <vorner@vorner.cz>"
+          "Masaki Hara <ackie.h.gmai@gmail.com>"
+        ];
+        dependencies = [
+          {
+            name = "errno";
+            packageId = "errno";
+          }
+          {
+            name = "libc";
+            packageId = "libc";
+          }
+        ];
+
       };
       "strsim" = rec {
         crateName = "strsim";

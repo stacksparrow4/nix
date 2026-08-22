@@ -242,8 +242,6 @@ fn bind_socket(path: &Path) -> UnixListener {
     listener
 }
 
-/// Serve commands that are executed by substituting them into `template` on this host. The returned
-/// directory holds the socket and must be kept alive for as long as the bridge is needed.
 pub fn start_remote_server(template: &str) -> TempDir {
     let dir = tempdir().expect("Failed to create temporary remote dir");
     let socket_path = dir.path().join(SOCKET_NAME);
@@ -255,8 +253,6 @@ pub fn start_remote_server(template: &str) -> TempDir {
     dir
 }
 
-/// Serve commands that are executed directly by this process. Used by --internal-serve, which runs
-/// inside the tool sandbox so that tool calls never touch the host.
 pub fn serve_local(socket_path: &str) -> ! {
     let path = Path::new(socket_path);
     let _ = fs::remove_file(path);

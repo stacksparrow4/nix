@@ -1,5 +1,10 @@
 use std::io::IsTerminal;
 use std::process::Command;
+use std::thread;
+
+use libc::SIGTERM;
+use rand::distr::{Alphanumeric, SampleString};
+use signal_hook::iterator::Signals;
 
 use crate::Cli;
 use crate::common::exit_code;
@@ -27,6 +32,9 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .iter()
         .map(|a| a.to_string())
         .collect();
+
+    let container_name = Alphanumeric.sample_string(&mut rand::rng(), 8);
+    docker_args.extend(["--name".to_string(), container_name.clone()]);
 
     if std::io::stdin().is_terminal() {
         docker_args.push("-t".to_string());
@@ -64,6 +72,20 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
             std::process::exit(1);
         }
     };
+
+    thread::spawn(move || {
+        let mut signals = Signals::new([SIGTERM]).unwrap();
+
+        for _ in signals.forever() {
+            Command::new("docker")
+                .arg("kill")
+                .arg(&container_name)
+                .spawn()
+                .expect("failed to run docker kill")
+                .wait()
+                .expect("failed to wait on docker kill");
+        }
+    });
 
     match child.wait() {
         Ok(status) => std::process::exit(exit_code(&status)),
