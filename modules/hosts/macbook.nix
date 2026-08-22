@@ -53,10 +53,10 @@ in
             #
             # app-notifications = no-clipboard-copy
             # env = TERMINFO_DIRS=/Users/dan/.terminfo
-            # macos-option-as-alt = true
 
             home.file."Library/Application Support/com.mitchellh.ghostty/config".text = ''
               command = ${pkgs.tmux}/bin/tmux
+              macos-option-as-alt = true
             '';
 
             home.file.".terminfo".source =
