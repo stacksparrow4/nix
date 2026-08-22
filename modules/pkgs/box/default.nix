@@ -78,6 +78,7 @@
                 gnugrep
                 ripgrep
                 python3
+                brave-search-cli
               ];
             };
           in
@@ -88,7 +89,7 @@
               --set SPRRW_BIN ${bin} \
               --set SPRRW_ETC ${etc} \
               --set SPRRW_USR ${usr} \
-              '' else "\\"}
+              '' else ""} \
               --set SPRRW_PATH ${packages}/bin \
               --set SPRRW_TERMINFO ${terminfo}
           '';
