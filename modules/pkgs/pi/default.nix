@@ -3,13 +3,11 @@
     {
       pkgs,
       pkgs-unstable,
-      lib,
       config,
       ...
     }:
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        pi =
+      packages.pi =
           let
             pi = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
           in
@@ -27,6 +25,5 @@
               ${pi}/bin/pi "$@"
             '';
           };
-      };
     };
 }

@@ -1,3 +1,4 @@
+use std::io::IsTerminal;
 use std::process::Command;
 
 use crate::Cli;
@@ -22,10 +23,14 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .collect(),
     );
 
-    let mut docker_args: Vec<String> = ["--rm", "-it", "-v", "/nix/store:/nix/store:ro"]
+    let mut docker_args: Vec<String> = ["--rm", "-i", "-v", "/nix/store:/nix/store:ro"]
         .iter()
         .map(|a| a.to_string())
         .collect();
+
+    if std::io::stdin().is_terminal() {
+        docker_args.push("-t".to_string());
+    }
 
     if args.no_network {
         docker_args.extend(["--network".to_string(), "none".to_string()]);

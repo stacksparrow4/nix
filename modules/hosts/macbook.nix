@@ -20,6 +20,7 @@ in
             general
             sprrw-cli
             nvim
+            sandbox
 
             term-aliases
             term-bash
@@ -44,8 +45,7 @@ in
               homeDirectory = "/Users/dan";
             };
 
-            # Ghostty
-            # ~/Library/Application Support/com.mitchellh.ghostty/config
+            # Ghostty settings I'm not sure I need
             #
             # app-notifications = no-clipboard-copy
             # env = TERMINFO_DIRS=/Users/dan/.terminfo
