@@ -1,48 +1,40 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::{self, ErrorKind};
 use std::path::PathBuf;
 
 use serde::Deserialize;
+use thiserror::Error;
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "kebab-case", deny_unknown_fields)]
 pub struct FileConfig {
-    #[serde(alias = "build_flake")]
     pub build_flake: Option<PathBuf>,
-
-    #[serde(alias = "update_flakes")]
     pub update_flakes: Option<Vec<PathBuf>>,
-
-    #[serde(alias = "override_inputs", alias = "overrideInputs")]
     pub override_inputs: Option<BTreeMap<String, String>>,
 }
 
+#[derive(Error, Debug)]
+pub enum ConfigLoadError {
+    #[error("failed to read config file: {0}")]
+    FailedRead(#[from] io::Error),
+
+    #[error("failed to parse config file: {0}")]
+    FailedParse(#[from] serde_json::Error),
+}
+
 impl FileConfig {
-    pub fn path() -> Option<PathBuf> {
-        if let Some(dir) = std::env::var_os("XDG_CONFIG_HOME")
-            && !dir.is_empty()
-        {
-            return Some(PathBuf::from(dir).join("sprrw.json"));
+    pub fn load() -> Result<Self, ConfigLoadError> {
+        let path = PathBuf::from(std::env::var_os("HOME").expect("HOME env var not set"))
+            .join(".config")
+            .join("sprrw.json");
+
+        match std::fs::read_to_string(&path) {
+            Ok(contents) => serde_json::from_str(&contents).map_err(ConfigLoadError::FailedParse),
+            Err(e) => match e.kind() {
+                ErrorKind::NotFound => Ok(Self::default()),
+                _ => Err(ConfigLoadError::FailedRead(e)),
+            },
         }
-
-        let home = std::env::var_os("HOME")?;
-        Some(PathBuf::from(home).join(".config").join("sprrw.json"))
-    }
-
-    pub fn load() -> Result<Self, String> {
-        let Some(path) = Self::path() else {
-            return Ok(Self::default());
-        };
-
-        let contents = match std::fs::read_to_string(&path) {
-            Ok(contents) => contents,
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-                return Ok(Self::default());
-            }
-            Err(err) => return Err(format!("failed to read {}: {err}", path.display())),
-        };
-
-        serde_json::from_str(&contents)
-            .map_err(|err| format!("failed to parse {}: {err}", path.display()))
     }
 }
 
@@ -54,58 +46,38 @@ pub struct Config {
     pub override_inputs: BTreeMap<String, String>,
 }
 
-/// Parse a `NAME=VALUE` flake input override from the command line.
-pub fn parse_override_input(raw: &str) -> Result<(String, String), String> {
-    let (name, value) = raw
-        .split_once('=')
-        .ok_or_else(|| format!("invalid input override `{raw}`, expected NAME=VALUE"))?;
-
-    if name.is_empty() {
-        return Err(format!(
-            "invalid input override `{raw}`, input name is empty"
-        ));
-    }
-
-    if value.is_empty() {
-        return Err(format!("invalid input override `{raw}`, value is empty"));
-    }
-
-    Ok((name.to_string(), value.to_string()))
-}
-
-/// Extract the local path from a `git+file://` flake reference, if it is one.
-fn local_git_flake_path(value: &str) -> Option<PathBuf> {
-    let rest = value.strip_prefix("git+file://")?;
-    let rest = rest.split(['?', '#']).next().unwrap_or(rest);
-
-    if rest.is_empty() {
-        return None;
-    }
-
-    Some(PathBuf::from(rest))
+fn get_flake_uri_path(value: &str) -> Option<PathBuf> {
+    Some(PathBuf::from(
+        value
+            .strip_prefix("git+file://")?
+            .split(['?', '#'])
+            .next()
+            .unwrap(),
+    ))
 }
 
 impl Config {
-    pub fn resolve(
+    pub fn load(
         cli_build_flake: Option<PathBuf>,
         cli_update_flakes: Vec<PathBuf>,
         cli_override_inputs: Vec<(String, String)>,
-        file: FileConfig,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, ConfigLoadError> {
+        let file = FileConfig::load()?;
+
         let mut override_inputs = file.override_inputs.unwrap_or_default();
         override_inputs.extend(cli_override_inputs);
 
-        let default_flake = format!("{}/nixos", std::env::var("HOME").unwrap());
+        let default_flake =
+            PathBuf::from(std::env::var_os("HOME").expect("HOME env var not set")).join("nixos");
 
         let build_flake = cli_build_flake
             .or(file.build_flake)
-            .unwrap_or_else(|| PathBuf::from(&default_flake));
+            .unwrap_or_else(|| default_flake.clone());
+
         let update_flakes = if !cli_update_flakes.is_empty() {
             cli_update_flakes
         } else {
-            file.update_flakes
-                .filter(|flakes| !flakes.is_empty())
-                .unwrap_or_else(|| vec![PathBuf::from(&default_flake)])
+            file.update_flakes.unwrap_or_else(|| vec![default_flake])
         };
 
         let add_flakes: BTreeSet<PathBuf> = std::iter::once(build_flake.clone())
@@ -113,17 +85,15 @@ impl Config {
             .chain(
                 override_inputs
                     .values()
-                    .filter_map(|value| local_git_flake_path(value)),
+                    .filter_map(|value| get_flake_uri_path(value)),
             )
             .collect();
 
-        let config = Self {
+        Ok(Self {
             override_inputs,
             build_flake,
             update_flakes,
             add_flakes,
-        };
-
-        Ok(config)
+        })
     }
 }

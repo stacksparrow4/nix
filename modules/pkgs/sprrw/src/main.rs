@@ -1,21 +1,30 @@
 mod config;
 
-use std::path::{Path, PathBuf};
+use std::iter;
+use std::path::PathBuf;
 use std::process::Command;
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clap_complete::Shell;
 
-use config::{Config, FileConfig, parse_override_input};
+use config::Config;
+use thiserror::Error;
 
-const PROFILE_DIR: &str = "/nix/var/nix/profiles";
+#[derive(Error, Debug)]
+enum ParseOverrideInputError {
+    #[error("expected format NAME=VALUE")]
+    InvalidFormat,
+}
+
+fn parse_override_input(raw: &str) -> Result<(String, String), ParseOverrideInputError> {
+    let (name, value) = raw
+        .split_once('=')
+        .ok_or(ParseOverrideInputError::InvalidFormat)?;
+    Ok((name.to_string(), value.to_string()))
+}
 
 #[derive(Parser, Debug)]
-#[command(
-    name = "sprrw",
-    about = "Build and update the sprrw nix flakes",
-    version
-)]
+#[command(name = "sprrw")]
 struct Cli {
     /// Absolute path to the flake to build and switch to
     #[arg(long, global = true, value_name = "PATH")]
@@ -26,12 +35,7 @@ struct Cli {
     update_flakes: Vec<PathBuf>,
 
     /// Override a flake input as NAME=VALUE (repeatable)
-    #[arg(
-        long = "override-input",
-        global = true,
-        value_name = "NAME=VALUE",
-        value_parser = parse_override_input
-    )]
+    #[arg(long = "override-input", global = true, value_name = "NAME=VALUE", value_parser=parse_override_input)]
     override_inputs: Vec<(String, String)>,
 
     #[command(subcommand)]
@@ -53,76 +57,107 @@ enum Cmd {
 fn main() {
     let cli = Cli::parse();
 
-    if let Err(err) = run(cli) {
-        eprintln!("sprrw: {err}");
-        std::process::exit(1);
+    match Config::load(cli.build_flake, cli.update_flakes, cli.override_inputs) {
+        Ok(config) => match cli.command {
+            Cmd::Build => build(&config),
+            Cmd::Update => {
+                update(&config);
+                build(&config);
+            }
+            Cmd::Deploy => deploy(),
+            Cmd::Completions { shell } => {
+                let mut cmd = Cli::command();
+                let name = cmd.get_name().to_string();
+                clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
+            }
+        },
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
     }
 }
 
-fn run(cli: Cli) -> Result<(), String> {
-    let file = FileConfig::load()?;
-    let config = Config::resolve(
-        cli.build_flake,
-        cli.update_flakes,
-        cli.override_inputs,
-        file,
-    )?;
+fn run_cmd(cmd: &mut Command) {
+    let str_cmd = iter::once(cmd.get_program().to_string_lossy())
+        .chain(cmd.get_args().map(|x| x.to_string_lossy()))
+        .collect::<Vec<std::borrow::Cow<str>>>()
+        .join(" ");
 
-    match cli.command {
-        Cmd::Build => build(&config),
-        Cmd::Update => {
-            update(&config)?;
-            build(&config)
-        }
-        Cmd::Deploy => {
-            run_cmd(Command::new("git").args(["add", "-A"]))?;
+    println!("\x1b[32m:: {}\x1b[0m", str_cmd);
 
-            if !Command::new("nix")
-                .args([
-                    "run",
-                    ".#deploy-rs",
-                    "--",
-                    ".",
-                    "--",
-                    "--option",
-                    "warn-dirty",
-                    "false",
-                    "--print-build-logs",
-                    "--show-trace",
-                ])
-                .status()
-                .expect("failed to execute nix run")
-                .success()
-            {
-                println!("Failed to execute nix run .#deploy-rs.");
-                println!("Maybe deploy-rs is not a flake output? Here is how to add it with dendritic nix:");
-                println!();
-                println!("flake.packages = builtins.mapAttrs (system: pkgs: {{");
-                println!("  deploy-rs = pkgs.deploy-rs;");
-                println!("}}) inputs.nixpkgs.legacyPackages;");
+    match cmd.status() {
+        Ok(status) => {
+            if !status.success() {
+                eprintln!(
+                    "'{}' - exited with nonzero code {}",
+                    cmd.get_program().to_string_lossy(),
+                    status
+                );
                 std::process::exit(1);
-            };
-
-            Ok(())
+            }
         }
-        Cmd::Completions { shell } => {
-            let mut cmd = Cli::command();
-            let name = cmd.get_name().to_string();
-            clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
-            Ok(())
+        Err(e) => {
+            eprintln!(
+                "failed to run command {} - {}",
+                cmd.get_program().to_string_lossy(),
+                e
+            );
+            std::process::exit(1);
         }
     }
 }
 
-fn build(config: &Config) -> Result<(), String> {
-    for flake in &config.add_flakes {
-        println!(":: git add -A in {}", flake.display());
-        run_cmd(Command::new("git").arg("-C").arg(flake).args(["add", "-A"]))?;
+fn append_override_inputs(cmd: &mut Command, config: &Config) {
+    for (name, value) in &config.override_inputs {
+        cmd.arg("--override-input").arg(name).arg(value);
+    }
+}
+
+fn diff_last_system_closures() {
+    let mut generations: Vec<(u64, PathBuf)> = std::fs::read_dir("/nix/var/nix/profiles")
+        .expect("failed to read profile directory")
+        .filter_map(|entry| {
+            let path = entry.ok()?.path();
+            let generation = path
+                .file_name()?
+                .to_str()?
+                .strip_prefix("system-")?
+                .strip_suffix("-link")?
+                .parse()
+                .ok()?;
+            Some((generation, path))
+        })
+        .collect();
+
+    generations.sort_by_key(|(generation, _)| *generation);
+
+    if generations.len() < 2 {
+        return;
     }
 
-    println!(":: switching to {}", config.build_flake.display());
-    for (name, value) in &config.override_inputs {
-        println!("   override input {name} = {value}");
+    let previous = &generations[generations.len() - 2].1;
+    let current = &generations[generations.len() - 1].1;
+
+    run_cmd(
+        Command::new("nix")
+            .args(["store", "diff-closures"])
+            .arg(previous)
+            .arg(current),
+    )
+}
+
+fn trim_profiles() {
+    run_cmd(
+        Command::new("sudo")
+            .args(["nix-env", "--delete-generations", "+2", "--profile"])
+            .arg("/nix/var/nix/profiles/system"),
+    );
+}
+
+fn build(config: &Config) {
+    for flake in &config.add_flakes {
+        run_cmd(Command::new("git").arg("-C").arg(flake).args(["add", "-A"]));
     }
 
     if cfg!(target_os = "macos") {
@@ -132,7 +167,7 @@ fn build(config: &Config) -> Result<(), String> {
             .arg("--flake")
             .arg(&config.build_flake);
         append_override_inputs(&mut cmd, config);
-        run_cmd(&mut cmd)?;
+        run_cmd(&mut cmd);
     } else {
         let mut cmd = Command::new("nixos-rebuild");
         cmd.current_dir(&config.build_flake)
@@ -147,23 +182,47 @@ fn build(config: &Config) -> Result<(), String> {
                 "--print-build-logs",
             ]);
         append_override_inputs(&mut cmd, config);
-        run_cmd(&mut cmd)?;
+        run_cmd(&mut cmd);
 
-        diff_last_system_closures()?;
-    }
-
-    trim_history()
-}
-
-fn append_override_inputs(cmd: &mut Command, config: &Config) {
-    for (name, value) in &config.override_inputs {
-        cmd.arg("--override-input").arg(name).arg(value);
+        diff_last_system_closures();
+        trim_profiles();
     }
 }
 
-fn update(config: &Config) -> Result<(), String> {
+fn deploy() {
+    run_cmd(Command::new("git").args(["add", "-A"]));
+
+    if !Command::new("nix")
+        .args([
+            "run",
+            ".#deploy-rs",
+            "--",
+            ".",
+            "--",
+            "--option",
+            "warn-dirty",
+            "false",
+            "--print-build-logs",
+            "--show-trace",
+        ])
+        .status()
+        .expect("failed to execute nix run")
+        .success()
+    {
+        println!("Failed to execute nix run .#deploy-rs.");
+        println!(
+            "Maybe deploy-rs is not a flake output? Here is how to add it with dendritic nix:"
+        );
+        println!();
+        println!("flake.packages = builtins.mapAttrs (system: pkgs: {{");
+        println!("  deploy-rs = pkgs.deploy-rs;");
+        println!("}}) inputs.nixpkgs.legacyPackages;");
+        std::process::exit(1);
+    };
+}
+
+fn update(config: &Config) {
     for update_flake in &config.update_flakes {
-        println!(":: nix flake update in {}", update_flake.display());
         run_cmd(
             Command::new("nix")
                 .current_dir(update_flake)
@@ -171,97 +230,6 @@ fn update(config: &Config) -> Result<(), String> {
                 .arg("update")
                 .arg("--flake")
                 .arg(update_flake),
-        )?;
+        );
     }
-
-    Ok(())
-}
-
-fn trim_history() -> Result<(), String> {
-    let home = std::env::var_os("HOME").ok_or("HOME is not set")?;
-    let home = PathBuf::from(home);
-    let hm_profile = home.join(".local/state/nix/profiles/home-manager");
-
-    if cfg!(target_os = "macos") {
-        println!(":: trimming {}", hm_profile.display());
-        return trim_profile(&hm_profile, false);
-    }
-
-    for profile in [
-        PathBuf::from(PROFILE_DIR).join("system"),
-        hm_profile,
-        home.join(".local/state/nix/profiles/profile"),
-    ] {
-        println!(":: trimming {}", profile.display());
-        trim_profile(&profile, true)?;
-    }
-
-    Ok(())
-}
-
-fn trim_profile(profile: &Path, sudo: bool) -> Result<(), String> {
-    if !profile.exists() {
-        println!("   (skipping, does not exist)");
-        return Ok(());
-    }
-
-    let mut cmd = if sudo {
-        let mut cmd = Command::new("sudo");
-        cmd.arg("nix-env");
-        cmd
-    } else {
-        Command::new("nix-env")
-    };
-
-    cmd.args(["--delete-generations", "+2", "--profile"])
-        .arg(profile);
-
-    run_cmd(&mut cmd)
-}
-
-fn diff_last_system_closures() -> Result<(), String> {
-    let mut generations: Vec<(u64, PathBuf)> = std::fs::read_dir(PROFILE_DIR)
-        .map_err(|err| format!("failed to read {PROFILE_DIR}: {err}"))?
-        .filter_map(|entry| {
-            let path = entry.ok()?.path();
-            let name = path.file_name()?.to_str()?;
-            let generation = name.strip_prefix("system-")?.strip_suffix("-link")?;
-            Some((generation.parse().ok()?, path))
-        })
-        .collect();
-
-    generations.sort_by_key(|(generation, _)| *generation);
-
-    if generations.len() < 2 {
-        return Ok(());
-    }
-
-    let previous = &generations[generations.len() - 2].1;
-    let current = &generations[generations.len() - 1].1;
-
-    println!(":: closure diff");
-    run_cmd(
-        Command::new("nix")
-            .args(["store", "diff-closures"])
-            .arg(previous)
-            .arg(current),
-    )
-}
-
-fn run_cmd(cmd: &mut Command) -> Result<(), String> {
-    let status = cmd.status().map_err(|err| {
-        format!(
-            "failed to run {}: {err}",
-            cmd.get_program().to_string_lossy()
-        )
-    })?;
-
-    if !status.success() {
-        return Err(format!(
-            "{} exited with {status}",
-            cmd.get_program().to_string_lossy()
-        ));
-    }
-
-    Ok(())
 }
