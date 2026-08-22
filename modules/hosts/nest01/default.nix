@@ -112,6 +112,10 @@ in
             };
           };
 
+        nix.extraOptions = ''
+          builders = ssh-ng://root@stacksparrow4 aarch64-linux
+        '';
+
         programs.steam = {
           enable = true;
         };

@@ -44,10 +44,10 @@ enum Cmd {
     Build,
     /// Update the update flake's inputs, then build
     Update,
+    /// Deploy a flake using deploy-rs
+    Deploy,
     /// Print shell completions
-    Completions {
-        shell: Shell,
-    },
+    Completions { shell: Shell },
 }
 
 fn main() {
@@ -73,6 +73,37 @@ fn run(cli: Cli) -> Result<(), String> {
         Cmd::Update => {
             update(&config)?;
             build(&config)
+        }
+        Cmd::Deploy => {
+            run_cmd(Command::new("git").args(["add", "-A"]))?;
+
+            if !Command::new("nix")
+                .args([
+                    "run",
+                    ".#deploy-rs",
+                    "--",
+                    ".",
+                    "--",
+                    "--option",
+                    "warn-dirty",
+                    "false",
+                    "--print-build-logs",
+                    "--show-trace",
+                ])
+                .status()
+                .expect("failed to execute nix run")
+                .success()
+            {
+                println!("Failed to execute nix run .#deploy-rs.");
+                println!("Maybe deploy-rs is not a flake output? Here is how to add it with dendritic nix:");
+                println!();
+                println!("flake.packages = builtins.mapAttrs (system: pkgs: {{");
+                println!("  deploy-rs = pkgs.deploy-rs;");
+                println!("}}) inputs.nixpkgs.legacyPackages;");
+                std::process::exit(1);
+            };
+
+            Ok(())
         }
         Cmd::Completions { shell } => {
             let mut cmd = Cli::command();

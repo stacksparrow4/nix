@@ -41,7 +41,6 @@
             ${openssh}/bin/ssh -o WarnWeakCrypto=no "$@"
           '';
         })
-        deploy-rs
         age
         ssh-to-age
         sops
