@@ -15,37 +15,34 @@ in
     inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       modules = [
-        {
-          imports = with homeModules; [
-            base
-            general
-            sprrw-cli
-            nvim
-            sandbox
-
-            ai-pi
-
-            term-aliases
-            term-bash
-            term-zshrc
-            term-yazi
-            term-tmux
-
-            programming-git
-            programming-rust
-          ];
-
-          sprrw = {
-            term.tmux.defaultTerm = "xterm-ghostty";
-            # https://aistudio.google.com/app/api-keys
-            ai.pi.execModel = "gemini-3.6-flash";
-          };
-        }
-
         (moduleWithSystem (
           { self', ... }:
           { pkgs, config, ... }:
           {
+            imports = with homeModules; [
+              base
+              general
+              nvim
+              sandbox
+
+              ai-pi
+
+              term-aliases
+              term-bash
+              term-zshrc
+              term-yazi
+              term-tmux
+
+              programming-git
+              programming-rust
+            ];
+
+            sprrw = {
+              term.tmux.defaultTerm = "xterm-ghostty";
+              # https://aistudio.google.com/app/api-keys
+              ai.pi.execModel = "gemini-3.6-flash";
+            };
+
             home = {
               username = "dan";
               homeDirectory = "/Users/dan";
@@ -64,12 +61,16 @@ in
             home.file.".terminfo".source =
               config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";
 
-            home.packages = with pkgs; [
-              sshpass
-              shtris
-
-              self'.packages.start-linux-builder
-            ];
+            home.packages =
+              with pkgs;
+              [
+                sshpass
+                shtris
+              ]
+              ++ (with self'.packages; [
+                start-linux-builder
+                sprrw
+              ]);
 
             home.sessionVariables = {
               NIX_PATH = "nixpkgs=${inputs.nixpkgs}:nixpkgs-unstable=${inputs.nixpkgs-unstable}";

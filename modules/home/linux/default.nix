@@ -7,7 +7,6 @@
       linux-rofi
       linux-sway
       linux-term
-      linux-yubikey
 
       (
         { pkgs, config, ... }:

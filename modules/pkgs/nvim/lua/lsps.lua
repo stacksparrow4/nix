@@ -1,6 +1,14 @@
 vim.lsp.config.clangd = {}
 vim.lsp.enable("clangd")
-vim.lsp.config.nixd = {}
+vim.lsp.config.nixd = {
+  settings = {
+    nixd = {
+      nixpkgs = {
+        expr = "import <nixpkgs> { }",
+      },
+    },
+  },
+}
 vim.lsp.enable("nixd")
 vim.lsp.config.basedpyright = {}
 vim.lsp.enable("basedpyright")

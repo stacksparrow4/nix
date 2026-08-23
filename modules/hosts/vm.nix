@@ -34,7 +34,6 @@ in
               general
               general-linux
               misc
-              sprrw-cli
 
               term
               term-yazi-linux
