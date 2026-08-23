@@ -391,7 +391,7 @@ fn main() {
             (
                 Some(proc),
                 Some(format!(
-                    "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {ssh_port} localhost 'exec 0</dev/null;' {starter}<CMD>"
+                    "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -p {ssh_port} localhost 'exec 0</dev/null;' {starter}<CMD>"
                 )),
             )
         }

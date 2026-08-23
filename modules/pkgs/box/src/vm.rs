@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use crate::Cli;
 use crate::common::{cwd, exit_code};
-use crate::mount::{BOX_CWD, Mount, MountType, build_stage_script, quote};
+use crate::mount::{BOX_VM_CWD, Mount, MountType, build_stage_script, quote};
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     for v in &volume_mounts {
@@ -22,11 +22,11 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let mut mounts = volume_mounts;
 
     if args.cwd {
-        mounts.push(Mount::new(&cwd(), BOX_CWD, MountType::Dir, false));
+        mounts.push(Mount::new(&cwd(), BOX_VM_CWD, MountType::Dir, false));
     }
 
     if args.ro_cwd {
-        mounts.push(Mount::new(&cwd(), BOX_CWD, MountType::Dir, true));
+        mounts.push(Mount::new(&cwd(), BOX_VM_CWD, MountType::Dir, true));
     }
 
     let ro_git = args.ro_git && Path::new("./.git").exists();
@@ -41,7 +41,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     println!("Forwarding SSH to port {open_port}");
     println!("Enter the VM yourself with:");
     println!(
-        "sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p {open_port} localhost"
+        "sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -p {open_port} localhost"
     );
 
     let stage = tempfile::Builder::new()
@@ -172,6 +172,8 @@ fn enter_vm(args: &Cli, mounts: &[Mount], open_port: u16) -> Result<i32, String>
         "StrictHostKeyChecking=no",
         "-o",
         "UserKnownHostsFile=/dev/null",
+        "-o",
+        "LogLevel=ERROR",
         "localhost",
         "-p",
         &open_port.to_string(),
@@ -189,7 +191,7 @@ fn enter_vm(args: &Cli, mounts: &[Mount], open_port: u16) -> Result<i32, String>
         ));
     }
     if args.cwd || args.ro_cwd {
-        startup_lines.push(format!("cd {BOX_CWD}"));
+        startup_lines.push(format!("cd {}", BOX_VM_CWD));
     }
     startup_lines.push(
         args.exec

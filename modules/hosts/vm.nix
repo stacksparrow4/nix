@@ -17,48 +17,44 @@ in
       modules = [
         inputs.home-manager.nixosModules.home-manager
 
-        {
-          imports = with nixosModules; [
-            base
-            locale
-            nix-config
-            users
-            virt
-          ];
-        }
-
-        {
-          home-manager.users.sprrw = {
-            imports = with homeModules; [
-              base
-              general
-              general-linux
-              misc
-
-              term
-              term-yazi-linux
-              linux-term
-              nvim
-
-              programming
-              sec
-              ai
-
-              sandbox
-            ];
-
-            home = {
-              username = "sprrw";
-              homeDirectory = "/home/sprrw";
-
-              file."nixos".source = ../../.;
-            };
-          };
-        }
-
         (
           { lib, ... }:
           {
+            imports = with nixosModules; [
+              base
+              locale
+              nix-config
+              users
+              virt
+            ];
+
+            home-manager.users.sprrw = {
+              imports = with homeModules; [
+                base
+                general
+                general-linux
+                misc
+
+                term
+                term-yazi-linux
+                linux-term
+                nvim
+
+                programming
+                sec
+                ai
+
+                sandbox
+              ];
+
+              home = {
+                username = "sprrw";
+                homeDirectory = "/home/sprrw";
+
+                file."nixos".source = ../../.;
+              };
+            };
+
             image.modules.iso.isoImage.squashfsCompression = null;
 
             boot.loader.timeout = lib.mkForce 1;

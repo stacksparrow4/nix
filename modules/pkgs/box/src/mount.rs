@@ -1,4 +1,5 @@
 pub const BOX_CWD: &str = "/root/box";
+pub const BOX_VM_CWD: &str = "/home/sprrw/box";
 pub const BOX_HOME: &str = "/root";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
