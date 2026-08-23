@@ -16,7 +16,7 @@ in
 
       (moduleWithSystem (
         { self', ... }:
-        { lib, ... }:
+        { lib, config, ... }:
         {
           imports = with nixosModules; [
             ./_hardware-configuration.nix

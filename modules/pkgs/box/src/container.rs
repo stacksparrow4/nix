@@ -21,7 +21,12 @@ pub fn get_container_args(
             .iter()
             .map(|f| {
                 let relative = f.strip_prefix(&format!("{}/", hm_files_path)).unwrap_or(f);
-                Mount::new(f, &format!("{}/{}", BOX_HOME, relative), MountType::File, true)
+                Mount::new(
+                    f,
+                    &format!("{}/{}", BOX_HOME, relative),
+                    MountType::File,
+                    true,
+                )
             })
             .collect()
     } else {
@@ -30,6 +35,15 @@ pub fn get_container_args(
     let mut envvars: Vec<String> = args.env_vars.clone();
 
     mounts.extend(volume_mounts);
+
+    if Path::new("/nix/var/nix/db").exists() {
+        mounts.push(Mount::new(
+            "/nix/var/nix/db",
+            "/nix/var/nix/db",
+            MountType::Dir,
+            true,
+        ));
+    }
 
     if args.cwd {
         mounts.push(Mount::new(&cwd(), BOX_CWD, MountType::Dir, false));
@@ -109,6 +123,8 @@ pub fn get_container_args(
                     .join(":")
             ),
             "IN_SPRRW_SANDBOX=1".to_string(),
+            "NIX_REMOTE=local?read-only=true".to_string(),
+            "NIX_CONFIG=extra-experimental-features = read-only-local-store".to_string(),
             format!("HOME={}", BOX_HOME),
             "COLORTERM=truecolor".to_string(),
             "TEMPDIR=/tmp".to_string(),
