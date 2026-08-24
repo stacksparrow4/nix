@@ -174,6 +174,7 @@ fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Ch
     let dir = tempdir().expect("Failed to create temporary bridge dir");
 
     let mut proc = Command::new("box")
+        .arg("--docker") // Use docker to be able to install tools
         .arg("-v")
         .arg(format!("{}:{}:rw:dir", dir.path().display(), BRIDGE_DIR))
         .args(if no_network {
