@@ -1,13 +1,12 @@
 {
   perSystem =
     {
-      pkgs,
-      lib,
+      pkgs-linux,
       mkSandbox,
       ...
     }:
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         bx = mkSandbox {
           name = "bx";
           sharedPaths = [
@@ -19,160 +18,160 @@
             }
           ];
           network = true;
-          prog = "${pkgs.brave-search-cli}/bin/bx";
+          prog = "${pkgs-linux.brave-search-cli}/bin/bx";
         };
 
         nodemon = mkSandbox {
           name = "nodemon";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.nodemon}/bin/nodemon";
+          prog = "${pkgs-linux.nodemon}/bin/nodemon";
         };
 
         dumbpipe = mkSandbox {
           name = "dumbpipe";
           network = true;
-          prog = "${pkgs.dumbpipe}/bin/dumbpipe";
+          prog = "${pkgs-linux.dumbpipe}/bin/dumbpipe";
         };
 
         wlfreerdp = mkSandbox {
           name = "wlfreerdp";
           wayland = true;
           network = true;
-          prog = "${pkgs.freerdp}/bin/wlfreerdp";
+          prog = "${pkgs-linux.freerdp}/bin/wlfreerdp";
         };
 
         sage = mkSandbox {
           name = "sage";
           shareCwd = true;
-          prog = "${pkgs.sage}/bin/sage";
+          prog = "${pkgs-linux.sage}/bin/sage";
         };
 
         neofetch = mkSandbox {
           name = "neofetch";
-          prog = "${pkgs.fastfetch}/bin/fastfetch";
+          prog = "${pkgs-linux.fastfetch}/bin/fastfetch";
         };
 
         shtris = mkSandbox {
           name = "shtris";
-          prog = "${pkgs.shtris}/bin/shtris";
+          prog = "${pkgs-linux.shtris}/bin/shtris";
         };
 
         zbarimg = mkSandbox {
           name = "zbarimg";
-          prog = "${pkgs.zbar}/bin/zbarimg";
+          prog = "${pkgs-linux.zbar}/bin/zbarimg";
         };
 
         twitch-dl = mkSandbox {
           name = "twitch-dl";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.twitch-dl}/bin/twitch-dl";
+          prog = "${pkgs-linux.twitch-dl}/bin/twitch-dl";
         };
 
         yt-dlp = mkSandbox {
           name = "yt-dlp";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.yt-dlp}/bin/yt-dlp";
+          prog = "${pkgs-linux.yt-dlp}/bin/yt-dlp";
         };
 
         exiftool = mkSandbox {
           name = "exiftool";
-          prog = "${pkgs.exiftool}/bin/exiftool";
+          prog = "${pkgs-linux.exiftool}/bin/exiftool";
           shareCwd = true;
         };
 
         binwalk = mkSandbox {
           name = "binwalk";
-          prog = "${pkgs.binwalk}/bin/binwalk";
+          prog = "${pkgs-linux.binwalk}/bin/binwalk";
           shareCwd = true;
         };
 
         ent = mkSandbox {
           name = "ent";
-          prog = "${pkgs.ent}/bin/ent";
+          prog = "${pkgs-linux.ent}/bin/ent";
           shareCwd = true;
         };
 
         apktool = mkSandbox {
           name = "apktool";
           shareCwd = true;
-          prog = "${pkgs.apktool}/bin/apktool";
+          prog = "${pkgs-linux.apktool}/bin/apktool";
         };
 
         jadx = mkSandbox {
           name = "jadx";
           shareCwd = true;
-          prog = "${pkgs.jadx}/bin/jadx";
+          prog = "${pkgs-linux.jadx}/bin/jadx";
         };
 
         hydra = mkSandbox {
           name = "hydra";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.thc-hydra}/bin/hydra";
+          prog = "${pkgs-linux.thc-hydra}/bin/hydra";
         };
 
         pwninit = mkSandbox {
           name = "pwninit";
           shareCwd = true;
-          prog = "${pkgs.pwninit}/bin/pwninit";
+          prog = "${pkgs-linux.pwninit}/bin/pwninit";
         };
 
         ropr = mkSandbox {
           name = "ropr";
           shareCwd = true;
-          prog = "${pkgs.ropr}/bin/ropr";
+          prog = "${pkgs-linux.ropr}/bin/ropr";
         };
 
         ROPgadget = mkSandbox {
           name = "ROPgadget";
           shareCwd = true;
-          prog = "${pkgs.ropgadget}/bin/ROPgadget";
+          prog = "${pkgs-linux.ropgadget}/bin/ROPgadget";
         };
 
         snmpwalk = mkSandbox {
           name = "snmpwalk";
           network = true;
-          prog = "${pkgs.net-snmp}/bin/snmpwalk";
+          prog = "${pkgs-linux.net-snmp}/bin/snmpwalk";
         };
 
         snmpcheck = mkSandbox {
           name = "snmpcheck";
           network = true;
-          prog = "${pkgs.snmpcheck}/bin/snmpcheck";
+          prog = "${pkgs-linux.snmpcheck}/bin/snmpcheck";
         };
 
         evil-winrm = mkSandbox {
           name = "evil-winrm";
-          prog = "${pkgs.evil-winrm}/bin/evil-winrm";
+          prog = "${pkgs-linux.evil-winrm}/bin/evil-winrm";
           network = true;
         };
 
         certipy = mkSandbox {
           name = "certipy";
-          prog = "${pkgs.certipy}/bin/certipy";
+          prog = "${pkgs-linux.certipy}/bin/certipy";
           shareCwd = true;
           network = true;
         };
 
         bloodyAD = mkSandbox {
           name = "bloodyAD";
-          prog = "${pkgs.python312Packages.bloodyad}/bloodyAD";
+          prog = "${pkgs-linux.python312Packages.bloodyad}/bloodyAD";
           shareCwd = true;
           network = true;
         };
 
         pwsh = mkSandbox {
           name = "pwsh";
-          prog = "${pkgs.powershell}/bin/pwsh";
+          prog = "${pkgs-linux.powershell}/bin/pwsh";
           network = true;
         };
 
         nuclei =
           let
-            nucleiTemplates = pkgs.fetchFromGitHub {
+            nucleiTemplates = pkgs-linux.fetchFromGitHub {
               owner = "projectdiscovery";
               repo = "nuclei-templates";
               rev = "ee71c007b30bf63a44f500ffeebf11741324f7e2";
@@ -197,75 +196,75 @@
             ];
             shareCwd = true;
             network = true;
-            prog = "${pkgs.nuclei}/bin/nuclei -ud /home/sprrw/.local/nuclei-templates -duc";
+            prog = "${pkgs-linux.nuclei}/bin/nuclei -ud /home/sprrw/.local/nuclei-templates -duc";
           };
 
         sqlmap = mkSandbox {
           name = "sqlmap";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.sqlmap}/bin/sqlmap";
+          prog = "${pkgs-linux.sqlmap}/bin/sqlmap";
         };
 
         feroxbuster = mkSandbox {
           name = "feroxbuster";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.feroxbuster}/bin/feroxbuster";
+          prog = "${pkgs-linux.feroxbuster}/bin/feroxbuster";
         };
 
         ffuf = mkSandbox {
           name = "ffuf";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.ffuf}/bin/ffuf";
+          prog = "${pkgs-linux.ffuf}/bin/ffuf";
         };
 
         shortscan = mkSandbox {
           name = "shortscan";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.shortscan}/bin/shortscan";
+          prog = "${pkgs-linux.shortscan}/bin/shortscan";
         };
 
         gau = mkSandbox {
           name = "gau";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.gau}/bin/gau";
+          prog = "${pkgs-linux.gau}/bin/gau";
         };
 
         naabu = mkSandbox {
           name = "naabu";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.naabu}/bin/naabu";
+          prog = "${pkgs-linux.naabu}/bin/naabu";
         };
 
         clairvoyance = mkSandbox {
           name = "clairvoyance";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.clairvoyance}/bin/clairvoyance";
+          prog = "${pkgs-linux.clairvoyance}/bin/clairvoyance";
         };
 
         sourcemapper = mkSandbox {
           name = "sourcemapper";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.sourcemapper}/bin/sourcemapper";
+          prog = "${pkgs-linux.sourcemapper}/bin/sourcemapper";
         };
 
         subfinder = mkSandbox {
           name = "subfinder";
           shareCwd = true;
           network = true;
-          prog = "${pkgs.subfinder}/bin/subfinder";
+          prog = "${pkgs-linux.subfinder}/bin/subfinder";
         };
 
         mitmproxy = mkSandbox {
           name = "mitmproxy";
-          prog = "${pkgs.mitmproxy}/bin/mitmproxy";
+          prog = "${pkgs-linux.mitmproxy}/bin/mitmproxy";
           shareCwd = true;
           sharedPaths = [
             {
@@ -281,7 +280,7 @@
         ilspycmd = mkSandbox {
           name = "ilspycmd";
           shareCwd = true;
-          prog = "${pkgs.ilspycmd}/bin/ilspycmd";
+          prog = "${pkgs-linux.ilspycmd}/bin/ilspycmd";
         };
       };
     };

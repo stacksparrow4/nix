@@ -3,7 +3,7 @@
     {
       pkgs,
       config,
-      mkSandboxPkg,
+      mkSandbox,
       ...
     }:
     {
@@ -18,7 +18,7 @@
               --prefix PATH : ${pkgs.lib.makeBinPath [ config.packages.interactsh ]}
           '';
 
-        oob = mkSandboxPkg {
+        oob = mkSandbox {
           name = "oob";
           prog = "${oob-unboxed}/bin/oob";
           sharedPaths = [

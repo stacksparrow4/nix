@@ -2,24 +2,22 @@
   perSystem =
     {
       pkgs,
-      pkgs-unstable,
+      pkgs-linux,
+      pkgs-linux-unstable,
       config,
       ...
     }:
     {
       packages.pi =
           let
-            linuxifyPkgs = pkgs: if pkgs.stdenv.hostPlatform.isLinux then pkgs else import pkgs.path { system = "${pkgs.stdenv.hostPlatform.parsed.cpu.name}-linux"; };
-            pkgsLinux = linuxifyPkgs pkgs;
-            pkgsLinuxUnstable = linuxifyPkgs pkgs-unstable;
             buildPi = pkgs: (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
             pi = buildPi pkgs;
-            piLinux = buildPi pkgsLinux;
+            piLinux = buildPi pkgs-linux;
           in
           pkgs.writeShellApplication {
             name = "pi";
             text = ''
-              export SPRRW_PI=${pkgsLinuxUnstable.pi-coding-agent}/bin/pi
+              export SPRRW_PI=${pkgs-linux-unstable.pi-coding-agent}/bin/pi
               export SPRRW_PI_WRAPPER_LINUX=${piLinux}/bin/pi
 
               export SPRRW_SKILLS=${./skills}

@@ -43,7 +43,7 @@
             Hostname localhost
             Port 2222
             User root
-            IdentityFile ~/.ssh/nixbuilder-key
+            IdentityFile /Users/$(whoami)/.ssh/nixbuilder-key
 
           Then add the following to /etc/nix/nix.conf
 

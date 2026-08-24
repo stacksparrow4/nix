@@ -10,9 +10,17 @@ in
   ];
 
   perSystem =
+    let
+      linuxify =
+        pkgs:
+        if pkgs.stdenv.hostPlatform.isLinux then
+          pkgs
+        else
+          import inputs.nixpkgs { system = "${pkgs.stdenv.hostPlatform.parsed.cpu.name}-linux"; };
+    in
     { system, ... }:
     {
-      _module.args = {
+      _module.args = rec {
         pkgs = import inputs.nixpkgs {
           inherit system;
           config = nixpkgsConfig;
@@ -22,6 +30,9 @@ in
           inherit system;
           config = nixpkgsConfig;
         };
+
+        pkgs-linux = linuxify pkgs;
+        pkgs-linux-unstable = linuxify pkgs-unstable;
       };
     };
 }

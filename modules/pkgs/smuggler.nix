@@ -2,7 +2,7 @@
   perSystem =
     {
       pkgs,
-      mkSandboxPkg,
+      mkSandbox,
       ...
     }:
     let
@@ -31,7 +31,7 @@
           '';
         };
 
-        smuggler = mkSandboxPkg {
+        smuggler = mkSandbox {
           name = "smuggler";
           sharedPaths = [
             {

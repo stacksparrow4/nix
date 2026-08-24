@@ -2,7 +2,7 @@
   perSystem =
     {
       pkgs,
-      mkSandboxPkg,
+      mkSandbox,
       ...
     }:
     {
@@ -30,7 +30,7 @@
           ];
         };
 
-        vulnx = mkSandboxPkg {
+        vulnx = mkSandbox {
           name = "vulnx";
           network = true;
           prog = "${vulnx-unboxed}/bin/vulnx";

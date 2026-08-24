@@ -3,7 +3,7 @@
     {
       pkgs,
       lib,
-      mkSandboxPkg,
+      mkSandbox,
       ...
     }:
     let
@@ -57,7 +57,7 @@
           '';
         });
 
-        webcrack = mkSandboxPkg {
+        webcrack = mkSandbox {
           name = "webcrack";
           shareCwd = true;
           prog = "${webcrack-unboxed}/bin/webcrack";

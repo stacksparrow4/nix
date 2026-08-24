@@ -2,7 +2,7 @@
   perSystem =
     {
       pkgs,
-      mkSandboxPkg,
+      mkSandbox,
       config,
       ...
     }:
@@ -36,7 +36,7 @@
     {
       packages = rec {
         bloodhound-ce-unboxed = mkBloodhoundCE pkgs.python3Packages.impacket;
-        bloodhound-ce = mkSandboxPkg {
+        bloodhound-ce = mkSandbox {
           name = "bloodhound-ce";
           shareCwd = true;
           network = true;

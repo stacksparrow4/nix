@@ -1,8 +1,8 @@
 {
   perSystem =
-    { pkgs, lib, config, ... }:
+    { pkgs, config, ... }:
     {
-      _module.args = rec {
+      _module.args = {
         mkSandbox =
           {
             name,
@@ -53,9 +53,6 @@
                 -- ${prog} "$@"
             '';
           };
-
-        # A package that exists as a sandbox on linux but doesn't exist on Mac
-        mkSandboxPkg = sbxargs: lib.mkIf pkgs.stdenv.hostPlatform.isLinux (mkSandbox sbxargs);
       };
     };
 }

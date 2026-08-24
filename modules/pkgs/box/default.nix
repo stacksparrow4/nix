@@ -1,14 +1,12 @@
 {
   perSystem =
-    { pkgs, ... }:
+    { pkgs, pkgs-linux, ... }:
     {
       packages = {
         box =
           let
             rustBin = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
-            isLinux = pkgs.stdenv.hostPlatform.isLinux;
-            pkgsLinux = if isLinux then pkgs else import pkgs.path { system = "${pkgs.stdenv.hostPlatform.parsed.cpu.name}-linux"; };
-            terminfo = if isLinux then "${pkgs.foot.terminfo}/share/terminfo" else "${pkgsLinux.ghostty.terminfo}/share/terminfo";
+            terminfo = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.foot.terminfo}/share/terminfo" else "${pkgs-linux.ghostty.terminfo}/share/terminfo";
             bin = pkgs.runCommand "box-bin" {} ''
               mkdir $out
               ln -s ${pkgs.bash}/bin/sh $out/sh
@@ -64,10 +62,10 @@
               mkdir -p $out/bin
               ln -s ${pkgs.coreutils}/bin/env $out/bin
             '';
-            packages = pkgsLinux.buildEnv {
+            packages = pkgs-linux.buildEnv {
               name = "box-packages";
               pathsToLink = [ "/bin" ];
-              paths = with pkgsLinux; [
+              paths = with pkgs-linux; [
                 coreutils
                 bash
                 curl
@@ -85,7 +83,7 @@
           pkgs.runCommand "box" { nativeBuildInputs = with pkgs; [ makeWrapper ]; } ''
             mkdir -p $out/bin
             makeWrapper ${rustBin}/bin/box $out/bin/box \
-              ${if isLinux then ''
+              ${if pkgs.stdenv.hostPlatform.isLinux then ''
               --set SPRRW_BIN ${bin} \
               --set SPRRW_ETC ${etc} \
               --set SPRRW_USR ${usr} \
