@@ -88,6 +88,13 @@ in
                         hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
                       };
                     }
+                    {
+                      name = "qwen3.8";
+                      path = pkgs.fetchurl {
+                        url = "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/Qwen3.8-27B-UD-Q4_K_M.gguf";
+                        hash = "sha256-Mi4ZT/eXQce6pJfCQPZ39UsgGw76tEyo5Q8SKzkSNII=";
+                      };
+                    }
                   ];
                 };
               };
