@@ -6,7 +6,10 @@
     { pkgs, ... }:
     {
       home.packages = [
-        (if pkgs.stdenv.hostPlatform.isLinux then self'.packages.nvim else self'.packages.nvim-unboxed)
+        self'.packages.nvim
+        (pkgs.writeShellScriptBin "nvim-unboxed" ''
+          exec ${self'.packages.nvim-unboxed} "$@"
+        '')
       ];
 
       home.sessionVariables.EDITOR = "nvim";
