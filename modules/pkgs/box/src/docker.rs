@@ -40,9 +40,10 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         docker_args.push("-t".to_string());
     }
 
-    if args.no_network {
-        docker_args.extend(["--network".to_string(), "none".to_string()]);
-    }
+    docker_args.extend([
+        "--network".to_string(),
+        if args.no_network { "none" } else { "host" }.to_string(),
+    ]);
 
     docker_args.push("-w".to_string());
     docker_args.push(container_args.workdir);
