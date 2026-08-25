@@ -47,11 +47,6 @@
           prog = "${pkgsLinux.sage}/bin/sage";
         };
 
-        neofetch = mkSandbox {
-          name = "neofetch";
-          prog = "${pkgsLinux.fastfetch}/bin/fastfetch";
-        };
-
         shtris = mkSandbox {
           name = "shtris";
           prog = "${pkgsLinux.shtris}/bin/shtris";
