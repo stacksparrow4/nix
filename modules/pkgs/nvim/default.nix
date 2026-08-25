@@ -137,54 +137,43 @@
         };
 
       mkNvimBoxed =
-        { pkgs, nvim-unboxed }:
-        (pkgs.symlinkJoin {
+        { nvim-unboxed }:
+        (pkgs.writeShellApplication {
           name = "nvim";
-          paths = [
-            (pkgs.writeShellApplication {
-              name = "nvim";
-              text = ''
-                if [[ "''${IN_SPRRW_SANDBOX:-}" == 1 ]]; then
-                  ${nvim-unboxed}/bin/nvim "$@"
+          text = ''
+            if [[ "''${IN_SPRRW_SANDBOX:-}" == 1 ]]; then
+              ${nvim-unboxed}/bin/nvim "$@"
+            else
+              share_dir="$(pwd)"
+              vim_args=()
+              if [[ $# -eq 1 ]] && [[ "$1" == /* ]]; then
+                arg="$1"
+                if [[ -d "$arg" ]]; then
+                  share_dir="$arg"
+                  share_file="."
                 else
-                  share_dir="$(pwd)"
-                  vim_args=()
-                  if [[ $# -eq 1 ]] && [[ "$1" == /* ]]; then
-                    arg="$1"
-                    if [[ -d "$arg" ]]; then
-                      share_dir="$arg"
-                      share_file="."
-                    else
-                      share_dir=$(dirname "$arg")
-                      share_file=$(basename "$arg")
-                    fi
-                    vim_args+=("$share_file")
-                  else
-                    vim_args+=("$@")
-                  fi
-
-                  (cd "$share_dir" && ${config.packages.box}/bin/box --cwd --wayland --ro-git -- ${nvim-unboxed}/bin/nvim "''${vim_args[@]}")
+                  share_dir=$(dirname "$arg")
+                  share_file=$(basename "$arg")
                 fi
-              '';
-            })
-            (pkgs.runCommand "nvim-unsandboxed" { } ''
-              mkdir -p $out/bin
-              ln -s ${nvim-unboxed}/bin/nvim $out/bin/nvim-unsandboxed
-            '')
-          ];
+                vim_args+=("$share_file")
+              else
+                vim_args+=("$@")
+              fi
+
+              (cd "$share_dir" && ${config.packages.box}/bin/box --cwd --wayland --ro-git -- ${nvim-unboxed}/bin/nvim "''${vim_args[@]}")
+            fi
+          '';
         })
         // {
           configure =
             args:
-            let
-              actualArgs = {
-                inherit pkgs;
-              }
-              // args;
-            in
             mkNvimBoxed {
-              pkgs = actualArgs.pkgs;
-              nvim-unboxed = mkNvim actualArgs;
+              nvim-unboxed = mkNvim (
+                {
+                  inherit pkgs;
+                }
+                // args
+              );
             };
         };
     in
@@ -192,7 +181,6 @@
       packages = {
         nvim-unboxed = mkNvim { inherit pkgs; };
         nvim = mkNvimBoxed {
-          pkgs = pkgsLinux;
           nvim-unboxed = mkNvim { pkgs = pkgsLinux; };
         };
       };
