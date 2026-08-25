@@ -297,6 +297,10 @@ fn main() {
             guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell");
         }
 
+        if let Target::Sandbox = target {
+            guidelines.push("You are in an Alpine linux container with a read-only /nix volume mounted in. Use apk to install packages.");
+        }
+
         if brave_search {
             guidelines.push("Perform web searches when you are unsure of current information");
         }
