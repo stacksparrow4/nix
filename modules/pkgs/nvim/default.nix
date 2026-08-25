@@ -180,8 +180,6 @@
     {
       packages = {
         inherit nvim-unboxed;
-      }
-      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         nvim = mkNvimBoxed nvim-unboxed;
       };
     };

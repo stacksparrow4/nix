@@ -7,7 +7,7 @@
       gui-emoji-picker
 
       (moduleWithSystem (
-        { self', pkgs-unstable, ... }:
+        { self', pkgsUnstable, ... }:
         { pkgs, ... }:
         {
           home.packages = with pkgs; [
@@ -20,7 +20,7 @@
             vlc
             blender
             rofi
-            pkgs-unstable.flameshot
+            pkgsUnstable.flameshot
             self'.packages.wlfreerdp
             obs-studio
           ];

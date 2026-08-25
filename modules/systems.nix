@@ -26,13 +26,13 @@ in
           config = nixpkgsConfig;
         };
 
-        pkgs-unstable = import inputs.nixpkgs-unstable {
+        pkgsUnstable = import inputs.nixpkgs-unstable {
           inherit system;
           config = nixpkgsConfig;
         };
 
-        pkgs-linux = linuxify pkgs;
-        pkgs-linux-unstable = linuxify pkgs-unstable;
+        pkgsLinux = linuxify pkgs;
+        pkgsLinuxUnstable = linuxify pkgsUnstable;
       };
     };
 }

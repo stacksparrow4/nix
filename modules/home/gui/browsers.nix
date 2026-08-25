@@ -16,11 +16,11 @@
 # map f LinkHints.activateMode
 {
   flake.homeModules.gui-browsers = moduleWithSystem (
-    { pkgs-unstable, ... }:
+    { pkgsUnstable, ... }:
     { pkgs, lib, ... }:
     {
       home.packages = [
-        pkgs-unstable.brave
+        pkgsUnstable.brave
         pkgs.firefox
         pkgs.chromium
       ];

@@ -1,12 +1,12 @@
 {
   perSystem =
-    { pkgs, pkgs-linux, ... }:
+    { pkgs, pkgsLinux, ... }:
     {
       packages = {
         box =
           let
             rustBin = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
-            terminfo = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.foot.terminfo}/share/terminfo" else "${pkgs-linux.ghostty.terminfo}/share/terminfo";
+            terminfo = if pkgs.stdenv.hostPlatform.isLinux then "${pkgs.foot.terminfo}/share/terminfo" else "${pkgsLinux.ghostty.terminfo}/share/terminfo";
             bin = pkgs.runCommand "box-bin" {} ''
               mkdir $out
               ln -s ${pkgs.bash}/bin/sh $out/sh
@@ -62,10 +62,10 @@
               mkdir -p $out/bin
               ln -s ${pkgs.coreutils}/bin/env $out/bin
             '';
-            packages = pkgs-linux.buildEnv {
+            packages = pkgsLinux.buildEnv {
               name = "box-packages";
               pathsToLink = [ "/bin" ];
-              paths = with pkgs-linux; [
+              paths = with pkgsLinux; [
                 coreutils
                 bash
                 curl

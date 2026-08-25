@@ -2,7 +2,7 @@
   perSystem =
     {
       pkgs,
-      pkgs-unstable,
+      pkgsUnstable,
       lib,
       ...
     }:
@@ -34,7 +34,7 @@
 
         signal-desktop-entry =
           let
-            signal-desktop = pkgs-unstable.signal-desktop;
+            signal-desktop = pkgsUnstable.signal-desktop;
           in
           pkgs.runCommand "signal" { } ''
             mkdir -p $out/share/applications

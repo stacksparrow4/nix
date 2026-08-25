@@ -2,8 +2,8 @@
   perSystem =
     {
       pkgs,
-      pkgs-linux,
-      pkgs-linux-unstable,
+      pkgsLinux,
+      pkgsLinuxUnstable,
       config,
       ...
     }:
@@ -12,12 +12,12 @@
           let
             buildPi = pkgs: (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
             pi = buildPi pkgs;
-            piLinux = buildPi pkgs-linux;
+            piLinux = buildPi pkgsLinux;
           in
           pkgs.writeShellApplication {
             name = "pi";
             text = ''
-              export SPRRW_PI=${pkgs-linux-unstable.pi-coding-agent}/bin/pi
+              export SPRRW_PI=${pkgsLinuxUnstable.pi-coding-agent}/bin/pi
               export SPRRW_PI_WRAPPER_LINUX=${piLinux}/bin/pi
 
               export SPRRW_SKILLS=${./skills}
