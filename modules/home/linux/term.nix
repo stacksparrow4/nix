@@ -15,7 +15,6 @@
         pkgs.traceroute
         pkgs.bubblewrap
 
-        self'.packages.neofetch
         self'.packages.proxychains
       ];
     }

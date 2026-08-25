@@ -105,7 +105,7 @@ in
               yazi-nvim
               trouble-nvim
               conform-nvim
-              (inputs.nvim-http-client.packages."${pkgs.stdenv.hostPlatform.system}".default)
+              inputs'.nvim-http-client.packages.default
             ]
             ++ additionalPlugins
           )
