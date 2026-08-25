@@ -4,13 +4,14 @@
   perSystem =
     {
       pkgs,
+      pkgsLinux,
       config,
       lib,
       inputs',
       ...
     }:
     let
-      sprrwConfig = pkgs.vimUtils.buildVimPlugin {
+      sprrwConfig = pkgsLinux.vimUtils.buildVimPlugin {
         pname = "sprrw-nvim-config";
         version = "0.1.0";
         doCheck = false;
@@ -22,6 +23,7 @@
 
       mkNvim =
         {
+          pkgs,
           additionalPlugins ? [ ],
           additionalLua ? "",
         }:
@@ -131,11 +133,11 @@
           ]);
         })
         // {
-          configure = mkNvim;
+          configure = args: mkNvim ({ inherit pkgs; } // args);
         };
 
       mkNvimBoxed =
-        nvim-unboxed:
+        { pkgs, nvim-unboxed }:
         (pkgs.symlinkJoin {
           name = "nvim";
           paths = [
@@ -172,15 +174,27 @@
           ];
         })
         // {
-          configure = args: mkNvimBoxed (mkNvim args);
+          configure =
+            args:
+            let
+              actualArgs = {
+                inherit pkgs;
+              }
+              // args;
+            in
+            mkNvimBoxed {
+              pkgs = actualArgs.pkgs;
+              nvim-unboxed = mkNvim actualArgs;
+            };
         };
-
-      nvim-unboxed = mkNvim { };
     in
     {
       packages = {
-        inherit nvim-unboxed;
-        nvim = mkNvimBoxed nvim-unboxed;
+        nvim-unboxed = mkNvim { inherit pkgs; };
+        nvim = mkNvimBoxed {
+          pkgs = pkgsLinux;
+          nvim-unboxed = mkNvim { pkgs = pkgsLinux; };
+        };
       };
     };
 }
