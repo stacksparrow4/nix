@@ -581,14 +581,16 @@ export default async function(pi: ExtensionAPI) {
       autocompleteRegistered = true;
     });
 
-    pi.registerTool(
-      createReadToolDefinition(cwd, {
+    pi.registerTool({
+      ...createReadToolDefinition(cwd, {
         operations: {
           readFile: remoteReadFile,
           access: (p) => remoteAccess(p, "r"),
         },
       }),
-    );
+      description:
+        "Read the contents of a file. Output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+    });
 
     pi.registerTool(
       createWriteToolDefinition(cwd, {
