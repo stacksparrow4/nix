@@ -12,7 +12,7 @@
           let
             oobBin = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
           in
-          pkgs.runCommand "oob-unboxed" { nativeBuildInputs = with pkgs; [ makeWrapper ]; } ''
+          pkgs.runCommand "oob-unboxed" { nativeBuildInputs = with pkgs; [ makeWrapper ]; meta.mainProgram = "oob"; } ''
             mkdir -p $out/bin
             makeWrapper ${oobBin}/bin/oob $out/bin/oob \
               --prefix PATH : ${pkgs.lib.makeBinPath [ config.packages.interactsh ]}
