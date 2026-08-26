@@ -2,7 +2,6 @@
   perSystem =
     {
       pkgs,
-      mkSandbox,
       config,
       lib,
       ...
@@ -105,7 +104,7 @@
           nativeCheckInputs = with python.pkgs; [ pytestCheckHook ] ++ [ pkgs.writableTmpDirAsHomeHook ];
         };
 
-        netexec = mkSandbox {
+        netexec = config.wrappers.mkSandbox {
           name = "nxc";
           sharedPaths = [
             {

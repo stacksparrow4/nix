@@ -1,6 +1,6 @@
 {
   perSystem =
-    { pkgs, mkSandbox, ... }:
+    { pkgs, config, ... }:
     {
       packages = rec {
         interactsh-unboxed = pkgs.buildGoModule (finalAttrs: {
@@ -25,7 +25,7 @@
           doCheck = false;
         });
 
-        interactsh = mkSandbox {
+        interactsh = config.wrappers.mkSandbox {
           name = "interactsh-client";
           prog = "${interactsh-unboxed}/bin/interactsh-client";
           sharedPaths = [

@@ -9,7 +9,6 @@ in
       pkgs,
       pkgsLinux,
       config,
-      mkSandbox,
       ...
     }:
     {
@@ -44,7 +43,7 @@ in
                 interactsh = globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.interactsh-unboxed;
               };
             in
-            mkSandbox {
+            config.wrappers.mkSandbox {
               name = "oob";
               prog = "${oobWrapped}/bin/oob";
               sharedPaths = [

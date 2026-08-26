@@ -6,7 +6,7 @@
       pkgs,
       lib,
       system,
-      mkSandbox,
+      config,
       ...
     }:
     let
@@ -17,7 +17,7 @@
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         urlenc = inputs.nvim-http-client.packages.${system}.urlenc;
 
-        pwnproxy = mkSandbox {
+        pwnproxy = config.wrappers.mkSandbox {
           name = "pwnproxy";
           prog = "${pwnproxy}/bin/mitmproxy";
           shareCwd = true;
@@ -33,7 +33,7 @@
           wayland = true; # nvim copy
         };
 
-        autorize = mkSandbox {
+        autorize = config.wrappers.mkSandbox {
           name = "autorize";
           prog = "${autorize}/bin/autorize";
           shareCwd = true;

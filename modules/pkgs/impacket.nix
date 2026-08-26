@@ -3,7 +3,7 @@
     {
       pkgs,
       lib,
-      mkSandbox,
+      config,
       ...
     }:
     let
@@ -105,7 +105,7 @@
           name = "impacket-sandboxed";
           paths = map (
             scriptName:
-            mkSandbox {
+            config.wrappers.mkSandbox {
               name = scriptName;
               shareCwd = true;
               network = true;
