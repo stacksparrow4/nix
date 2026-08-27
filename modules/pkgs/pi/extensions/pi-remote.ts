@@ -215,6 +215,21 @@ async function remoteAccess(path: string, mode: "r" | "rw"): Promise<void> {
   }
 }
 
+// Image mime detection
+// ------------------------------------------------------------
+// pi only sends a file as an image attachment when detectImageMimeType returns
+// a mime type; processImage() then normalizes/converts it (e.g. bmp -> png via
+// sharp). We detect the type on the remote with file(1). If file is missing or
+// the type isn't an image we return null, so the read tool falls back to
+// treating the file as text (never breaking plain text reads).
+
+async function remoteDetectImageMimeType(path: string): Promise<string | null> {
+  const res = await runFileOp(`file -b --mime-type -- ${shQuote(path)}`);
+  if (res.exitCode !== 0) return null;
+  const mimeType = res.stdout.toString("utf-8").trim().toLowerCase();
+  return mimeType.startsWith("image/") ? mimeType : null;
+}
+
 // The edit tool's renderCall draws a live diff preview by calling computeEditsDiff(),
 // which reads the file with node:fs/promises directly and therefore bypasses the
 // pluggable EditOperations we hand to createEditToolDefinition(). For remote edits the
@@ -586,10 +601,11 @@ export default async function(pi: ExtensionAPI) {
         operations: {
           readFile: remoteReadFile,
           access: (p) => remoteAccess(p, "r"),
+          detectImageMimeType: remoteDetectImageMimeType,
         },
       }),
       description:
-        "Read the contents of a file. Output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+        "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
     });
 
     pi.registerTool(
