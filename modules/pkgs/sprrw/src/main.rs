@@ -222,6 +222,9 @@ fn deploy() {
 }
 
 fn update(config: &Config) {
+    if cfg!(target_os = "linux") {
+        run_cmd(Command::new("flatpak").arg("update").arg("-y"));
+    }
     for update_flake in &config.update_flakes {
         run_cmd(
             Command::new("nix")
