@@ -40,6 +40,8 @@
         };
       };
 
+      # TODO: generate models.ini file and use this to dictate MTP per model
+
       config.home.packages = [
         (pkgs.writeShellApplication {
           name = "llama-server";

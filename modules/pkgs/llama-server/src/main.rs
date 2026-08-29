@@ -33,6 +33,10 @@ struct Args {
     /// will be added automatically
     internal_default_context: u64,
 
+    /// Number of MTP tokens (default is no MTP)
+    #[arg(short, long)]
+    mtp: Option<u64>,
+
     /// Additional arguments for llama-server, pass these after --
     args: Vec<String>,
 }
@@ -69,6 +73,18 @@ fn main() {
         .arg("--no-models-autoload")
         .args(["--no-warmup", "--host", SOCKET])
         .args(["--reasoning", if args.reasoning { "on" } else { "off" }])
+        .args(
+            args.mtp
+                .map(|n| {
+                    vec![
+                        "--spec-type".to_string(),
+                        "draft-mtp".to_string(),
+                        "--spec-draft-n-max".to_string(),
+                        format!("{}", n),
+                    ]
+                })
+                .unwrap_or(vec![]),
+        )
         .args(["-c", &context.to_string()])
         .args(args.args)
         .status()

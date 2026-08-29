@@ -89,6 +89,13 @@ in
                       };
                     }
                     {
+                      name = "qwen3.6";
+                      path = pkgs.fetchurl {
+                        url = "https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/main/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf";
+                        hash = "";
+                      };
+                    }
+                    {
                       name = "qwen3.8";
                       path = pkgs.fetchurl {
                         url = "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/Qwen3.8-27B-UD-Q4_K_M.gguf";
