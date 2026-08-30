@@ -9,17 +9,8 @@
       lib,
       ...
     }:
-    let
-      cfg = config.sprrw.ai.llama;
-    in
     {
       options.sprrw.ai.llama = {
-        context = lib.mkOption {
-          type = lib.types.int;
-          default = 32768;
-          description = "Default context size, can be overridden with llama-server --context";
-        };
-
         models = lib.mkOption {
           type = lib.types.listOf (
             lib.types.submodule {
@@ -33,6 +24,17 @@
                   type = lib.types.path;
                   description = "GGUF file for this model";
                 };
+
+                context = lib.mkOption {
+                  type = lib.types.int;
+                  description = "Default context size, can be overridden with llama-server --context";
+                };
+
+                mtp = lib.mkOption {
+                  type = lib.types.int;
+                  default = 0;
+                  description = "Number of MTP speculative tokens, 0 for no MTP";
+                };
               };
             }
           );
@@ -40,29 +42,58 @@
         };
       };
 
-      # TODO: generate models.ini file and use this to dictate MTP per model
-
-      config.home.packages = [
-        (pkgs.writeShellApplication {
-          name = "llama-server";
-          runtimeInputs = [ pkgs.socat ];
-          text =
-            let
-              modelsDir = pkgs.linkFarm "llama-models" (
-                map (
-                  { name, path }:
-                  {
-                    name = "${name}.gguf";
-                    inherit path;
+      config.home.packages =
+        let
+          cfg = config.sprrw.ai.llama;
+          modelsPreset = (pkgs.formats.ini { }).generate "preset.ini" (
+            builtins.listToAttrs (
+              map (
+                {
+                  name,
+                  context,
+                  mtp,
+                  ...
+                }:
+                {
+                  inherit name;
+                  value = {
+                    ctx-size = context;
                   }
-                ) cfg.models
-              );
-            in
-            ''
-              ${self'.packages.llama-server}/bin/llama-server ${modelsDir} ${toString cfg.context} "$@"
+                  // (
+                    if mtp != 0 then
+                      {
+                        spec-type = "draft-mtp";
+                        spec-draft-n-max = mtp;
+                      }
+                    else
+                      { }
+                  );
+                }
+              ) cfg.models
+            )
+          );
+          modelsDir = pkgs.linkFarm "llama-models" (
+            map (
+              { name, path, ... }:
+              {
+                name = "${name}.gguf";
+                inherit path;
+              }
+            ) cfg.models
+          );
+        in
+        [
+          (pkgs.writeShellApplication {
+            name = "llama-server";
+            runtimeInputs = [ pkgs.socat ];
+            text = ''
+              ${self'.packages.llama-server}/bin/llama-server \
+                --internal-models-dir ${modelsDir} \
+                --internal-preset-ini ${modelsPreset} \
+                "$@"
             '';
-        })
-      ];
+          })
+        ];
     }
   );
 }

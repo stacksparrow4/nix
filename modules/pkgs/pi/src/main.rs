@@ -31,6 +31,10 @@ struct Args {
     #[arg(short, long)]
     search: bool,
 
+    /// Bare mode - provide almost nothing
+    #[arg(short, long)]
+    bare: bool,
+
     /// Print mode
     // This technically does not need pass through however keeping it here for backwards
     // compatability
@@ -164,7 +168,7 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
     generate_pi_volume(fname, fname, a, t)
 }
 
-const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "save.ts", "goal.ts"];
+const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "save.ts", "goal.ts", "brave-search.ts"];
 const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
 const BRIDGE_DIR: &str = "/tmp/pi-remote";
@@ -241,26 +245,29 @@ fn main() {
 
     let brave_search = !(args.no_brave_search || args.local.is_some());
 
-    let all_tools: Vec<String> = args
-        .tools
-        .as_deref()
-        .map_or(vec![], |ts| {
-            ts.split(',').map(|t| t.trim().to_string()).collect()
-        })
-        .into_iter()
-        .chain(if args.no_tools || args.search {
-            vec![]
-        } else if matches!(target, Target::Remote { universal: true }) {
-            vec!["Command".to_string()]
-        } else {
-            DEFAULT_TOOLS.iter().map(|t| t.to_string()).collect()
-        })
-        .chain(if brave_search {
-            Some("web_search".to_string())
-        } else {
-            None
-        })
-        .collect();
+    let all_tools: Vec<String> = if args.bare {
+        vec![]
+    } else {
+        args.tools
+            .as_deref()
+            .map_or(vec![], |ts| {
+                ts.split(',').map(|t| t.trim().to_string()).collect()
+            })
+            .into_iter()
+            .chain(if args.no_tools || args.search {
+                vec![]
+            } else if matches!(target, Target::Remote { universal: true }) {
+                vec!["Command".to_string()]
+            } else {
+                DEFAULT_TOOLS.iter().map(|t| t.to_string()).collect()
+            })
+            .chain(if brave_search {
+                Some("web_search".to_string())
+            } else {
+                None
+            })
+            .collect()
+    };
 
     let all_extensions: Vec<String> = args
         .extensions
@@ -274,15 +281,14 @@ fn main() {
         } else {
             DEFAULT_EXTENSIONS.iter().map(|e| e.to_string()).collect()
         })
-        .chain(if brave_search {
-            Some("brave-search.ts".to_string())
-        } else {
-            None
-        })
         .chain(REQUIRED_EXTENSIONS.iter().map(|e| e.to_string()))
         .collect();
 
     let system = args.system.unwrap_or_else(|| {
+        if args.bare {
+            return String::from("You are a technical assistant. Be concise.");
+        }
+
         if args.search {
             return String::from("You are a technical research assistant that searches the web to provide information. Be concise.");
         }

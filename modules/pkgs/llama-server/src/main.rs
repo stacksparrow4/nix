@@ -2,6 +2,7 @@ use std::{
     fs,
     path::Path,
     process::{Command, Stdio},
+    vec,
 };
 
 use clap::Parser;
@@ -17,25 +18,16 @@ const PORT: u16 = 8033;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Enable reasoning
+    #[arg(long, hide = true)]
+    internal_models_dir: Option<String>,
+
+    #[arg(long, hide = true)]
+    internal_preset_ini: Option<String>,
+
+    // Pass through args
+    /// Reasoning - off or on
     #[arg(short, long)]
-    reasoning: bool,
-
-    /// Override the default context size
-    #[arg(short, long)]
-    context: Option<u64>,
-
-    /// Models directory, used internally by Nix. You shouldn't need to supply this option, it will
-    /// be added automatically
-    internal_models_dir: String,
-
-    /// Default context size, used internally by Nix. You shouldn't need to supply this option, it
-    /// will be added automatically
-    internal_default_context: u64,
-
-    /// Number of MTP tokens (default is no MTP)
-    #[arg(short, long)]
-    mtp: Option<u64>,
+    reasoning: Option<String>,
 
     /// Additional arguments for llama-server, pass these after --
     args: Vec<String>,
@@ -57,14 +49,20 @@ fn main() {
         .spawn()
         .expect("Failed to start socat");
 
-    let context = args.context.unwrap_or(args.internal_default_context);
-
     let _ = Command::new("podman")
         .args(["run", "--rm", "-it", "--name", "llama-cpp", "--gpus", "all"])
-        .args([
-            "-v".to_string(),
-            format!("{}:/models:ro", args.internal_models_dir),
-        ])
+        .args(if let Some(model_dir) = args.internal_models_dir {
+            vec!["-v".to_string(), format!("{}:/models:ro", model_dir)]
+        } else {
+            vec![]
+        })
+        .args(
+            if let Some(preset_ini) = args.internal_preset_ini.as_ref() {
+                vec!["-v".to_string(), format!("{}:/preset.ini:ro", preset_ini)]
+            } else {
+                vec![]
+            },
+        )
         .args(["-v", "/nix/store:/nix/store:ro"])
         .args(["-v", &format!("{}:{}", SOCKET_DIR, SOCKET_DIR)])
         .args(["--network", "none"])
@@ -72,20 +70,16 @@ fn main() {
         .args(["--models-dir", "/models"])
         .arg("--no-models-autoload")
         .args(["--no-warmup", "--host", SOCKET])
-        .args(["--reasoning", if args.reasoning { "on" } else { "off" }])
-        .args(
-            args.mtp
-                .map(|n| {
-                    vec![
-                        "--spec-type".to_string(),
-                        "draft-mtp".to_string(),
-                        "--spec-draft-n-max".to_string(),
-                        format!("{}", n),
-                    ]
-                })
-                .unwrap_or(vec![]),
-        )
-        .args(["-c", &context.to_string()])
+        .args(if args.internal_preset_ini.is_some() {
+            vec!["--models-preset", "/preset.ini"]
+        } else {
+            vec![]
+        })
+        .args(if let Some(reasoning) = args.reasoning {
+            vec!["--reasoning".to_string(), reasoning]
+        } else {
+            vec![]
+        })
         .args(args.args)
         .status()
         .expect("Failed to launch llama-cpp");
