@@ -92,7 +92,7 @@ in
                       name = "qwen3.6";
                       path = pkgs.fetchurl {
                         url = "https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/main/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf";
-                        hash = "";
+                        hash = "sha256-rA4sEYngVfqjbv82FYDnnFvW+Odr/7TOVH8WfVPjGmE=";
                       };
                     }
                     {
