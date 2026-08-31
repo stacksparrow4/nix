@@ -32,6 +32,11 @@ export default function (pi: ExtensionAPI) {
   // The current tok/s readout, rendered inline by the custom footer.
   let tpsText: string | undefined;
 
+  // Running totals for the average tok/s across the whole response (all turns
+  // in the agent loop), reset when a new agent run starts.
+  let totalOutput = 0;
+  let totalGenMs = 0;
+
   // Latest event context — the footer renders live model/context/session state
   // off it, since the setFooter factory isn't handed an AgentSession.
   let lastCtx: any;
@@ -133,6 +138,14 @@ export default function (pi: ExtensionAPI) {
     if (ctx.hasUI && ctx.mode === "tui") installFooter(ctx);
   });
 
+  // A new agent run starts a fresh response; reset the average accumulators so
+  // the "avg" reflects only the current response's turns.
+  pi.on("agent_start", (_event, ctx) => {
+    lastCtx = ctx;
+    totalOutput = 0;
+    totalGenMs = 0;
+  });
+
   // message_start only fires once the provider's first stream chunk lands, so we
   // reset timing state here and anchor tok/s to the first token below.
   pi.on("message_start", (event, ctx) => {
@@ -165,7 +178,12 @@ export default function (pi: ExtensionAPI) {
     const genMs = Math.max(0, Date.now() - (firstToken ?? Date.now()));
     if (output <= 0 || genMs <= 0) return;
 
-    tpsText = `${(output / (genMs / 1000)).toFixed(1)} tok/s`;
+    totalOutput += output;
+    totalGenMs += genMs;
+
+    const tps = output / (genMs / 1000);
+    const avg = totalOutput / (totalGenMs / 1000);
+    tpsText = `${tps.toFixed(1)}tps (${avg.toFixed(1)} avg)`;
     refresh();
   });
 }
