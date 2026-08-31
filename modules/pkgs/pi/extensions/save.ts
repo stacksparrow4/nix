@@ -6,7 +6,7 @@ import {
   CURRENT_SESSION_VERSION,
   type ExtensionAPI,
   type ExtensionCommandContext,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 function stripKnownExtension(name: string): string {
   return name.replace(/\.(html?|jsonl|json)$/i, "");
