@@ -30,6 +30,8 @@
             😅 Sweat smile
             😴 Sleeping
             😢 Crying
+            🐢 Turtle
+            🐇 Rabbit
             EOF
             )
         
