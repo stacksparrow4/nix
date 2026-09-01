@@ -79,7 +79,7 @@ pub fn build_stage_script(mounts: &[Mount], stage: &str, ro_git: bool) -> Vec<St
             quote(&root)
         ));
 
-        if ro_git && m.box_path == BOX_CWD {
+        if ro_git && m.box_path == BOX_VM_CWD {
             let git = format!("{root}/.git");
             lines.push(format!("mount --bind {} {}", quote(&git), quote(&git)));
             lines.push(format!("mount -o remount,bind,ro {}", quote(&git)));
