@@ -2,6 +2,7 @@
   perSystem =
     {
       pkgsLinux,
+      pkgsLinuxUnstable,
       config,
       ...
     }:
@@ -28,10 +29,10 @@
           prog = "${pkgsLinux.nodemon}/bin/nodemon";
         };
 
-        dumbpipe = config.wrappers.mkSandbox {
-          name = "dumbpipe";
+        tailcat = config.wrappers.mkSandbox {
+          name = "tailcat";
           network = true;
-          prog = "${pkgsLinux.dumbpipe}/bin/dumbpipe";
+          prog = "${pkgsLinuxUnstable.tailcat}/bin/tailcat";
         };
 
         wlfreerdp = config.wrappers.mkSandbox {

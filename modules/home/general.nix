@@ -53,7 +53,7 @@
     {
       home.packages = with self'.packages; [
         nodemon
-        dumbpipe
+        tailcat
       ];
 
       nix.extraOptions = ''
