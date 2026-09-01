@@ -131,7 +131,7 @@ pub fn get_container_args(
             "TMPDIR=/tmp".to_string(),
             "TEMP=/tmp".to_string(),
             "TMP=/tmp".to_string(),
-            "SHELL=/bin/sh".to_string(), // TODO: should this be bash?
+            "SHELL=/bin/sh".to_string(),
         ]
         .into_iter()
         .chain(std::env::var("EDITOR").map(|e| format!("EDITOR={}", e)))

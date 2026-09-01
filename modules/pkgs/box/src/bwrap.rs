@@ -13,13 +13,6 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         Mount::new(&get_nix_argument("SPRRW_BIN"), "/bin", MountType::Dir, true),
         Mount::new(&get_nix_argument("SPRRW_ETC"), "/etc", MountType::Dir, true),
         Mount::new(&get_nix_argument("SPRRW_USR"), "/usr", MountType::Dir, true),
-        // TODO: Make nix-ld work inside the box and fix this
-        // Mount::new(
-        //     &get_nix_argument("SPRRW_LIB64"),
-        //     "/lib64",
-        //     MountType::Dir,
-        //     true,
-        // ),
     ]);
 
     if Path::new("/etc/resolv.conf").exists() {
