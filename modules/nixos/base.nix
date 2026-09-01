@@ -1,7 +1,6 @@
 {
   flake.nixosModules.base =
     {
-      pkgs,
       config,
       lib,
       ...
@@ -31,16 +30,6 @@
         {
           "hm-package".source = hmConfig.home.activationPackage;
         };
-
-      # TODO: is this needed
-      boot.blacklistedKernelModules = [
-        "esp4"
-        "esp6"
-      ];
-      boot.extraModprobeConfig = ''
-        install esp4 ${pkgs.coreutils}/bin/false
-        install esp6 ${pkgs.coreutils}/bin/false
-      '';
 
       boot.tmp.cleanOnBoot = true;
 
