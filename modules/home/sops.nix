@@ -19,7 +19,13 @@
             nativeBuildInputs = [ pkgs.makeWrapper ];
             postBuild = ''
               wrapProgram $out/bin/sops \
-                --set SOPS_AGE_SSH_PRIVATE_KEY_CMD ${lib.escapeShellArg "op read ${lib.escapeShellArg config.sprrw.sops.opRef}"}
+                --set SOPS_AGE_SSH_PRIVATE_KEY_CMD ${lib.escapeShellArg "op read ${lib.escapeShellArg "${config.sprrw.sops.opRef}/private key"}"}
+            '';
+          })
+          (pkgs.writeShellApplication {
+            name = "sops-pubkey";
+            text = ''
+              op read ${lib.escapeShellArg "${config.sprrw.sops.opRef}/public key"}
             '';
           })
         ];
