@@ -1,7 +1,8 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.general =
+  flake.homeModules.general = moduleWithSystem (
+    { self', ... }:
     { pkgs, ... }:
     {
       home.packages = with pkgs; [
@@ -43,9 +44,9 @@
         })
         age
         ssh-to-age
-        sops
       ];
-    };
+    }
+  );
 
   flake.homeModules.general-linux = moduleWithSystem (
     { self', ... }:
