@@ -38,10 +38,7 @@
         ];
       };
 
-      # TODO: is dconf needed?
-      programs = {
-        dconf.enable = true;
-      };
+      programs.dconf.enable = true;
 
       services.greetd = {
         enable = true;
