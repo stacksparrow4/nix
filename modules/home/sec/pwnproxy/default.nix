@@ -13,14 +13,7 @@
 
       config = {
         home.file.".config/pwnproxy/tools".source = ./tools;
-        home.file.".config/pwnproxy/config.json".text = builtins.toJSON (
-          {
-            ## TODO: figure out a safe way of using tmux while being sandboxed
-            ## Maybe make a wrapper around nsenter?
-            # request_edit_command = "tmux split-window -v nvim {file}";
-          }
-          // config.sprrw.sec.pwnproxy.config
-        );
+        home.file.".config/pwnproxy/config.json".text = builtins.toJSON config.sprrw.sec.pwnproxy.config;
 
         home.packages = [
           self'.packages.pwnproxy
