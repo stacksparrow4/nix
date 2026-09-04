@@ -10,6 +10,7 @@
         self'.packages.zbarimg
         self'.packages.twitch-dl
         self'.packages.yt-dlp
+        self'.packages.qpdf
         pkgs.semgrep
         pkgs.gh
         pkgs.ffmpeg

@@ -278,6 +278,12 @@
           shareCwd = true;
           prog = "${pkgsLinux.ilspycmd}/bin/ilspycmd";
         };
+
+        qpdf = config.wrappers.mkSandbox {
+          name = "qpdf";
+          shareCwd = true;
+          prog = "${pkgsLinux.qpdf}/bin/qpdf";
+        };
       };
     };
 }
