@@ -28,6 +28,12 @@
               ro = false;
               type = "dir";
             }
+            {
+              hostPath = "$HOME/.config/pwnproxy";
+              boxPath = "~/.pwnproxy";
+              ro = true;
+              type = "dir";
+            }
           ];
           network = true;
           wayland = true; # nvim copy
