@@ -1,3 +1,5 @@
+{ self, ... }:
+
 {
   perSystem =
     {
@@ -106,19 +108,21 @@
             packages = pkgsLinux.buildEnv {
               name = "box-packages";
               pathsToLink = [ "/bin" ];
-              paths = with pkgsLinux; [
-                coreutils
-                bash
-                curl
-                wget
-                dig
-                git
-                findutils
-                gnugrep
-                ripgrep
-                python3
-                brave-search-cli
-              ];
+              paths =
+                with pkgsLinux;
+                [
+                  coreutils
+                  bash
+                  curl
+                  wget
+                  dig
+                  git
+                  findutils
+                  gnugrep
+                  ripgrep
+                  brave-search-cli
+                ]
+                ++ (with self.packages.${pkgsLinux.stdenv.hostPlatform.system}; [ python ]);
             };
           in
           pkgs.runCommand "box" { nativeBuildInputs = with pkgs; [ makeWrapper ]; } ''

@@ -1,4 +1,4 @@
-{ inputs, config, ... }:
+{ config, ... }:
 
 let
   globalConfig = config;
