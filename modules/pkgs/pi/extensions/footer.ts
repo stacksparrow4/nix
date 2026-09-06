@@ -71,12 +71,13 @@ export default function (pi: ExtensionAPI) {
             const ch = latestCacheHitRate(c);
             if (ch !== undefined) parts.push(theme.fg("dim", `CH${ch.toFixed(1)}%`));
 
-            // Context usage, e.g. "2.2%/1.0M"
+            // Context usage, e.g. "1045/1.0M (2.2%)"
             const usage = c.getContextUsage?.();
             const contextWindow = usage?.contextWindow ?? c.model?.contextWindow ?? 0;
             const percentValue = usage?.percent ?? 0;
             const percentStr = usage?.percent != null ? `${percentValue.toFixed(1)}%` : "?";
-            const contextDisplay = `${percentStr}/${formatTokens(contextWindow)}`;
+            const tokensStr = usage?.tokens != null ? `${usage.tokens}` : "?";
+            const contextDisplay = `${tokensStr}/${formatTokens(contextWindow)} (${percentStr})`;
             const contextColor =
               percentValue > 90 ? "error" : percentValue > 70 ? "warning" : "dim";
             parts.push(theme.fg(contextColor, contextDisplay));
