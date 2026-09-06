@@ -19,7 +19,13 @@ vim.opt.splitright = true
 vim.opt.wrap = false
 
 -- Vertical column
-vim.opt.colorcolumn = "100"
+vim.opt.colorcolumn = ""
+local colorcolumn_augroup = vim.api.nvim_create_augroup("ColorColumn Settings", { clear = true })
+vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'}, {
+  pattern = {'*.rs'},
+  group = colorcolumn_augroup,
+  command = 'setlocal colorcolumn=100'
+})
 
 -- But not for md or typst files!
 local wrap_augroup = vim.api.nvim_create_augroup("Wrap Settings", { clear = true })
