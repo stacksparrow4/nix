@@ -93,7 +93,7 @@ in
               friendly-snippets
               gitsigns-nvim
               img-clip-nvim
-              tokyonight-nvim
+              vim-moonfly-colors
               nvim-lspconfig
               nvim-treesitter
               nvim-web-devicons
