@@ -6,7 +6,6 @@
         cargo
         rustc
         crate2nix
-        rustfmt
       ];
     };
 }

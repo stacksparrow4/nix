@@ -83,7 +83,8 @@ struct Args {
     #[arg(short, long)]
     no_brave_search: bool,
 
-    /// Execute commands on a remote host. Use the template <CMD>. The remote must be a unix/bash host.
+    /// Execute commands on a remote host.
+    /// Use the template <CMD>. The remote must be a unix/bash host.
     #[arg(long)]
     remote: Option<String>,
 
@@ -168,7 +169,13 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
     generate_pi_volume(fname, fname, a, t)
 }
 
-const DEFAULT_EXTENSIONS: &[&str] = &["ask-mode.ts", "save.ts", "goal.ts", "brave-search.ts", "footer.ts"];
+const DEFAULT_EXTENSIONS: &[&str] = &[
+    "ask-mode.ts",
+    "save.ts",
+    "goal.ts",
+    "brave-search.ts",
+    "footer.ts",
+];
 const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
 const BRIDGE_DIR: &str = "/tmp/pi-remote";
@@ -290,30 +297,54 @@ fn main() {
         }
 
         if args.search {
-            return String::from("You are a technical research assistant that searches the web to provide information. Be concise.");
+            return String::from(
+                "You are a technical research assistant that searches the web to \
+                provide information. Be concise.",
+            );
         }
 
         let mut guidelines = vec![];
 
         if all_tools.contains(&"bash".to_string()) {
-            guidelines.push("Avoid recalling information about source available software and instead answer definitively by cloning the source to /tmp and referring to it");
+            guidelines.push(
+                "Avoid recalling information about source available software and \
+                instead answer definitively by cloning the source to /tmp and referring to it",
+            );
         }
 
         if all_tools.contains(&"command".to_string()) {
-            guidelines.push("The command tool is not necessarily bash (although this is the most common option), it could also be other shells such as Windows Powershell");
+            guidelines.push(
+                "The command tool is not necessarily bash (although this is the most \
+                common option), it could also be other shells such as Windows Powershell",
+            );
         }
 
         if let Target::Sandbox = target {
-            guidelines.push("You are in an Alpine linux container with a read-only /nix volume mounted in. Use apk to install packages.");
+            guidelines.push(
+                "You are in an Alpine linux container with a read-only /nix volume \
+                mounted in. Use apk to install packages.",
+            );
         }
 
         if brave_search {
             guidelines.push("Perform web searches when you are unsure of current information");
         }
 
+        if args.cwd || args.ro_cwd {
+            guidelines.push(
+                "The user has mounted data into the sanbox at the current working \
+                directory. The user's question will be in reference to the data in the current \
+                working directory.",
+            );
+        }
+
         format!(
             "You are a helpful coding assistant.{}{}",
-            if guidelines.is_empty() { "" } else { "\n\nGuidelines:\n" },
+            if guidelines.is_empty() {
+                ""
+            } else {
+                "\n\nGuidelines:\n"
+            },
             guidelines
                 .into_iter()
                 .map(|g| format!("- {}", g))
@@ -340,33 +371,33 @@ fn main() {
     }))
     .collect();
 
-    let (socat_info, in_sandbox_shell_prefix, network_args) = if let Some(socat_arg) =
-        args.local.as_ref()
-    {
-        let socat_tmp_dir = tempdir().expect("Failed to create temporary socat dir");
+    let (socat_info, in_sandbox_shell_prefix, network_args) =
+        if let Some(socat_arg) = args.local.as_ref() {
+            let socat_tmp_dir = tempdir().expect("Failed to create temporary socat dir");
 
-        let socat_tmp_dir_str = socat_tmp_dir.path().to_string_lossy().to_string();
+            let socat_tmp_dir_str = socat_tmp_dir.path().to_string_lossy().to_string();
 
-        let socat = Command::new("socat")
-            .arg(format!("UNIX-LISTEN:{}/llama.sock,fork", socat_tmp_dir_str))
-            .arg(socat_arg)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-            .expect("Failed to start socat");
+            let socat = Command::new("socat")
+                .arg(format!("UNIX-LISTEN:{}/llama.sock,fork", socat_tmp_dir_str))
+                .arg(socat_arg)
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()
+                .expect("Failed to start socat");
 
-        (
-            Some((socat_tmp_dir, socat)),
-            "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock &>/dev/null & ",
-            vec![
-                "--no-network".to_string(),
-                "-v".to_string(),
-                format!("{}:/tmp/llama:ro:dir", socat_tmp_dir_str),
-            ],
-        )
-    } else {
-        (None, "", vec![])
-    };
+            (
+                Some((socat_tmp_dir, socat)),
+                "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock \
+                &>/dev/null & ",
+                vec![
+                    "--no-network".to_string(),
+                    "-v".to_string(),
+                    format!("{}:/tmp/llama:ro:dir", socat_tmp_dir_str),
+                ],
+            )
+        } else {
+            (None, "", vec![])
+        };
 
     let (vm_proc, host_template) = match target {
         Target::Vm => {
@@ -402,7 +433,9 @@ fn main() {
             (
                 Some(proc),
                 Some(format!(
-                    "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -p {ssh_port} localhost 'exec 0</dev/null;' {starter}<CMD>"
+                    "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o \
+                        UserKnownHostsFile=/dev/null -o LogLevel=ERROR -p {ssh_port} localhost \
+                        'exec 0</dev/null;' {starter}<CMD>"
                 )),
             )
         }

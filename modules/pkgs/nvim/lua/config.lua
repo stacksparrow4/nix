@@ -18,6 +18,9 @@ vim.opt.splitright = true
 -- Disable line wrapping
 vim.opt.wrap = false
 
+-- Vertical column
+vim.opt.colorcolumn = "100"
+
 -- But not for md or typst files!
 local wrap_augroup = vim.api.nvim_create_augroup("Wrap Settings", { clear = true })
 vim.api.nvim_create_autocmd('BufEnter', {
