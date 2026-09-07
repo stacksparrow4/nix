@@ -305,7 +305,7 @@ fn main() {
 
         let mut guidelines = vec![];
 
-        if all_tools.contains(&"bash".to_string()) {
+        if all_tools.contains(&"bash".to_string()) && args.local.is_none() {
             guidelines.push(
                 "Avoid recalling information about source available software and \
                 instead answer definitively by cloning the source to /tmp and referring to it",
@@ -319,11 +319,15 @@ fn main() {
             );
         }
 
-        if let Target::Sandbox = target {
+        if let Target::Sandbox = target && args.local.is_none() {
             guidelines.push(
                 "You are in an Alpine linux container with a read-only /nix volume \
                 mounted in. Use apk to install packages.",
             );
+        }
+
+        if args.local.is_some() {
+            guidelines.push("You are in a sandbox with no network access.");
         }
 
         if brave_search {
