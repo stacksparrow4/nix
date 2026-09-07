@@ -497,12 +497,6 @@ fn main() {
                 generate_pi_mirror_volume("models.json", VolAccess::RO, VolType::File),
                 generate_pi_mirror_volume("sessions", VolAccess::RW, VolType::Dir),
                 generate_absolute_volume(
-                    &std::env::var("SPRRW_SKILLS").unwrap(),
-                    "~/.pi/agent/skills",
-                    VolAccess::RO,
-                    VolType::Dir,
-                ),
-                generate_absolute_volume(
                     &std::env::var("SPRRW_EXTENSIONS").unwrap(),
                     "~/.pi/agent/extensions",
                     VolAccess::RO,

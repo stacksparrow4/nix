@@ -20,7 +20,6 @@
               export SPRRW_PI=${pkgsLinuxUnstable.pi-coding-agent}/bin/pi
               export SPRRW_PI_WRAPPER_LINUX=${piLinux}/bin/pi
 
-              export SPRRW_SKILLS=${./skills}
               export SPRRW_EXTENSIONS=${./extensions}
               export SPRRW_PROMPTS=${./prompts}
 
