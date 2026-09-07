@@ -109,12 +109,6 @@ in
                     ];
                   };
                 };
-
-                flatpaks = [
-                  {
-                    name = "org.musescore.MuseScore";
-                  }
-                ];
               };
 
               home = {
@@ -142,6 +136,12 @@ in
                   config.lib.file.mkOutOfStoreSymlink "${repo}/noctalia.toml";
               };
             };
+
+          sprrw.flatpaks = [
+            {
+              name = "org.musescore.MuseScore";
+            }
+          ];
 
           nix.extraOptions = ''
             builders = ssh-ng://root@stacksparrow4 aarch64-linux
