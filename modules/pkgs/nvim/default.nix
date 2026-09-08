@@ -14,16 +14,6 @@ in
       ...
     }:
     let
-      sprrwConfig = pkgsLinux.vimUtils.buildVimPlugin {
-        pname = "sprrw-nvim-config";
-        version = "0.1.0";
-        doCheck = false;
-        src = pkgs.runCommand "sprrw-nvim-config-src" { } ''
-          mkdir -p $out/lua
-          cp -r ${./lua}/. $out/lua/
-        '';
-      };
-
       mkNvim =
         {
           pkgs,
@@ -83,7 +73,15 @@ in
           ];
 
           plugins = [
-            sprrwConfig
+            (pkgs.vimUtils.buildVimPlugin {
+              pname = "sprrw-nvim-config";
+              version = "0.1.0";
+              doCheck = false;
+              src = pkgs.runCommand "sprrw-nvim-config-src" { } ''
+                mkdir -p $out/lua
+                cp -r ${./lua}/. $out/lua/
+              '';
+            })
           ]
           ++ (
             with pkgs.vimPlugins;
