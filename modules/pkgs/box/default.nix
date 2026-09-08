@@ -1,4 +1,4 @@
-{ self, ... }:
+{ self, inputs, ... }:
 
 {
   perSystem =
@@ -12,7 +12,11 @@
       packages = {
         box =
           let
-            rustBin = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
+            rustBin =
+              ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
+                name = "box";
+                src = ./.;
+              }).rootCrate.build;
             terminfo =
               if pkgs.stdenv.hostPlatform.isLinux then
                 "${pkgs.foot.terminfo}/share/terminfo"

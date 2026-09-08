@@ -1,3 +1,5 @@
+{ inputs, ... }:
+
 {
   perSystem =
     {
@@ -10,7 +12,12 @@
     {
       packages.pi =
           let
-            buildPi = pkgs: (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
+            buildPi =
+              pkgs:
+              ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
+                name = "pi";
+                src = ./.;
+              }).rootCrate.build;
             pi = buildPi pkgs;
             piLinux = buildPi pkgsLinux;
           in

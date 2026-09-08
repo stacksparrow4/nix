@@ -1,8 +1,14 @@
+{ inputs, ... }:
+
 {
   perSystem =
     { pkgs, ... }:
     let
-      sprrw-unwrapped = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
+      sprrw-unwrapped =
+        ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
+          name = "sprrw";
+          src = ./.;
+        }).rootCrate.build;
     in
     {
       packages.sprrw = pkgs.stdenv.mkDerivation {

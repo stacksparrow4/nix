@@ -1,7 +1,13 @@
+{ inputs, ... }:
+
 {
   perSystem =
     { pkgs, ... }:
     {
-      packages.llama-server = (import ./_Cargo.nix { inherit pkgs; }).rootCrate.build;
+      packages.llama-server =
+        ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
+          name = "llama-server";
+          src = ./.;
+        }).rootCrate.build;
     };
 }
