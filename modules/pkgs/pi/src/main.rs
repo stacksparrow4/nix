@@ -293,13 +293,13 @@ fn main() {
 
     let system = args.system.unwrap_or_else(|| {
         if args.bare {
-            return String::from("You are a technical assistant. Be concise.");
+            return String::from("You are a technical assistant.");
         }
 
         if args.search {
             return String::from(
                 "You are a technical research assistant that searches the web to \
-                provide information. Be concise.",
+                provide information.",
             );
         }
 
@@ -411,7 +411,6 @@ fn main() {
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::null())
-                .env("PYTHONUNBUFFERED", "1")
                 .spawn()
                 .expect("Failed to start VM box");
 
