@@ -59,8 +59,12 @@ struct Args {
     models: Option<String>,
 
     /// Disable network, and specify a SOCAT target for the LLM connection
-    #[arg(short, long)]
+    #[arg(long)]
     local: Option<String>,
+
+    /// Use 1 hour (long) Claude cache writes instead of the default 5 minutes
+    #[arg(short = 'l', long)]
+    long_cache: bool,
 
     /// Pass options directly to the sandbox
     #[arg(long)]
@@ -524,6 +528,11 @@ fn main() {
         .args(match target {
             Target::Remote { .. } => vec![],
             _ => vec!["--env", "PI_READ_AGENTS_MD=1"],
+        })
+        .args(if args.long_cache {
+            vec!["--env", "PI_CACHE_RETENTION=long"]
+        } else {
+            vec![]
         })
         .args(if brave_search {
             vec![
