@@ -129,8 +129,12 @@
                 ++ (with self.packages.${pkgsLinux.stdenv.hostPlatform.system}; [ python ]);
             };
           in
-          pkgs.runCommand "box" { nativeBuildInputs = with pkgs; [ makeWrapper ]; } ''
+          pkgs.runCommand "box" { nativeBuildInputs = with pkgs; [ makeWrapper installShellFiles ]; } ''
             mkdir -p $out/bin
+            installShellCompletion --cmd box \
+              --bash <(${rustBin}/bin/box --completions bash) \
+              --zsh <(${rustBin}/bin/box --completions zsh) \
+              --fish <(${rustBin}/bin/box --completions fish)
             makeWrapper ${rustBin}/bin/box $out/bin/box \
               ${
                 if pkgs.stdenv.hostPlatform.isLinux then

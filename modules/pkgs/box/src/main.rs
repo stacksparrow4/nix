@@ -8,7 +8,7 @@ mod vm;
 use std::path::Path;
 use std::process::Command;
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use common::exit_code;
 use mount::{Mount, MountType};
 
@@ -16,6 +16,13 @@ use crate::common::Cli;
 
 fn main() {
     let mut args = Cli::parse();
+
+    if let Some(shell) = args.completions {
+        let mut cmd = Cli::command();
+        let name = cmd.get_name().to_string();
+        clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
+        return;
+    }
 
     if args.ro_git && !args.cwd {
         println!("Cannot specify --ro-git without --cwd");

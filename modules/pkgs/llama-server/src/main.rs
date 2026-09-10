@@ -5,7 +5,8 @@ use std::{
     vec,
 };
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap_complete::Shell;
 
 const IMAGE: &str = "ghcr.io/ggml-org/llama.cpp:server-cuda13";
 const SOCKET_DIR: &str = "/tmp/llama-cpp";
@@ -18,6 +19,10 @@ const PORT: u16 = 8033;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
+    /// Generate shell completions for the given shell
+    #[arg(long, value_name = "SHELL")]
+    completions: Option<Shell>,
+
     #[arg(long, hide = true)]
     internal_models_dir: Option<String>,
 
@@ -35,6 +40,13 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+
+    if let Some(shell) = args.completions {
+        let mut cmd = Args::command();
+        let name = cmd.get_name().to_string();
+        clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
+        return;
+    }
 
     if Path::new(SOCKET).exists() {
         let _ = fs::remove_file(SOCKET);

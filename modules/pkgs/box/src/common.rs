@@ -1,4 +1,5 @@
 use clap::Parser;
+use clap_complete::Shell;
 
 use std::os::unix::process::ExitStatusExt;
 use std::path::Path;
@@ -7,6 +8,10 @@ use std::process::ExitStatus;
 #[derive(Parser, Debug)]
 #[command(name = "box")]
 pub struct Cli {
+    /// Generate shell completions for the given shell
+    #[arg(long, value_name = "SHELL")]
+    pub completions: Option<Shell>,
+
     /// Use VM backend
     #[arg(long, group = "backend")]
     pub vm: bool,

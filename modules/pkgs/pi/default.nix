@@ -20,20 +20,28 @@
               }).rootCrate.build;
             pi = buildPi pkgs;
             piLinux = buildPi pkgsLinux;
+            piWrapper = pkgs.writeShellApplication {
+              name = "pi";
+              text = ''
+                export SPRRW_PI=${pkgsLinuxUnstable.pi-coding-agent}/bin/pi
+                export SPRRW_PI_WRAPPER_LINUX=${piLinux}/bin/pi
+
+                export SPRRW_EXTENSIONS=${./extensions}
+                export SPRRW_PROMPTS=${./prompts}
+
+                export PATH="${pkgs.lib.makeBinPath [ config.packages.box ]}:$PATH"
+
+                ${pi}/bin/pi "$@"
+              '';
+            };
           in
-          pkgs.writeShellApplication {
-            name = "pi";
-            text = ''
-              export SPRRW_PI=${pkgsLinuxUnstable.pi-coding-agent}/bin/pi
-              export SPRRW_PI_WRAPPER_LINUX=${piLinux}/bin/pi
-
-              export SPRRW_EXTENSIONS=${./extensions}
-              export SPRRW_PROMPTS=${./prompts}
-
-              export PATH="${pkgs.lib.makeBinPath [ config.packages.box ]}:$PATH"
-
-              ${pi}/bin/pi "$@"
-            '';
-          };
+          pkgs.runCommand "pi" { nativeBuildInputs = [ pkgs.installShellFiles ]; } ''
+            mkdir -p $out/bin
+            ln -s ${piWrapper}/bin/pi $out/bin/pi
+            installShellCompletion --cmd pi \
+              --bash <(${pi}/bin/pi --completions bash) \
+              --zsh <(${pi}/bin/pi --completions zsh) \
+              --fish <(${pi}/bin/pi --completions fish)
+          '';
     };
 }

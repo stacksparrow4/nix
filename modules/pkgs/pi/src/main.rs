@@ -6,7 +6,8 @@ use std::{
     time::Duration,
 };
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap_complete::Shell;
 use regex::Regex;
 use tempfile::{TempDir, tempdir};
 
@@ -18,6 +19,10 @@ mod remote;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
+    /// Generate shell completions for the given shell
+    #[arg(long, value_name = "SHELL")]
+    completions: Option<Shell>,
+
     // Pass through args
     /// Disable tools by default
     #[arg(long)]
@@ -226,6 +231,13 @@ fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Ch
 
 fn main() {
     let args = Args::parse();
+
+    if let Some(shell) = args.completions {
+        let mut cmd = Args::command();
+        let name = cmd.get_name().to_string();
+        clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
+        return;
+    }
 
     if let Some(socket_path) = args.internal_serve.as_deref() {
         serve_local(socket_path);
