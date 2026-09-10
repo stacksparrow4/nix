@@ -1,8 +1,8 @@
 mod config;
 
-use std::iter;
 use std::path::PathBuf;
 use std::process::Command;
+use std::{iter, process::Stdio};
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clap_complete::Shell;
@@ -163,7 +163,17 @@ fn build(config: &Config) {
     if cfg!(target_os = "macos") {
         let mut cmd = Command::new("nix");
         cmd.current_dir(&config.build_flake)
-            .args(["run", "home-manager/master", "--", "switch", "--show-trace"])
+            .args([
+                "run",
+                "home-manager/master",
+                "--",
+                "switch",
+                "--option",
+                "warn-dirty",
+                "false",
+                "--print-build-logs",
+                "--show-trace",
+            ])
             .arg("--flake")
             .arg(&config.build_flake);
         append_override_inputs(&mut cmd, config);
@@ -191,6 +201,37 @@ fn build(config: &Config) {
 
 fn deploy() {
     run_cmd(Command::new("git").args(["add", "-A"]));
+
+    // Build each system first and make sure its added to gcroots
+    let deploy_nodes: Vec<String> = serde_json::from_slice(
+        &Command::new("nix")
+            .args([
+                "eval",
+                ".#deploy.nodes",
+                "--apply",
+                "builtins.attrNames",
+                "--json",
+            ])
+            .stdout(Stdio::piped())
+            .output()
+            .expect("failed to evaluate deploy.nodes of flake")
+            .stdout,
+    )
+    .expect("failed to parse nix eval json");
+
+    for n in deploy_nodes.iter() {
+        run_cmd(Command::new("nix").args([
+            "build",
+            &format!(".#deploy.nodes.{}.profiles.system.path", n),
+            "--out-link",
+            &format!("./.{}.gcroot", n),
+            "--option",
+            "warn-dirty",
+            "false",
+            "--print-build-logs",
+            "--show-trace",
+        ]));
+    }
 
     if !Command::new("nix")
         .args([
