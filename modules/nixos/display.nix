@@ -35,8 +35,34 @@
         extraPortals = with pkgs; [
           xdg-desktop-portal-gtk
           xdg-desktop-portal-wlr
+          xdg-desktop-portal-termfilechooser
         ];
+
+        config = {
+          common = {
+            default = [ "gtk" ];
+            "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
+            "org.freedesktop.impl.portal.ScreenCast" = [ "wlr" ];
+            "org.freedesktop.impl.portal.Screenshot" = [ "wlr" ];
+          };
+          sway."org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
+        };
       };
+
+      systemd.user.services.xdg-desktop-portal-termfilechooser.serviceConfig.ExecStart =
+        let
+          termfilechooserConfig = pkgs.writeText "termfilechooser-config" ''
+            [filechooser]
+            cmd=${self'.packages.yazi-file-picker}/bin/yazi-file-picker
+            default_dir=$HOME
+            open_mode=suggested
+            save_mode=suggested
+          '';
+        in
+        [
+          ""
+          "${pkgs.xdg-desktop-portal-termfilechooser}/libexec/xdg-desktop-portal-termfilechooser -c ${termfilechooserConfig}"
+        ];
 
       programs.dconf.enable = true;
 
