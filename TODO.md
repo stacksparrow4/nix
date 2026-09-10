@@ -1,0 +1,2 @@
+- Replace blink with native nvim completion
+- Package terminal emulators (foot, ghostty) as wrapped packages
