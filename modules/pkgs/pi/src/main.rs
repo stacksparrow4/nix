@@ -229,6 +229,58 @@ fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Ch
     (dir, proc)
 }
 
+fn wait_for_ssh(ssh_port: &str, vm_proc: &mut Child) {
+    let start = std::time::Instant::now();
+    let timeout = Duration::from_secs(120);
+
+    loop {
+        if let Some(status) = vm_proc
+            .try_wait()
+            .expect("Failed to poll the VM process")
+        {
+            eprintln!("VM exited before SSH was ready ({})", status);
+            std::process::exit(1);
+        }
+
+        let ready = Command::new("sshpass")
+            .args([
+                "-p",
+                "password",
+                "ssh",
+                "-n",
+                "-o",
+                "StrictHostKeyChecking=no",
+                "-o",
+                "UserKnownHostsFile=/dev/null",
+                "-o",
+                "LogLevel=ERROR",
+                "-o",
+                "ConnectTimeout=2",
+                "-p",
+                ssh_port,
+                "localhost",
+                "true",
+            ])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false);
+
+        if ready {
+            return;
+        }
+
+        if start.elapsed() >= timeout {
+            eprintln!("Timed out waiting for VM SSH on port {}", ssh_port);
+            std::process::exit(1);
+        }
+
+        sleep(Duration::from_millis(250));
+    }
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -439,9 +491,12 @@ fn main() {
 
             let re = Regex::new(r"^Forwarding SSH to port (\d+)$").unwrap();
 
-            let ssh_port = &re
+            let ssh_port = re
                 .captures(first_line.trim())
-                .expect("Failed to extract SSH port")[1];
+                .expect("Failed to extract SSH port")[1]
+                .to_string();
+
+            wait_for_ssh(&ssh_port, &mut proc);
 
             let starter = if args.cwd || args.ro_cwd {
                 "'cd ~/box &&' "

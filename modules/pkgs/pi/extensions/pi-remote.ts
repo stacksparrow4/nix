@@ -252,14 +252,16 @@ function withoutLocalEditPreview<T extends { renderCall?: (...args: any[]) => an
   };
 }
 
-let cachedRemotePwd: Promise<string> | undefined;
+let cachedRemotePwd: string | undefined;
 
-function remotePwdCached(): Promise<string> {
-  cachedRemotePwd ??= remotePwd();
-  return cachedRemotePwd;
+async function remotePwdCached(): Promise<string> {
+  if (cachedRemotePwd !== undefined) return cachedRemotePwd;
+  const pwd = await remotePwd();
+  if (pwd !== undefined) cachedRemotePwd = pwd;
+  return pwd ?? "/";
 }
 
-async function remotePwd(): Promise<string> {
+async function remotePwd(): Promise<string | undefined> {
   try {
     const res = await bridgeExec("pwd", { timeout: REMOTE_FILE_OP_TIMEOUT_SECONDS });
     const out = res.stdout.toString("utf-8").trim();
@@ -267,7 +269,7 @@ async function remotePwd(): Promise<string> {
   } catch {
     // fall through to default
   }
-  return "/";
+  return undefined;
 }
 
 /**
