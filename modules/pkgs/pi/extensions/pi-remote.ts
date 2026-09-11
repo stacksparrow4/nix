@@ -252,6 +252,22 @@ function withoutLocalEditPreview<T extends { renderCall?: (...args: any[]) => an
   };
 }
 
+// The read/write/edit tools resolve relative paths against `ctx?.cwd || cwd`, so the
+// ExtensionContext.cwd (which pi derives from process.cwd() of the *brain* sandbox, e.g.
+// /root) takes precedence over the remote cwd we bake into the tool definition. That makes
+// relative paths resolve against the brain's cwd instead of where the tools actually run
+// (the bridge/remote sandbox). Force ctx.cwd to the remote cwd so relative paths resolve
+// against the filesystem the operations execute on.
+function withRemoteCwd<T extends { execute: (...args: any[]) => any }>(tool: T, cwd: string): T {
+  const execute = tool.execute;
+  return {
+    ...tool,
+    execute(id: any, params: any, signal: any, onUpdate: any, ctx?: any) {
+      return execute.call(tool, id, params, signal, onUpdate, { ...(ctx ?? {}), cwd });
+    },
+  };
+}
+
 let cachedRemotePwd: string | undefined;
 
 async function remotePwdCached(): Promise<string> {
@@ -598,7 +614,7 @@ export default async function(pi: ExtensionAPI) {
       autocompleteRegistered = true;
     });
 
-    pi.registerTool({
+    pi.registerTool(withRemoteCwd({
       ...createReadToolDefinition(cwd, {
         operations: {
           readFile: remoteReadFile,
@@ -608,18 +624,19 @@ export default async function(pi: ExtensionAPI) {
       }),
       description:
         "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
-    });
+    }, cwd));
 
-    pi.registerTool(
+    pi.registerTool(withRemoteCwd(
       createWriteToolDefinition(cwd, {
         operations: {
           writeFile: remoteWriteFile,
           mkdir: remoteMkdir,
         },
       }),
-    );
+      cwd,
+    ));
 
-    pi.registerTool(withoutLocalEditPreview(
+    pi.registerTool(withRemoteCwd(withoutLocalEditPreview(
       createEditToolDefinition(cwd, {
         operations: {
           readFile: remoteReadFile,
@@ -627,6 +644,6 @@ export default async function(pi: ExtensionAPI) {
           access: (p) => remoteAccess(p, "rw"),
         },
       }),
-    ));
+    ), cwd));
   }
 }
