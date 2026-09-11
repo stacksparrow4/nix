@@ -34,8 +34,12 @@ pub fn start_notify_server() -> Option<tempfile::TempDir> {
                     _ => ("Pi", "Ready for input"),
                 };
 
-                let _ = Command::new("notify-send")
-                    .args(["--app-name=pi", "--", title, body])
+                let mut cmd = Command::new("notify-send");
+                if let Ok(icon) = std::env::var("SPRRW_PI_NOTIFY_ICON") {
+                    cmd.arg(format!("--icon={icon}"));
+                }
+                let _ = cmd
+                    .args(["--app-name=", "--", title, body])
                     .stdin(Stdio::null())
                     .stdout(Stdio::null())
                     .stderr(Stdio::null())
