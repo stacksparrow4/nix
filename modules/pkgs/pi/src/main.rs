@@ -229,7 +229,7 @@ fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Ch
     (dir, proc)
 }
 
-fn wait_for_ssh(ssh_port: &str, vm_proc: &mut Child) {
+fn wait_for_ssh(ssh_port: &str, ready_check: &str, vm_proc: &mut Child) {
     let start = std::time::Instant::now();
     let timeout = Duration::from_secs(120);
 
@@ -259,7 +259,7 @@ fn wait_for_ssh(ssh_port: &str, vm_proc: &mut Child) {
                 "-p",
                 ssh_port,
                 "localhost",
-                "true",
+                ready_check,
             ])
             .stdin(Stdio::null())
             .stdout(Stdio::null())
@@ -496,7 +496,13 @@ fn main() {
                 .expect("Failed to extract SSH port")[1]
                 .to_string();
 
-            wait_for_ssh(&ssh_port, &mut proc);
+            let ready_check = if args.cwd || args.ro_cwd {
+                "mountpoint -q ~/box"
+            } else {
+                "true"
+            };
+
+            wait_for_ssh(&ssh_port, ready_check, &mut proc);
 
             let starter = if args.cwd || args.ro_cwd {
                 "'cd ~/box &&' "
