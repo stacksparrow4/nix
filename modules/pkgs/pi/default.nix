@@ -29,7 +29,10 @@
                 export SPRRW_EXTENSIONS=${./extensions}
                 export SPRRW_PROMPTS=${./prompts}
 
-                export PATH="${pkgs.lib.makeBinPath [ config.packages.box ]}:$PATH"
+                export PATH="${pkgs.lib.makeBinPath (
+                  [ config.packages.box ]
+                  ++ pkgs.lib.optional pkgs.stdenv.isLinux pkgs.libnotify
+                )}:$PATH"
 
                 ${pi}/bin/pi "$@"
               '';

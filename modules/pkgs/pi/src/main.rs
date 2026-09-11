@@ -11,8 +11,10 @@ use clap_complete::Shell;
 use regex::Regex;
 use tempfile::{TempDir, tempdir};
 
+use crate::notify::start_notify_server;
 use crate::remote::{SOCKET_NAME, serve_local, start_remote_server, validate_remote_arg};
 
+mod notify;
 mod remote;
 
 /// Pi sandbox wrapper. For Pi help, use pi -- --help
@@ -184,6 +186,7 @@ const DEFAULT_EXTENSIONS: &[&str] = &[
     "goal.ts",
     "brave-search.ts",
     "footer.ts",
+    "notify.ts",
 ];
 const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
@@ -535,6 +538,24 @@ fn main() {
         format!("{}:{}:ro:dir", bridge_dir.path().display(), BRIDGE_DIR),
     ];
 
+    let notify_dir = start_notify_server();
+    let notify_args: Vec<String> = match &notify_dir {
+        Some(dir) => {
+            let socket_mount_dir = std::path::Path::new(notify::SOCKET_PATH_IN_SANDBOX)
+                .parent()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+            vec![
+                "-v".to_string(),
+                format!("{}:{}:ro:dir", dir.path().display(), socket_mount_dir),
+                "--env".to_string(),
+                format!("PI_NOTIFY_SOCKET={}", notify::SOCKET_PATH_IN_SANDBOX),
+            ]
+        }
+        None => vec![],
+    };
+
     let pi_cmd: Vec<String> = [
         real_pi_location,
         "--approve".to_string(),
@@ -594,6 +615,7 @@ fn main() {
         )
         .args(network_args)
         .args(bridge_args)
+        .args(notify_args)
         .args(match target {
             Target::Remote { universal: true } => vec![],
             _ => vec!["--env", "PI_REMOTE_FILE_TOOLS=1"],
