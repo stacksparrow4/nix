@@ -10,6 +10,24 @@ function formatTokens(count: number): string {
   return `${Math.round(count / 1000000)}M`;
 }
 
+// Cumulative Claude/LLM cost across all session entries. Mirrors the built-in
+// footer's cost stat, summing usage.cost.total over assistant messages, tool
+// results that carry usage, and branch summaries / compactions.
+function totalCost(ctx: any): number {
+  const entries = ctx.sessionManager?.getEntries?.() ?? [];
+  let cost = 0;
+  for (const e of entries) {
+    if (e.type === "message" && e.message.role === "assistant") {
+      cost += e.message.usage?.cost?.total ?? 0;
+    } else if (e.type === "message" && e.message.role === "toolResult" && e.message.usage) {
+      cost += e.message.usage.cost?.total ?? 0;
+    } else if ((e.type === "branch_summary" || e.type === "compaction") && e.usage) {
+      cost += e.usage.cost?.total ?? 0;
+    }
+  }
+  return cost;
+}
+
 // Cache-hit rate of the most recent assistant turn on the active branch.
 function latestCacheHitRate(ctx: any): number | undefined {
   const entries = ctx.sessionManager?.getBranch?.() ?? [];
@@ -70,6 +88,10 @@ export default function (pi: ExtensionAPI) {
             // Cache hit
             const ch = latestCacheHitRate(c);
             if (ch !== undefined) parts.push(theme.fg("dim", `CH${ch.toFixed(1)}%`));
+
+            // Cumulative cost, e.g. "$0.123"
+            const cost = totalCost(c);
+            if (cost > 0) parts.push(theme.fg("dim", `$${cost.toFixed(3)}`));
 
             // Context usage, e.g. "1045/1.0M (2.2%)"
             const usage = c.getContextUsage?.();
