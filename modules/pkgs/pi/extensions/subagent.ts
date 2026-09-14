@@ -13,6 +13,14 @@ const MAX_CONCURRENT = 4;
 
 const EXT_DIR = path.join(os.homedir(), ".pi", "agent", "extensions");
 
+function formatTokens(count: number): string {
+	if (count < 1000) return `${count}`;
+	if (count < 10000) return `${(count / 1000).toFixed(1)}k`;
+	if (count < 1000000) return `${Math.round(count / 1000)}k`;
+	if (count < 10000000) return `${(count / 1000000).toFixed(1)}M`;
+	return `${Math.round(count / 1000000)}M`;
+}
+
 const SUBAGENT_SYSTEM_PROMPT = [
 	"You are a subagent handling a delegated task on behalf of a main agent.",
 	"You run autonomously with a fresh, isolated context and cannot ask follow-up questions.",
@@ -129,23 +137,17 @@ export default function (pi: ExtensionAPI) {
 
 	function refreshStatus() {
 		const ui = lastCtx?.ui;
-		if (!ui?.setStatus) return;
+		if (!ui?.setWidget) return;
 		const running = [...live.values()].filter((s) => !s.done);
 		if (running.length === 0) {
-			ui.setStatus("subagents", undefined);
+			ui.setWidget("subagents", undefined);
 			return;
 		}
 		const parts = running.map((s) => {
 			const tail = s.lastTool ? ` ${s.lastTool}` : "";
-			return `#${s.id} ${s.turns}t${tail}`;
+			return `#${s.id} ${formatTokens(s.tokens)}${tail}`;
 		});
-		ui.setStatus("subagents", `⛭ subagents: ${running.length} · ${parts.join(" · ")}`);
-	}
-
-	function notify(text: string, level: "info" | "warning" | "error" = "info") {
-		try {
-			lastCtx?.ui?.notify?.(text, level);
-		} catch {}
+		ui.setWidget("subagents", [`⛭ subagents: ${running.length} · ${parts.join(" · ")}`, ""]);
 	}
 
 	function buildSubagentArgs(task: string): string[] {
@@ -259,8 +261,6 @@ export default function (pi: ExtensionAPI) {
 			sa.proc = spawnSubagent(sa);
 			live.set(id, sa);
 
-			const preview = req.task.length > 50 ? `${req.task.slice(0, 50)}…` : req.task;
-			notify(`Subagent #${id} started: ${preview}`);
 			refreshStatus();
 
 			let outBuf = "";
@@ -291,10 +291,6 @@ export default function (pi: ExtensionAPI) {
 				}
 				live.delete(id);
 				recordFinished(id, { exitCode, stopReason: end.stopReason, aborted: false });
-				notify(
-					exitCode === 0 ? `Subagent #${id} finished` : `Subagent #${id} failed (exit ${exitCode})`,
-					exitCode === 0 ? "info" : "warning",
-				);
 				refreshStatus();
 			};
 
@@ -346,9 +342,7 @@ export default function (pi: ExtensionAPI) {
 			fs.rmSync(CONTROL_PATH!, { force: true });
 		} catch {}
 		server = net.createServer(handleConnection);
-		server.on("error", (err) => {
-			notify(`subagent control socket error: ${err.message}`, "error");
-		});
+		server.on("error", () => {});
 		server.listen(CONTROL_PATH);
 	}
 
