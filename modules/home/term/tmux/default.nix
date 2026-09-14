@@ -22,7 +22,7 @@
               config.sprrw.term.tmux.defaultTerm
               (
 
-                if pkgs.stdenv.isDarwin then "echo '#{pane_current_path}'" else "readlink /proc/#{pane_pid}/cwd"
+                if pkgs.stdenv.isDarwin then "#{pane_current_path}" else "$(readlink /proc/#{pane_pid}/cwd)"
               )
             ]
             (builtins.readFile ./tmux.conf);
