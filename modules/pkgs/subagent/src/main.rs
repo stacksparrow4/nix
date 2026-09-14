@@ -6,8 +6,6 @@ use std::os::unix::io::{AsRawFd, RawFd};
 use std::os::unix::net::UnixStream;
 use std::process::exit;
 use std::sync::atomic::{AtomicI32, Ordering};
-use std::thread::sleep;
-use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 
@@ -154,27 +152,66 @@ fn writer_loop(mut reader: BufReader<UnixStream>, id: &str, path: &str) {
 }
 
 fn wait(id: String) {
-    let id = id
+    let id_str = id
         .trim_start_matches("subagent-")
         .trim_end_matches(".log")
         .to_string();
 
-    let pidfile = pid_path(&id);
-    let pid: i32 = match fs::read_to_string(&pidfile) {
-        Ok(s) => match s.trim().parse() {
-            Ok(p) => p,
-            Err(_) => return,
-        },
-        Err(_) => return,
+    let id_num: i64 = match id_str.parse() {
+        Ok(n) => n,
+        Err(_) => {
+            eprintln!("subagent: invalid id: {id_str}");
+            exit(2);
+        }
     };
 
-    loop {
-        let alive = unsafe { libc::kill(pid, 0) } == 0;
-        if !alive {
-            break;
+    let socket = match env::var("PI_SUBAGENT_SOCKET") {
+        Ok(s) if !s.is_empty() => s,
+        _ => {
+            eprintln!("subagents unavailable in this context");
+            exit(1);
         }
-        sleep(Duration::from_millis(200));
+    };
+
+    let stream = UnixStream::connect(&socket).unwrap_or_else(|e| {
+        eprintln!("subagent: failed to connect to control socket ({socket}): {e}");
+        exit(1);
+    });
+
+    let mut writer = stream.try_clone().expect("failed to clone control socket");
+    let mut reader = BufReader::new(stream);
+
+    let req = format!("{{\"type\":\"wait\",\"id\":{id_num}}}\n");
+    if writer.write_all(req.as_bytes()).is_err() || writer.flush().is_err() {
+        eprintln!("subagent: failed to send request to control server");
+        exit(1);
     }
+
+    let mut line = String::new();
+    if reader.read_line(&mut line).unwrap_or(0) == 0 {
+        eprintln!("subagent: no response from control server");
+        exit(1);
+    }
+    let line = line.trim();
+
+    if line.contains("\"type\":\"error\"") {
+        let msg = json_field(line, "message").unwrap_or_else(|| "unknown error".to_string());
+        eprintln!("subagent: {msg}");
+        exit(4);
+    }
+
+    if line.contains("\"type\":\"subagent_end\"") {
+        if line.contains("\"aborted\":true") {
+            eprintln!("subagent {id_num}: aborted");
+        }
+        let code = json_field(line, "exitCode")
+            .and_then(|v| v.parse::<i32>().ok())
+            .unwrap_or(0);
+        exit(code);
+    }
+
+    eprintln!("subagent: unexpected response from control server: {line}");
+    exit(1);
 }
 
 fn daemonize() {

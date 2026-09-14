@@ -50,10 +50,74 @@ export default function (pi: ExtensionAPI) {
 	if (!CONTROL_PATH) return;
 
 	const live = new Map<number, LiveSubagent>();
+	interface SubagentResult {
+		exitCode: number;
+		stopReason: string;
+		aborted: boolean;
+	}
+	const finished = new Map<number, SubagentResult>();
+	const waiters = new Map<number, net.Socket[]>();
+	const MAX_FINISHED = 256;
 	let nextId = 0;
 	let server: net.Server | undefined;
 	let lastCtx: any;
 	let promptFile: string | undefined;
+
+	function recordFinished(id: number, result: SubagentResult) {
+		finished.set(id, result);
+		while (finished.size > MAX_FINISHED) {
+			const oldest = finished.keys().next().value;
+			if (oldest === undefined) break;
+			finished.delete(oldest);
+		}
+		const pending = waiters.get(id);
+		if (!pending) return;
+		waiters.delete(id);
+		const payload = `${JSON.stringify({ type: "subagent_end", id, ...result })}\n`;
+		for (const w of pending) {
+			if (!w.destroyed) {
+				w.write(payload);
+				w.end();
+			}
+		}
+	}
+
+	function handleWait(conn: net.Socket, req: any) {
+		const id = typeof req.id === "number" ? req.id : Number.parseInt(String(req.id), 10);
+		if (!Number.isFinite(id)) {
+			conn.write(`${JSON.stringify({ type: "error", message: "invalid wait id" })}\n`);
+			conn.end();
+			return;
+		}
+		const done = finished.get(id);
+		if (done) {
+			conn.write(`${JSON.stringify({ type: "subagent_end", id, ...done })}\n`);
+			conn.end();
+			return;
+		}
+		if (live.has(id)) {
+			const arr = waiters.get(id) ?? [];
+			arr.push(conn);
+			waiters.set(id, arr);
+			conn.on("close", () => {
+				const cur = waiters.get(id);
+				if (!cur) return;
+				const idx = cur.indexOf(conn);
+				if (idx >= 0) cur.splice(idx, 1);
+				if (cur.length === 0) waiters.delete(id);
+			});
+			return;
+		}
+		if (id < nextId) {
+			conn.write(
+				`${JSON.stringify({ type: "subagent_end", id, exitCode: 0, stopReason: "end", aborted: false })}\n`,
+			);
+			conn.end();
+			return;
+		}
+		conn.write(`${JSON.stringify({ type: "error", message: `unknown subagent ${id}` })}\n`);
+		conn.end();
+	}
 
 	function ensurePromptFile(): string {
 		if (promptFile && fs.existsSync(promptFile)) return promptFile;
@@ -101,7 +165,7 @@ export default function (pi: ExtensionAPI) {
 		args.push("--no-tools", "--no-extensions");
 		for (const e of extensions) args.push("-e", e);
 		args.push("--tools", tools.join(","));
-		args.push("--append-system-prompt", ensurePromptFile());
+		args.push("--system-prompt", ensurePromptFile());
 		args.push(`Task: ${task}`);
 		return args;
 	}
@@ -159,6 +223,10 @@ export default function (pi: ExtensionAPI) {
 			} catch {
 				conn.write(`${JSON.stringify({ type: "error", message: "invalid request" })}\n`);
 				conn.end();
+				return;
+			}
+			if (req.type === "wait") {
+				handleWait(conn, req);
 				return;
 			}
 			if (req.type !== "run" || typeof req.task !== "string" || !req.task.trim()) {
@@ -222,6 +290,7 @@ export default function (pi: ExtensionAPI) {
 					conn.end();
 				}
 				live.delete(id);
+				recordFinished(id, { exitCode, stopReason: end.stopReason, aborted: false });
 				notify(
 					exitCode === 0 ? `Subagent #${id} finished` : `Subagent #${id} failed (exit ${exitCode})`,
 					exitCode === 0 ? "info" : "warning",
@@ -259,6 +328,7 @@ export default function (pi: ExtensionAPI) {
 	function abortSubagent(sa: LiveSubagent) {
 		sa.done = true;
 		live.delete(sa.id);
+		recordFinished(sa.id, { exitCode: 143, stopReason: "aborted", aborted: true });
 		try {
 			sa.proc.kill("SIGTERM");
 		} catch {}
