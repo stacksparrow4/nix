@@ -1,5 +1,8 @@
-{ inputs, ... }:
+{ inputs, config, ... }:
 
+let
+  globalConfig = config;
+in
 {
   perSystem =
     {
@@ -36,6 +39,10 @@
 
                 export SPRRW_EXTENSIONS=${./extensions}
                 export SPRRW_PROMPTS=${./prompts}
+
+                export SPRRW_SUBAGENT_BIN=${
+                  globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.subagent
+                }/bin
 
                 export SPRRW_PI_NOTIFY_ICON=${piLogoPng}
 
