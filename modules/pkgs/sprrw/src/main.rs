@@ -196,6 +196,14 @@ fn build(config: &Config) {
 
         diff_last_system_closures();
         trim_profiles();
+
+        run_cmd(Command::new("notify-send").args([
+            "--app-name",
+            "",
+            "--app-icon",
+            "nix-snowflake",
+            "Nix rebuild complete",
+        ]));
     }
 }
 
@@ -267,6 +275,7 @@ fn update(config: &Config) {
         run_cmd(Command::new("flatpak").arg("update").arg("-y"));
     }
     for update_flake in &config.update_flakes {
+        run_cmd(Command::new("git").current_dir(update_flake).arg("pull"));
         run_cmd(
             Command::new("nix")
                 .current_dir(update_flake)
