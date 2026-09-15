@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, inputs, ... }:
 
 let
   globalConfig = config;
@@ -137,44 +137,29 @@ in
           configure = args: mkNvim ({ inherit pkgs; } // args);
         };
 
+      nvimWrapper =
+        (
+          (inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
+            name = "nvim-wrapper";
+            src = ./wrapper;
+          }
+        ).rootCrate.build;
+
+      clipShimLinux = globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.clip-shim;
+
       mkNvimBoxed =
         { nvim-unboxed }:
-        (pkgs.writeShellApplication {
-          name = "nvim";
-          text = ''
-            if [[ "''${IN_SPRRW_SANDBOX:-}" == 1 ]]; then
-              ${nvim-unboxed}/bin/nvim "$@"
-            else
-              share_dir="$(pwd)"
-              vim_args=()
-              if [[ $# -eq 1 ]] && [[ "$1" == /* ]]; then
-                arg="$1"
-                if [[ -d "$arg" ]]; then
-                  share_dir="$arg"
-                  share_file="."
-                else
-                  share_dir=$(dirname "$arg")
-                  share_file=$(basename "$arg")
-                fi
-                vim_args+=("$share_file")
-              else
-                vim_args+=("$@")
-              fi
-
-              (cd "$share_dir" && ${config.packages.box}/bin/box --cwd --wayland --ro-git -- ${nvim-unboxed}/bin/nvim "''${vim_args[@]}")
-            fi
-          '';
-        })
+        (pkgs.runCommand "nvim" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
+          makeWrapper ${nvimWrapper}/bin/nvim $out/bin/nvim \
+            --set SPRRW_NVIM ${nvim-unboxed}/bin/nvim \
+            --set SPRRW_CLIP_SHIM ${clipShimLinux}/bin/sprrw-clip \
+            --prefix PATH : ${lib.makeBinPath [ config.packages.box ]}
+        '')
         // {
           configure =
             args:
             mkNvimBoxed {
-              nvim-unboxed = mkNvim (
-                {
-                  inherit pkgs;
-                }
-                // args
-              );
+              nvim-unboxed = mkNvim ({ pkgs = pkgsLinux; } // args);
             };
         };
     in

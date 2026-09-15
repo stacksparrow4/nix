@@ -1,0 +1,11 @@
+[package]
+name = "nvim-wrapper"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "nvim"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 2
