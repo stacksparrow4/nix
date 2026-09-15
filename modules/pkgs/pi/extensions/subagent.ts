@@ -339,9 +339,9 @@ export default function (pi: ExtensionAPI) {
 			const ame = event.assistantMessageEvent;
 			switch (ame?.type) {
 				case "text_start":
+					// Reset the stream buffer but keep the last activity visible until the
+					// first delta lands, so the row shows the last log instead of blanking.
 					sa.streamBuf = "";
-					sa.activityKind = "text";
-					sa.activity = "";
 					break;
 				case "text_delta":
 					sa.streamBuf += ame.delta ?? "";
@@ -351,8 +351,6 @@ export default function (pi: ExtensionAPI) {
 					break;
 				case "thinking_start":
 					sa.streamBuf = "";
-					sa.activityKind = "thinking";
-					sa.activity = "";
 					break;
 				case "thinking_delta":
 					sa.streamBuf += ame.delta ?? "";
@@ -526,6 +524,16 @@ export default function (pi: ExtensionAPI) {
 		sa.done = true;
 		live.delete(sa.id);
 		recordFinished(sa.id, { exitCode: 143, stopReason: "aborted", aborted: true });
+		// If the spawning tool is still connected (e.g. a /subagent-cancel while it
+		// runs), tell it we aborted and close the run stream so it doesn't hang.
+		if (!sa.conn.destroyed) {
+			try {
+				sa.conn.write(
+					`${JSON.stringify({ type: "subagent_end", id: sa.id, exitCode: 143, stopReason: "aborted", aborted: true })}\n`,
+				);
+				sa.conn.end();
+			} catch {}
+		}
 		try {
 			sa.proc.kill("SIGTERM");
 		} catch {}
@@ -558,6 +566,49 @@ export default function (pi: ExtensionAPI) {
 		} catch {}
 		server = undefined;
 	}
+
+	pi.registerCommand("subagent-cancel", {
+		description: "Cancel a running subagent by ID, or all subagents if no ID is given",
+		getArgumentCompletions: (prefix: string) => {
+			const running = [...live.values()].filter((s) => !s.done);
+			return running
+				.filter((s) => String(s.id).startsWith(prefix.trim()))
+				.map((s) => {
+					const act = collapseWs(s.activity ?? "");
+					return {
+						value: String(s.id),
+						label: `#${s.id}`,
+						description: act ? `${formatTokens(s.tokens)} · ${act}` : formatTokens(s.tokens),
+					};
+				});
+		},
+		handler: async (args: string, ctx: any) => {
+			const running = [...live.values()].filter((s) => !s.done);
+			const arg = args.trim();
+			if (!arg) {
+				if (running.length === 0) {
+					ctx.ui.notify("No running subagents to cancel.", "info");
+					return;
+				}
+				const n = running.length;
+				for (const sa of running) abortSubagent(sa);
+				ctx.ui.notify(`Cancelled ${n} subagent${n === 1 ? "" : "s"}.`, "info");
+				return;
+			}
+			const id = Number.parseInt(arg, 10);
+			if (!Number.isFinite(id) || String(id) !== arg) {
+				ctx.ui.notify(`Invalid subagent ID: ${arg}`, "error");
+				return;
+			}
+			const sa = live.get(id);
+			if (!sa || sa.done) {
+				ctx.ui.notify(`No running subagent #${id}.`, "error");
+				return;
+			}
+			abortSubagent(sa);
+			ctx.ui.notify(`Cancelled subagent #${id}.`, "info");
+		},
+	});
 
 	pi.on("session_start", (_event: any, ctx: any) => {
 		lastCtx = ctx;
