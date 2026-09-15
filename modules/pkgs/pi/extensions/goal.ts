@@ -75,7 +75,14 @@ export default function goalExtension(pi: ExtensionAPI) {
   pi.registerCommand("crits", {
     description: "Find critical vulnerabilities in a codebase",
     handler: async (_args, ctx) => {
-      const presetGoal = `Find a unique (known findings are listed in KNOWN-FINDINGS.md) critical vulnerability in the codebase. Verify identified vulnerabilities end to end by tracing code flow. Clone third party modules to refer to the source authoritatively instead of recalling from memory. Keep track of progress in PROGRESS.md.`;
+      const presetGoal = `Find a unique critical vulnerability in the codebase. Verify identified vulnerabilities end to end by tracing code flow.
+The vulnerability chain may pass through code in open source third party libraries. Clone these libraries to refer to the source authoritatively instead of recalling from memory.
+
+Use the following directories to store markdown files related to progress (create them if they don't exist):
+hunt/progress/ - store progress on leads in markdown files in this directory.
+hunt/known-findings/ - store a list of known findings here. Check that identified findings are unique against this database of known findings.
+
+Subagents can be used to investigate multiple paths at once. For more information use the bash command "subagent --help".`;
       startGoal(presetGoal, ctx);
     },
   });

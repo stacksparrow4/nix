@@ -19,13 +19,14 @@ struct Args {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    /// Launch a subagent, daemonize, and stream its event log
+    /// Launch a subagent, daemonize, and return the path to its event log
     Run {
         /// The task for the subagent to perform
         #[arg(required = true, num_args = 1.., trailing_var_arg = true)]
         task: Vec<String>,
     },
-    /// Block until subagent N finishes
+    /// Block until subagent N finishes (remember to use a non-default timeout on the bash
+    /// tool itself)
     Wait {
         /// The subagent id (or a subagent-<N>.log path)
         id: String,
