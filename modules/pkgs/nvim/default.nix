@@ -69,6 +69,7 @@ in
                 tinymist
                 typstyle
               ]
+              ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.wl-clipboard
             )}"
           ];
 
@@ -152,7 +153,7 @@ in
         (pkgs.runCommand "nvim" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           makeWrapper ${nvimWrapper}/bin/nvim $out/bin/nvim \
             --set SPRRW_NVIM ${nvim-unboxed}/bin/nvim \
-            --set SPRRW_CLIP_SHIM ${clipShimLinux}/bin/sprrw-clip \
+            ${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "--set SPRRW_CLIP_SHIM ${clipShimLinux}/bin/sprrw-clip"} \
             --prefix PATH : ${lib.makeBinPath [ config.packages.box ]}
         '')
         // {

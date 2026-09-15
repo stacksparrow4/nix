@@ -1,16 +1,15 @@
 use std::env;
-use std::fs;
-use std::io::{BufRead, BufReader, Read, Write};
-use std::net::Shutdown;
-use std::os::unix::fs::PermissionsExt;
-use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio, exit};
-use std::thread;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::process::{Command, exit};
 
-const SOCKET_NAME: &str = "clip.sock";
-const SANDBOX_SOCKET_DIR: &str = "/tmp/sprrw-clip";
+#[cfg(not(target_os = "linux"))]
+use std::io::{Read, Write};
+#[cfg(not(target_os = "linux"))]
+use std::net::TcpListener;
+#[cfg(not(target_os = "linux"))]
+use std::process::Stdio;
+#[cfg(not(target_os = "linux"))]
+use std::thread;
 
 fn main() {
     let nvim = env::var("SPRRW_NVIM").expect("SPRRW_NVIM is not set");
@@ -24,33 +23,24 @@ fn main() {
         exit(status.code().unwrap_or(1));
     }
 
-    let shim = env::var("SPRRW_CLIP_SHIM").expect("SPRRW_CLIP_SHIM is not set");
-
     let raw_args: Vec<String> = env::args().skip(1).collect();
     let (share_dir, vim_args) = compute_share(raw_args);
 
-    let tmp = make_tmp_dir();
-    start_clip_server(&tmp);
-    let sandbox_socket = format!("{SANDBOX_SOCKET_DIR}/{SOCKET_NAME}");
-
-    let status = Command::new("box")
-        .current_dir(&share_dir)
+    let mut cmd = Command::new("box");
+    cmd.current_dir(&share_dir)
         .arg("--cwd")
         .arg("--wayland")
-        .arg("--ro-git")
-        .arg("-v")
-        .arg(format!("{}:{}:ro:dir", tmp.display(), SANDBOX_SOCKET_DIR))
-        .arg("-e")
-        .arg(format!("SPRRW_CLIPBOARD_SOCKET={sandbox_socket}"))
-        .arg("-e")
-        .arg(format!("SPRRW_CLIPBOARD_SHIM={shim}"))
+        .arg("--ro-git");
+
+    add_clipboard_bridge(&mut cmd);
+
+    let status = cmd
         .arg("--")
         .arg(&nvim)
         .args(&vim_args)
         .status()
         .expect("failed to launch box");
 
-    let _ = fs::remove_dir_all(&tmp);
     exit(status.code().unwrap_or(1));
 }
 
@@ -77,21 +67,18 @@ fn compute_share(args: Vec<String>) -> (PathBuf, Vec<String>) {
     (cwd, args)
 }
 
-fn make_tmp_dir() -> PathBuf {
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("time went backwards")
-        .as_nanos();
-    let dir = env::temp_dir().join(format!("sprrw-clip-{}-{}", std::process::id(), nanos));
-    fs::create_dir_all(&dir).expect("failed to create clipboard temp dir");
-    let _ = fs::set_permissions(&dir, fs::Permissions::from_mode(0o700));
-    dir
-}
+#[cfg(target_os = "linux")]
+fn add_clipboard_bridge(_cmd: &mut Command) {}
 
-fn start_clip_server(dir: &Path) {
-    let socket_path = dir.join(SOCKET_NAME);
-    let listener = UnixListener::bind(&socket_path).expect("failed to bind clipboard socket");
-    let _ = fs::set_permissions(&socket_path, fs::Permissions::from_mode(0o600));
+#[cfg(not(target_os = "linux"))]
+fn add_clipboard_bridge(cmd: &mut Command) {
+    let shim = env::var("SPRRW_CLIP_SHIM").expect("SPRRW_CLIP_SHIM is not set");
+
+    let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind clipboard socket");
+    let port = listener
+        .local_addr()
+        .expect("failed to read clipboard socket address")
+        .port();
 
     thread::spawn(move || {
         for conn in listener.incoming() {
@@ -99,28 +86,33 @@ fn start_clip_server(dir: &Path) {
             thread::spawn(move || handle(stream));
         }
     });
+
+    cmd.arg("-e")
+        .arg(format!("SPRRW_CLIPBOARD_ADDR=tcp:host.docker.internal:{port}"))
+        .arg("-e")
+        .arg(format!("SPRRW_CLIPBOARD_SHIM={shim}"));
 }
 
-fn handle(stream: UnixStream) {
-    let Ok(read_half) = stream.try_clone() else {
-        return;
-    };
-    let mut reader = BufReader::new(read_half);
-
-    let mut op = String::new();
-    if reader.read_line(&mut op).unwrap_or(0) == 0 {
-        return;
+#[cfg(not(target_os = "linux"))]
+fn handle<S: Read + Write>(mut stream: S) {
+    let mut op = Vec::new();
+    let mut byte = [0u8; 1];
+    loop {
+        match stream.read(&mut byte) {
+            Ok(0) => break,
+            Ok(_) if byte[0] == b'\n' => break,
+            Ok(_) => op.push(byte[0]),
+            Err(_) => return,
+        }
     }
 
-    match op.trim_end_matches(['\n', '\r']) {
+    match String::from_utf8_lossy(&op).trim_end_matches('\r') {
         "copy" => {
             let mut data = Vec::new();
-            if reader.read_to_end(&mut data).is_err() {
+            if stream.read_to_end(&mut data).is_err() {
                 return;
             }
-            let (cmd, args) = copy_command();
-            if let Ok(mut child) = Command::new(cmd)
-                .args(args)
+            if let Ok(mut child) = Command::new("pbcopy")
                 .stdin(Stdio::piped())
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
@@ -131,34 +123,13 @@ fn handle(stream: UnixStream) {
                 }
                 let _ = child.wait();
             }
-            let _ = stream.shutdown(Shutdown::Both);
         }
         "paste" => {
-            let (cmd, args) = paste_command();
-            let output = Command::new(cmd).args(args).stderr(Stdio::null()).output();
-            let mut stream = stream;
-            if let Ok(output) = output {
+            if let Ok(output) = Command::new("pbpaste").stderr(Stdio::null()).output() {
                 let _ = stream.write_all(&output.stdout);
             }
             let _ = stream.flush();
-            let _ = stream.shutdown(Shutdown::Both);
         }
         _ => {}
-    }
-}
-
-fn copy_command() -> (&'static str, &'static [&'static str]) {
-    if cfg!(target_os = "macos") {
-        ("pbcopy", &[])
-    } else {
-        ("wl-copy", &[])
-    }
-}
-
-fn paste_command() -> (&'static str, &'static [&'static str]) {
-    if cfg!(target_os = "macos") {
-        ("pbpaste", &[])
-    } else {
-        ("wl-paste", &["--no-newline"])
     }
 }

@@ -1,14 +1,13 @@
 use std::env;
 use std::io::{self, Read, Write};
-use std::net::Shutdown;
-use std::os::unix::net::UnixStream;
+use std::net::{Shutdown, TcpStream};
 use std::process::exit;
 
 fn main() {
     let mode = env::args().nth(1).unwrap_or_default();
 
-    let socket = env::var("SPRRW_CLIPBOARD_SOCKET").unwrap_or_else(|_| {
-        eprintln!("sprrw-clip: SPRRW_CLIPBOARD_SOCKET is not set");
+    let addr = env::var("SPRRW_CLIPBOARD_ADDR").unwrap_or_else(|_| {
+        eprintln!("sprrw-clip: SPRRW_CLIPBOARD_ADDR is not set");
         exit(1);
     });
 
@@ -20,25 +19,25 @@ fn main() {
                 exit(1);
             }
 
-            let mut stream = connect(&socket);
-            if stream.write_all(b"copy\n").and_then(|_| stream.write_all(&data)).is_err() {
+            let mut conn = connect(&addr);
+            if conn.write_all(b"copy\n").and_then(|_| conn.write_all(&data)).is_err() {
                 eprintln!("sprrw-clip: failed to send clipboard data");
                 exit(1);
             }
-            let _ = stream.shutdown(Shutdown::Write);
+            let _ = conn.shutdown(Shutdown::Write);
             let mut ack = Vec::new();
-            let _ = stream.read_to_end(&mut ack);
+            let _ = conn.read_to_end(&mut ack);
         }
         "paste" => {
-            let mut stream = connect(&socket);
-            if stream.write_all(b"paste\n").is_err() {
+            let mut conn = connect(&addr);
+            if conn.write_all(b"paste\n").is_err() {
                 eprintln!("sprrw-clip: failed to request clipboard");
                 exit(1);
             }
-            let _ = stream.shutdown(Shutdown::Write);
+            let _ = conn.shutdown(Shutdown::Write);
 
             let mut out = Vec::new();
-            if let Err(e) = stream.read_to_end(&mut out) {
+            if let Err(e) = conn.read_to_end(&mut out) {
                 eprintln!("sprrw-clip: failed to read clipboard: {e}");
                 exit(1);
             }
@@ -51,9 +50,23 @@ fn main() {
     }
 }
 
-fn connect(path: &str) -> UnixStream {
-    UnixStream::connect(path).unwrap_or_else(|e| {
-        eprintln!("sprrw-clip: failed to connect to {path}: {e}");
+fn connect(addr: &str) -> TcpStream {
+    let hostport = addr.strip_prefix("tcp:").unwrap_or_else(|| {
+        eprintln!("sprrw-clip: unsupported clipboard address '{addr}'");
+        exit(1);
+    });
+
+    let (host, port_str) = hostport.rsplit_once(':').unwrap_or_else(|| {
+        eprintln!("sprrw-clip: invalid tcp address '{hostport}'");
+        exit(1);
+    });
+    let port: u16 = port_str.parse().unwrap_or_else(|_| {
+        eprintln!("sprrw-clip: invalid tcp port '{port_str}'");
+        exit(1);
+    });
+
+    TcpStream::connect((host, port)).unwrap_or_else(|e| {
+        eprintln!("sprrw-clip: failed to connect to tcp {host}:{port}: {e}");
         exit(1);
     })
 }
