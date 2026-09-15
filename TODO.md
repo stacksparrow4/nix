@@ -1,1 +1,3 @@
 - Package terminal emulators (foot, ghostty) as wrapped packages
+- `sprrw build` calls notify-send when done
+- IFD only depends on Cargo lock

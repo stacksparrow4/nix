@@ -4,6 +4,7 @@ import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 const CONTROL_PATH = process.env.PI_SUBAGENT_CONTROL;
 const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
@@ -28,6 +29,8 @@ const SUBAGENT_SYSTEM_PROMPT = [
 	"Other agents may be working in the same filesystem concurrently: prefer reads, and keep any writes scoped to the task you were given to avoid colliding with disjoint work.",
 ].join(" ");
 
+type ActivityKind = "text" | "thinking" | "tool";
+
 interface LiveSubagent {
 	id: number;
 	task: string;
@@ -38,6 +41,53 @@ interface LiveSubagent {
 	cost: number;
 	lastTool?: string;
 	done: boolean;
+	// Live view of what the subagent is doing right now: streaming prose,
+	// reasoning, or an active tool call. Updated off the JSON event stream.
+	activity?: string;
+	activityKind?: ActivityKind;
+	// Accumulator for the in-flight text/thinking block being streamed.
+	streamBuf: string;
+}
+
+const collapseWs = (s: string): string => s.replace(/\s+/g, " ").trim();
+
+// Best-effort one-liner describing a tool call from its arguments, so the tree
+// shows "read src/main.rs" or "bash cargo build" rather than a bare tool name.
+function summarizeToolArgs(name: string, args: unknown): string {
+	if (!args || typeof args !== "object") return "";
+	const a = args as Record<string, unknown>;
+	const pick = (...keys: string[]): string => {
+		for (const k of keys) {
+			const v = a[k];
+			if (typeof v === "string" && v.trim()) return collapseWs(v);
+			if (typeof v === "number") return String(v);
+		}
+		return "";
+	};
+	switch (name.toLowerCase()) {
+		case "bash":
+		case "command":
+			return pick("command", "cmd", "script");
+		case "read":
+		case "write":
+		case "edit":
+			return pick("path", "file", "filePath", "file_path");
+		case "web_search":
+			return pick("query", "q");
+		case "web_fetch":
+			return pick("url");
+		case "grep":
+			return pick("pattern", "query", "regex");
+		case "glob":
+		case "ls":
+			return pick("pattern", "glob", "path");
+		default: {
+			const common = pick("command", "path", "query", "pattern", "url", "file");
+			if (common) return common;
+			const first = Object.values(a).find((v) => typeof v === "string" && v.trim());
+			return typeof first === "string" ? collapseWs(first) : "";
+		}
+	}
 }
 
 function getPiInvocation(args: string[]): { command: string; args: string[] } {
@@ -135,6 +185,61 @@ export default function (pi: ExtensionAPI) {
 		return promptFile;
 	}
 
+	// Render one subagent's live activity, coloured by kind: tool calls show the
+	// tool name (accented) plus a dim argument snippet; streamed prose/reasoning
+	// shows the trailing text. `avail` is the visible width left for the activity.
+	function renderActivity(sa: LiveSubagent, theme: any, avail: number): string {
+		const text = collapseWs(sa.activity ?? "");
+		if (!text) return theme.fg("dim", "…");
+
+		if (sa.activityKind === "tool") {
+			const sp = text.indexOf(" ");
+			const name = sp > 0 ? text.slice(0, sp) : text;
+			const arg = sp > 0 ? text.slice(sp + 1) : "";
+			if (!arg) return theme.fg("toolTitle", truncateToWidth(name, avail, "…"));
+			const nameW = visibleWidth(name) + 1;
+			if (nameW >= avail) return theme.fg("toolTitle", truncateToWidth(name, avail, "…"));
+			const argTrunc = truncateToWidth(arg, avail - nameW, "…");
+			return `${theme.fg("toolTitle", name)} ${theme.fg("dim", argTrunc)}`;
+		}
+
+		const prefix = sa.activityKind === "thinking" ? "~ " : "";
+		return theme.fg("dim", truncateToWidth(prefix + text, avail, "…"));
+	}
+
+	function renderTree(running: LiveSubagent[], theme: any, width: number): string[] {
+		const head = `${theme.fg("accent", "⛭")} ${theme.fg("dim", `subagents (${running.length})`)}`;
+		const lines = [head];
+		running.forEach((sa, i) => {
+			const last = i === running.length - 1;
+			const branch = last ? "└─ " : "├─ ";
+			const idStr = `#${sa.id}`;
+			const tokStr = formatTokens(sa.tokens).padStart(5);
+			// A single leading space indents the tree under the header glyph.
+			const prefixPlain = ` ${branch}${idStr} ${tokStr}  `;
+			const avail = Math.max(4, width - visibleWidth(prefixPlain));
+			const prefix = ` ${theme.fg("dim", branch)}${theme.fg("toolTitle", idStr)} ${theme.fg("dim", tokStr)}  `;
+			lines.push(prefix + renderActivity(sa, theme, avail));
+		});
+		// Trailing blank line separates the tree from the working indicator below.
+		lines.push("");
+		return lines;
+	}
+
+	// Plain-text fallback used when the themed component factory isn't supported.
+	function renderTreePlain(running: LiveSubagent[]): string[] {
+		const lines = [`⛭ subagents (${running.length})`];
+		running.forEach((sa, i) => {
+			const branch = i === running.length - 1 ? "└─" : "├─";
+			const act = collapseWs(sa.activity ?? "");
+			lines.push(`${branch} #${sa.id} ${formatTokens(sa.tokens)}${act ? `  ${act}` : ""}`);
+		});
+		lines.push("");
+		return lines;
+	}
+
+	let widgetFallback = false;
+
 	function refreshStatus() {
 		const ui = lastCtx?.ui;
 		if (!ui?.setWidget) return;
@@ -143,11 +248,43 @@ export default function (pi: ExtensionAPI) {
 			ui.setWidget("subagents", undefined);
 			return;
 		}
-		const parts = running.map((s) => {
-			const tail = s.lastTool ? ` ${s.lastTool}` : "";
-			return `#${s.id} ${formatTokens(s.tokens)}${tail}`;
-		});
-		ui.setWidget("subagents", [`⛭ subagents: ${running.length} · ${parts.join(" · ")}`, ""]);
+		if (!widgetFallback) {
+			try {
+				ui.setWidget("subagents", (_tui: any, theme: any) => ({
+					render(width: number): string[] {
+						try {
+							return renderTree(running, theme, width);
+						} catch {
+							return renderTreePlain(running);
+						}
+					},
+					dispose() {},
+				}));
+				return;
+			} catch {
+				widgetFallback = true;
+			}
+		}
+		ui.setWidget("subagents", renderTreePlain(running));
+	}
+
+	// The activity line updates on every streamed token; throttle the (relatively
+	// expensive) widget rebuild so fast streams don't thrash the renderer.
+	let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+	let refreshPending = false;
+	function scheduleRefresh() {
+		if (refreshTimer) {
+			refreshPending = true;
+			return;
+		}
+		refreshStatus();
+		refreshTimer = setTimeout(() => {
+			refreshTimer = undefined;
+			if (refreshPending) {
+				refreshPending = false;
+				scheduleRefresh();
+			}
+		}, 80);
 	}
 
 	function buildSubagentArgs(task: string): string[] {
@@ -197,6 +334,54 @@ export default function (pi: ExtensionAPI) {
 		} catch {
 			return;
 		}
+		if (event.type === "message_update") {
+			// Streaming deltas: reflect what the subagent is generating right now.
+			const ame = event.assistantMessageEvent;
+			switch (ame?.type) {
+				case "text_start":
+					sa.streamBuf = "";
+					sa.activityKind = "text";
+					sa.activity = "";
+					break;
+				case "text_delta":
+					sa.streamBuf += ame.delta ?? "";
+					sa.activityKind = "text";
+					sa.activity = sa.streamBuf;
+					scheduleRefresh();
+					break;
+				case "thinking_start":
+					sa.streamBuf = "";
+					sa.activityKind = "thinking";
+					sa.activity = "";
+					break;
+				case "thinking_delta":
+					sa.streamBuf += ame.delta ?? "";
+					sa.activityKind = "thinking";
+					sa.activity = sa.streamBuf;
+					scheduleRefresh();
+					break;
+				case "toolcall_start":
+					// Args aren't known yet; show the tool name until toolcall_end.
+					sa.activityKind = "tool";
+					sa.lastTool = ame.toolName;
+					sa.activity = ame.toolName ?? "";
+					scheduleRefresh();
+					break;
+				case "toolcall_end": {
+					const tc = ame.toolCall;
+					if (tc) {
+						sa.activityKind = "tool";
+						sa.lastTool = tc.name;
+						const arg = summarizeToolArgs(tc.name, tc.arguments);
+						sa.activity = arg ? `${tc.name} ${arg}` : tc.name;
+						scheduleRefresh();
+					}
+					break;
+				}
+			}
+			return;
+		}
+
 		if (event.type === "message_end" && event.message?.role === "assistant") {
 			sa.turns++;
 			const usage = event.message.usage;
@@ -204,9 +389,24 @@ export default function (pi: ExtensionAPI) {
 				sa.tokens += (usage.output ?? 0) + (usage.input ?? 0);
 				sa.cost += usage.cost?.total ?? 0;
 			}
+			// Finalize activity from the authoritative message content.
+			let lastText = "";
 			for (const part of event.message.content ?? []) {
-				if (part.type === "toolCall") sa.lastTool = part.name;
+				if (part.type === "toolCall") {
+					sa.lastTool = part.name;
+					sa.activityKind = "tool";
+					const arg = summarizeToolArgs(part.name, part.arguments ?? part.input);
+					sa.activity = arg ? `${part.name} ${arg}` : part.name;
+				} else if (part.type === "text" && typeof part.text === "string") {
+					lastText = part.text;
+				}
 			}
+			// If the turn ended on prose (no tool call), keep that text visible.
+			if (sa.activityKind !== "tool" && lastText) {
+				sa.activityKind = "text";
+				sa.activity = lastText;
+			}
+			sa.streamBuf = "";
 			refreshStatus();
 		} else if (event.type === "tool_result_end" && event.message) {
 			refreshStatus();
@@ -256,6 +456,7 @@ export default function (pi: ExtensionAPI) {
 				tokens: 0,
 				cost: 0,
 				done: false,
+				streamBuf: "",
 				proc: undefined as unknown as ChildProcess,
 			};
 			sa.proc = spawnSubagent(sa);
@@ -347,6 +548,10 @@ export default function (pi: ExtensionAPI) {
 	}
 
 	function shutdown() {
+		if (refreshTimer) {
+			clearTimeout(refreshTimer);
+			refreshTimer = undefined;
+		}
 		for (const sa of [...live.values()]) abortSubagent(sa);
 		try {
 			server?.close();
