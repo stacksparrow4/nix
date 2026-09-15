@@ -123,6 +123,8 @@
                   git
                   findutils
                   gnugrep
+                  gnused
+                  gawk
                   ripgrep
                   brave-search-cli
                 ]
