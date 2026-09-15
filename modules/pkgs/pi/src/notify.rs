@@ -31,7 +31,7 @@ pub fn start_notify_server() -> Option<tempfile::TempDir> {
                 let line = line.trim_end_matches(['\n', '\r']);
                 let (title, body) = match line.split_once('\t') {
                     Some((t, b)) if !t.is_empty() => (t, b),
-                    _ => ("Pi", "Ready for input"),
+                    _ => ("Pi turn complete", ""),
                 };
 
                 let mut cmd = Command::new("notify-send");

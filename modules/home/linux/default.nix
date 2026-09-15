@@ -17,6 +17,7 @@
             usbutils
             pciutils
             openvpn
+            libnotify
           ];
 
           # 1password stuff
