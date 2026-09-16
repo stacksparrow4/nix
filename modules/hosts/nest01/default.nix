@@ -106,6 +106,15 @@ in
                         context = 32768;
                         mtp = 2;
                       }
+                      {
+                        name = "swift";
+                        path = pkgs.fetchurl {
+                          url = "https://huggingface.co/ukisai/Swift-Qwen3.8-27B-GGUF/resolve/main/Swift-Qwen3.8-27B-Q4_K_M.gguf";
+                          hash = "sha256-rVgR4pFDG9DeHOwMQASl6smNrumFCILtrGmoIyCeiKs=";
+                        };
+                        context = 32768;
+                        mtp = 2;
+                      }
                     ];
                   };
                 };

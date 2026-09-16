@@ -1,2 +1,1 @@
 - Package terminal emulators (foot, ghostty) as wrapped packages
-- IFD only depends on Cargo lock

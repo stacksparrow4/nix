@@ -44,7 +44,7 @@ in
                   globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.subagent
                 }/bin
 
-                export SPRRW_PI_NOTIFY_ICON=${piLogoPng}
+                ${pkgs.lib.optionalString pkgs.stdenv.isLinux "export SPRRW_PI_NOTIFY_ICON=${piLogoPng}"}
 
                 export PATH="${pkgs.lib.makeBinPath (
                   [ config.packages.box ]
