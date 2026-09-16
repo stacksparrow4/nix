@@ -13,11 +13,14 @@ in
   perSystem =
     let
       linuxify =
-        pkgs:
+        input: pkgs:
         if pkgs.stdenv.hostPlatform.isLinux then
           pkgs
         else
-          import inputs.nixpkgs { system = "${pkgs.stdenv.hostPlatform.parsed.cpu.name}-linux"; };
+          import input {
+            system = "${pkgs.stdenv.hostPlatform.parsed.cpu.name}-linux";
+            config = nixpkgsConfig;
+          };
     in
     { system, ... }:
     {
@@ -32,8 +35,8 @@ in
           config = nixpkgsConfig;
         };
 
-        pkgsLinux = linuxify pkgs;
-        pkgsLinuxUnstable = linuxify pkgsUnstable;
+        pkgsLinux = linuxify inputs.nixpkgs pkgs;
+        pkgsLinuxUnstable = linuxify inputs.nixpkgs-unstable pkgsUnstable;
       };
     };
 }
