@@ -88,7 +88,10 @@ in
                           hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
                         };
                         options = {
-                          ctx-size = 32768;
+                          ctx-size = 16384;
+                          flash-attn = "on";
+                          cache-type-k = "q8_0";
+                          cache-type-v = "q8_0";
                         };
                       }
                       {
@@ -98,19 +101,13 @@ in
                           hash = "sha256-rA4sEYngVfqjbv82FYDnnFvW+Odr/7TOVH8WfVPjGmE=";
                         };
                         options = {
-                          ctx-size = 32768;
-                        };
-                      }
-                      {
-                        name = "qwen3.8";
-                        path = pkgs.fetchurl {
-                          url = "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/Qwen3.8-27B-UD-Q4_K_M.gguf";
-                          hash = "sha256-Mi4ZT/eXQce6pJfCQPZ39UsgGw76tEyo5Q8SKzkSNII=";
-                        };
-                        options = {
-                          ctx-size = 32768;
-                          spec-type = "draft-mtp";
-                          spec-draft-n-max = 2;
+                          ctx-size = 16384;
+                          n-cpu-moe = 999;
+                          n-gpu-layers = 999;
+                          threads = 6;
+                          flash-attn = "on";
+                          cache-type-k = "q8_0";
+                          cache-type-v = "q8_0";
                         };
                       }
                       {
@@ -120,9 +117,13 @@ in
                           hash = "sha256-rVgR4pFDG9DeHOwMQASl6smNrumFCILtrGmoIyCeiKs=";
                         };
                         options = {
-                          ctx-size = 32768;
+                          ctx-size = 8192;
                           spec-type = "draft-mtp";
                           spec-draft-n-max = 2;
+                          threads = 6;
+                          flash-attn = "on";
+                          cache-type-k = "q8_0";
+                          cache-type-v = "q8_0";
                         };
                       }
                     ];

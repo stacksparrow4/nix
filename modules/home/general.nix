@@ -45,6 +45,8 @@
           })
           age
           ssh-to-age
+          fastfetch
+          nix-tree
         ]
         ++ (with self'.packages; [ python ]);
     }
