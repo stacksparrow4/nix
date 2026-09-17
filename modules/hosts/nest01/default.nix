@@ -89,9 +89,6 @@ in
                         };
                         options = {
                           ctx-size = 16384;
-                          flash-attn = "on";
-                          cache-type-k = "q8_0";
-                          cache-type-v = "q8_0";
                         };
                       }
                       {
@@ -102,12 +99,6 @@ in
                         };
                         options = {
                           ctx-size = 16384;
-                          n-cpu-moe = 999;
-                          n-gpu-layers = 999;
-                          threads = 6;
-                          flash-attn = "on";
-                          cache-type-k = "q8_0";
-                          cache-type-v = "q8_0";
                         };
                       }
                       {
@@ -120,10 +111,6 @@ in
                           ctx-size = 8192;
                           spec-type = "draft-mtp";
                           spec-draft-n-max = 2;
-                          threads = 6;
-                          flash-attn = "on";
-                          cache-type-k = "q8_0";
-                          cache-type-v = "q8_0";
                         };
                       }
                     ];
