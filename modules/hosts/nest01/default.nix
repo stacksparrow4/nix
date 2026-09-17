@@ -87,7 +87,9 @@ in
                           url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-UD-Q3_K_XL.gguf";
                           hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
                         };
-                        context = 32768;
+                        options = {
+                          ctx-size = 32768;
+                        };
                       }
                       {
                         name = "qwen3.6";
@@ -95,7 +97,9 @@ in
                           url = "https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/main/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf";
                           hash = "sha256-rA4sEYngVfqjbv82FYDnnFvW+Odr/7TOVH8WfVPjGmE=";
                         };
-                        context = 32768;
+                        options = {
+                          ctx-size = 32768;
+                        };
                       }
                       {
                         name = "qwen3.8";
@@ -103,8 +107,11 @@ in
                           url = "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/Qwen3.8-27B-UD-Q4_K_M.gguf";
                           hash = "sha256-Mi4ZT/eXQce6pJfCQPZ39UsgGw76tEyo5Q8SKzkSNII=";
                         };
-                        context = 32768;
-                        mtp = 2;
+                        options = {
+                          ctx-size = 32768;
+                          spec-type = "draft-mtp";
+                          spec-draft-n-max = 2;
+                        };
                       }
                       {
                         name = "swift";
@@ -112,8 +119,11 @@ in
                           url = "https://huggingface.co/ukisai/Swift-Qwen3.8-27B-GGUF/resolve/main/Swift-Qwen3.8-27B-Q4_K_M.gguf";
                           hash = "sha256-rVgR4pFDG9DeHOwMQASl6smNrumFCILtrGmoIyCeiKs=";
                         };
-                        context = 32768;
-                        mtp = 2;
+                        options = {
+                          ctx-size = 32768;
+                          spec-type = "draft-mtp";
+                          spec-draft-n-max = 2;
+                        };
                       }
                     ];
                   };

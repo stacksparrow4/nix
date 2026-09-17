@@ -25,15 +25,18 @@
                   description = "GGUF file for this model";
                 };
 
-                context = lib.mkOption {
-                  type = lib.types.int;
-                  description = "Default context size, can be overridden with llama-server --context";
-                };
-
-                mtp = lib.mkOption {
-                  type = lib.types.int;
-                  default = 0;
-                  description = "Number of MTP speculative tokens, 0 for no MTP";
+                options = lib.mkOption {
+                  type = lib.types.attrsOf (
+                    lib.types.oneOf (
+                      with lib.types;
+                      [
+                        str
+                        int
+                        bool
+                      ]
+                    )
+                  );
+                  default = { };
                 };
               };
             }
@@ -50,24 +53,12 @@
               map (
                 {
                   name,
-                  context,
-                  mtp,
+                  options,
                   ...
                 }:
                 {
                   inherit name;
-                  value = {
-                    ctx-size = context;
-                  }
-                  // (
-                    if mtp != 0 then
-                      {
-                        spec-type = "draft-mtp";
-                        spec-draft-n-max = mtp;
-                      }
-                    else
-                      { }
-                  );
+                  value = options;
                 }
               ) cfg.models
             )
