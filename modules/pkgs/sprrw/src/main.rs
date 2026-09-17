@@ -202,7 +202,7 @@ fn build(config: &Config) {
             "",
             "--app-icon",
             "nix-snowflake",
-            "Nix rebuild complete",
+            "Nixos rebuild complete",
         ]));
     }
 }

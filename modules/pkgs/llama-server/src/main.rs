@@ -30,10 +30,6 @@ struct Args {
     internal_preset_ini: Option<String>,
 
     // Pass through args
-    /// Reasoning - off or on
-    #[arg(short, long)]
-    reasoning: Option<String>,
-
     /// Additional arguments for llama-server, pass these after --
     args: Vec<String>,
 }
@@ -84,11 +80,6 @@ fn main() {
         .args(["--no-warmup", "--host", SOCKET])
         .args(if args.internal_preset_ini.is_some() {
             vec!["--models-preset", "/preset.ini"]
-        } else {
-            vec![]
-        })
-        .args(if let Some(reasoning) = args.reasoning {
-            vec!["--reasoning".to_string(), reasoning]
         } else {
             vec![]
         })
