@@ -16,12 +16,11 @@
             reasoning = true;
             thinkingLevelMap = {
               off = "off";
-              minimal = "low";
+              minimal = null;
               low = "low";
               medium = "medium";
-              high = "xhigh";
+              high = null;
               xhigh = "xhigh";
-              max = "xhigh";
             };
             compat = {
               thinkingFormat = "chat-template";
@@ -69,7 +68,7 @@
               hash = "sha256-rVgR4pFDG9DeHOwMQASl6smNrumFCILtrGmoIyCeiKs=";
             };
             options = {
-              ctx-size = 8192;
+              ctx-size = 16384;
               spec-type = "draft-mtp";
               spec-draft-n-max = 2;
               jinja = true;
