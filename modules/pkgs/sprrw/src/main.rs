@@ -273,6 +273,7 @@ fn deploy() {
 fn update(config: &Config) {
     if cfg!(target_os = "linux") {
         run_cmd(Command::new("flatpak").arg("update").arg("-y"));
+        run_cmd(Command::new("docker").args(["pull", "ghcr.io/ggml-org/llama.cpp:server-cuda13"]));
     }
     for update_flake in &config.update_flakes {
         run_cmd(Command::new("git").current_dir(update_flake).arg("pull"));
