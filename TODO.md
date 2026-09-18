@@ -1,1 +1,0 @@
-- Package terminal emulators (foot, ghostty) as wrapped packages
