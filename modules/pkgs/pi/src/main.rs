@@ -197,12 +197,7 @@ const CONTROL_DIR: &str = "/tmp/pi-subagent";
 const CONTROL_SOCKET: &str = "/tmp/pi-subagent/control.sock";
 
 /// Start a sandbox serving tool calls from the inside, and wait for its socket to appear.
-fn start_tool_sandbox(
-    sandbox_args: &[String],
-    no_network: bool,
-    extra_box_args: &[String],
-    subagent_bin: Option<&str>,
-) -> (TempDir, Child) {
+fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Child) {
     let dir = tempdir().expect("Failed to create temporary bridge dir");
 
     let mut cmd = Command::new("box");
@@ -214,16 +209,16 @@ fn start_tool_sandbox(
         } else {
             vec![]
         })
-        .args(sandbox_args)
-        .args(extra_box_args);
+        .args(sandbox_args);
 
-    if let Some(bin) = subagent_bin {
-        let path = match std::env::var("SPRRW_ADDITIONAL_PATH") {
-            Ok(existing) if !existing.is_empty() => format!("{}:{}", bin, existing),
+    let bin = std::env::var("SPRRW_SUBAGENT_BIN").unwrap();
+    cmd.env(
+        "SPRRW_ADDITIONAL_PATH",
+        match std::env::var("SPRRW_ADDITIONAL_PATH") {
+            Ok(existing) => format!("{}:{}", bin, existing),
             _ => bin.to_string(),
-        };
-        cmd.env("SPRRW_ADDITIONAL_PATH", path);
-    }
+        },
+    );
 
     let mut proc = cmd
         .arg("--")
@@ -257,10 +252,7 @@ fn wait_for_ssh(ssh_port: &str, ready_check: &str, vm_proc: &mut Child) {
     let timeout = Duration::from_secs(120);
 
     loop {
-        if let Some(status) = vm_proc
-            .try_wait()
-            .expect("Failed to poll the VM process")
-        {
+        if let Some(status) = vm_proc.try_wait().expect("Failed to poll the VM process") {
             eprintln!("VM exited before SSH was ready ({})", status);
             std::process::exit(1);
         }
@@ -410,7 +402,9 @@ fn main() {
             );
         }
 
-        if let Target::Sandbox = target && args.local.is_none() {
+        if let Target::Sandbox = target
+            && args.local.is_none()
+        {
             guidelines.push(
                 "You are in an Alpine linux container with a read-only /nix volume \
                 mounted in. Use apk to install packages.",
@@ -448,6 +442,11 @@ fn main() {
         )
     });
 
+    let subagent_pipe_dir = match target {
+        Target::Sandbox => Some(tempdir().unwrap()),
+        _ => None,
+    };
+
     let sandbox_args: Vec<String> = if args.cwd {
         vec!["--cwd".to_string(), "--ro-git".to_string()]
     } else if args.ro_cwd {
@@ -461,6 +460,16 @@ fn main() {
             .into_iter()
             .flat_map(|v| vec!["-v".to_string(), v]),
     )
+    .chain(if let Some(spd) = subagent_pipe_dir {
+        vec![
+            "-v".to_string(),
+            format!("{}:{}:rw:dir", spd.path().display(), CONTROL_DIR),
+            "--env".to_string(),
+            format!("PI_SUBAGENT_SOCKET={}", CONTROL_SOCKET),
+        ]
+    } else {
+        vec![]
+    })
     .chain(args.additional_sandbox_args.map_or(vec![], |a| {
         shlex::split(&a).expect("Invalid value for additional_sandbox_args")
     }))
@@ -545,55 +554,12 @@ fn main() {
         _ => (None, args.remote.or(args.universal_remote)),
     };
 
-    let control_dir: Option<TempDir> = if matches!(target, Target::Sandbox) {
-        Some(tempdir().expect("Failed to create subagent control dir"))
-    } else {
-        None
-    };
-    let subagent_bin = std::env::var("SPRRW_SUBAGENT_BIN").ok();
-
-    let tool_subagent_args: Vec<String> = match &control_dir {
-        Some(dir) => vec![
-            "-v".to_string(),
-            format!("{}:{}:rw:dir", dir.path().display(), CONTROL_DIR),
-            "--env".to_string(),
-            format!("PI_SUBAGENT_SOCKET={}", CONTROL_SOCKET),
-        ],
-        None => vec![],
-    };
-
     let (bridge_dir, tool_proc) = match host_template {
         Some(template) => (start_remote_server(&template), None),
         None => {
-            let (dir, proc) = start_tool_sandbox(
-                &sandbox_args,
-                args.local.is_some(),
-                &tool_subagent_args,
-                if control_dir.is_some() {
-                    subagent_bin.as_deref()
-                } else {
-                    None
-                },
-            );
+            let (dir, proc) = start_tool_sandbox(&sandbox_args, args.local.is_some());
             (dir, Some(proc))
         }
-    };
-
-    let brain_subagent_args: Vec<String> = match &control_dir {
-        Some(dir) => {
-            let mut v = vec![
-                "-v".to_string(),
-                format!("{}:{}:rw:dir", dir.path().display(), CONTROL_DIR),
-                "--env".to_string(),
-                format!("PI_SUBAGENT_CONTROL={}", CONTROL_SOCKET),
-            ];
-            if brave_search {
-                v.push("--env".to_string());
-                v.push("PI_SUBAGENT_BRAVE=1".to_string());
-            }
-            v
-        }
-        None => vec![],
     };
 
     let bridge_args = vec![
@@ -618,6 +584,24 @@ fn main() {
         }
         None => vec![],
     };
+
+    let subagent_args: Vec<String> = match &control_dir {
+        Some(dir) => {
+            let mut v = vec![
+                "-v".to_string(),
+                format!("{}:{}:rw:dir", dir.path().display(), CONTROL_DIR),
+                "--env".to_string(),
+                format!("PI_SUBAGENT_CONTROL={}", CONTROL_SOCKET),
+            ];
+            if brave_search {
+                v.push("--env".to_string());
+                v.push("PI_SUBAGENT_BRAVE=1".to_string());
+            }
+            v
+        }
+        None => vec![],
+    };
+
 
     let pi_cmd: Vec<String> = [
         real_pi_location,
@@ -679,7 +663,7 @@ fn main() {
         .args(network_args)
         .args(bridge_args)
         .args(notify_args)
-        .args(brain_subagent_args)
+        .args(subagent_args)
         .args(match target {
             Target::Remote { universal: true } => vec![],
             _ => vec!["--env", "PI_REMOTE_FILE_TOOLS=1"],

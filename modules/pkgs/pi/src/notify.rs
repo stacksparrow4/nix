@@ -1,17 +1,17 @@
+use std::{
+    fs,
+    io::{BufRead, BufReader},
+    os::unix::{fs::PermissionsExt, net::UnixListener},
+    process::{Command, Stdio},
+    thread,
+};
+
 pub const SOCKET_NAME: &str = "notify.sock";
 
 pub const SOCKET_PATH_IN_SANDBOX: &str = "/tmp/pi-notify/notify.sock";
 
 #[cfg(target_os = "linux")]
 pub fn start_notify_server() -> Option<tempfile::TempDir> {
-    use std::{
-        fs,
-        io::{BufRead, BufReader},
-        os::unix::{fs::PermissionsExt, net::UnixListener},
-        process::{Command, Stdio},
-        thread,
-    };
-
     let dir = tempfile::tempdir().expect("Failed to create temporary notify dir");
     let socket_path = dir.path().join(SOCKET_NAME);
 
@@ -28,18 +28,21 @@ pub fn start_notify_server() -> Option<tempfile::TempDir> {
                     return;
                 }
 
-                let line = line.trim_end_matches(['\n', '\r']);
-                let (title, body) = match line.split_once('\t') {
-                    Some((t, b)) if !t.is_empty() => (t, b),
-                    _ => ("Pi turn complete", ""),
-                };
+                let line = line.trim_end();
+                let (title, body) = line.split_once('\t').unwrap_or(("Pi turn complete", ""));
 
-                let mut cmd = Command::new("notify-send");
-                if let Ok(icon) = std::env::var("SPRRW_PI_NOTIFY_ICON") {
-                    cmd.arg(format!("--icon={icon}"));
-                }
-                let _ = cmd
-                    .args(["--app-name=", "--", title, body])
+                let _ = Command::new("notify-send")
+                    .args(
+                        std::env::var("SPRRW_PI_NOTIFY_ICON")
+                            .map(|icon| format!("--icon={icon}"))
+                            .into_iter()
+                            .collect::<Vec<String>>()
+                    ).args([
+                        "--app-name=",
+                        "--",
+                        title,
+                        body,
+                    ])
                     .stdin(Stdio::null())
                     .stdout(Stdio::null())
                     .stderr(Stdio::null())
