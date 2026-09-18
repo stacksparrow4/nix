@@ -8,7 +8,6 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 const CONTROL_PATH = process.env.PI_SUBAGENT_CONTROL;
 const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
-const BRAVE = process.env.PI_SUBAGENT_BRAVE === "1";
 
 const MAX_CONCURRENT = 4;
 
@@ -293,10 +292,6 @@ export default function (pi: ExtensionAPI) {
 
 		const tools = FULL_REMOTE ? ["bash", "read", "write", "edit"] : ["Command"];
 		const extensions = [path.join(EXT_DIR, "pi-remote.ts")];
-		if (BRAVE) {
-			tools.push("web_search");
-			extensions.push(path.join(EXT_DIR, "brave-search.ts"));
-		}
 
 		const args: string[] = ["--mode", "json", "-p", "--no-session", "--approve"];
 		if (model) args.push("--model", model);

@@ -460,7 +460,7 @@ fn main() {
             .into_iter()
             .flat_map(|v| vec!["-v".to_string(), v]),
     )
-    .chain(if let Some(spd) = subagent_pipe_dir {
+    .chain(if let Some(spd) = &subagent_pipe_dir {
         vec![
             "-v".to_string(),
             format!("{}:{}:rw:dir", spd.path().display(), CONTROL_DIR),
@@ -585,23 +585,17 @@ fn main() {
         None => vec![],
     };
 
-    let subagent_args: Vec<String> = match &control_dir {
+    let subagent_args: Vec<String> = match &subagent_pipe_dir {
         Some(dir) => {
-            let mut v = vec![
+            vec![
                 "-v".to_string(),
                 format!("{}:{}:rw:dir", dir.path().display(), CONTROL_DIR),
                 "--env".to_string(),
                 format!("PI_SUBAGENT_CONTROL={}", CONTROL_SOCKET),
-            ];
-            if brave_search {
-                v.push("--env".to_string());
-                v.push("PI_SUBAGENT_BRAVE=1".to_string());
-            }
-            v
+            ]
         }
         None => vec![],
     };
-
 
     let pi_cmd: Vec<String> = [
         real_pi_location,
