@@ -83,6 +83,7 @@ fn main() {
         } else {
             vec![]
         })
+        .args(["-fa", "on", "-ctk", "q8_0", "-ctv", "q8_0"])
         .args(args.args)
         .status()
         .expect("Failed to launch llama-cpp");
