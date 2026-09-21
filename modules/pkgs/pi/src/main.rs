@@ -69,10 +69,6 @@ struct Args {
     #[arg(short, long)]
     local: Option<String>,
 
-    /// Use 5 minute (short) Claude cache writes instead of the default 1 hour
-    #[arg(long)]
-    short_cache: bool,
-
     /// Pass options directly to the sandbox
     #[arg(long)]
     additional_sandbox_args: Option<String>,
@@ -665,11 +661,6 @@ fn main() {
         .args(match target {
             Target::Remote { .. } => vec![],
             _ => vec!["--env", "PI_READ_AGENTS_MD=1"],
-        })
-        .args(if args.short_cache {
-            vec![]
-        } else {
-            vec!["--env", "PI_CACHE_RETENTION=long"]
         })
         .args(if brave_search {
             vec![

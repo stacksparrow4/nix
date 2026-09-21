@@ -7,7 +7,7 @@
           name = "yazi-file-picker";
 
           runtimeInputs = [
-            pkgs.foot
+            self'.packages.foot
             self'.packages.yazi
           ];
 
