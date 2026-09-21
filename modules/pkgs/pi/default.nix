@@ -39,11 +39,12 @@ in
                   globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.subagent
                 }/bin
 
-                ${pkgs.lib.optionalString pkgs.stdenv.isLinux "export SPRRW_PI_NOTIFY_ICON=${piLogoPng}"}
+                export SPRRW_PI_NOTIFY_ICON=${piLogoPng}
 
                 export PATH="${pkgs.lib.makeBinPath (
                   [ config.packages.box ]
                   ++ pkgs.lib.optional pkgs.stdenv.isLinux pkgs.libnotify
+                  ++ pkgs.lib.optional pkgs.stdenv.isDarwin pkgs.terminal-notifier
                 )}:$PATH"
 
                 ${pi}/bin/pi "$@"

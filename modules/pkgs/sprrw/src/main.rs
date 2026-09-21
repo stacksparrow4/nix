@@ -78,6 +78,26 @@ fn main() {
     }
 }
 
+#[cfg(target_os = "linux")]
+fn notify_rebuild_complete() {
+    let _ = Command::new("notify-send")
+        .args([
+            "--app-name",
+            "",
+            "--app-icon",
+            "nix-snowflake",
+            "Nixos rebuild complete",
+        ])
+        .status();
+}
+
+#[cfg(target_os = "macos")]
+fn notify_rebuild_complete() {
+    let _ = Command::new("terminal-notifier")
+        .args(["-title", "NixOS", "-message", "Nixos rebuild complete"])
+        .status();
+}
+
 fn run_cmd(cmd: &mut Command) {
     let str_cmd = iter::once(cmd.get_program().to_string_lossy())
         .chain(cmd.get_args().map(|x| x.to_string_lossy()))
@@ -197,13 +217,7 @@ fn build(config: &Config) {
         diff_last_system_closures();
         trim_profiles();
 
-        run_cmd(Command::new("notify-send").args([
-            "--app-name",
-            "",
-            "--app-icon",
-            "nix-snowflake",
-            "Nixos rebuild complete",
-        ]));
+        notify_rebuild_complete();
     }
 }
 

@@ -9,6 +9,9 @@
           name = "sprrw";
           src = ./.;
         }).rootCrate.build;
+
+      notifier =
+        if pkgs.stdenv.isDarwin then pkgs.terminal-notifier else pkgs.libnotify;
     in
     {
       packages.sprrw = pkgs.stdenv.mkDerivation {
@@ -17,13 +20,19 @@
 
         dontUnpack = true;
 
-        nativeBuildInputs = [ pkgs.installShellFiles ];
+        nativeBuildInputs = [
+          pkgs.installShellFiles
+          pkgs.makeWrapper
+        ];
 
         installPhase = ''
           runHook preInstall
 
           mkdir -p $out/bin
           cp ${sprrw-unwrapped}/bin/sprrw $out/bin/sprrw
+
+          wrapProgram $out/bin/sprrw \
+            --prefix PATH : ${pkgs.lib.makeBinPath [ notifier ]}
 
           installShellCompletion --cmd sprrw \
             --bash <($out/bin/sprrw completions bash) \
