@@ -51,47 +51,34 @@ monitor_regions() {
 }
 
 window_regions() {
-  local views line rest id title geom label
+  local views line id geom label
   declare -A geom_by_id=()
-  declare -A geom_by_title=()
 
   views=$(swaymsg -t get_tree | jq -r '
     [recurse(.nodes[]?, .floating_nodes[]?)][]
     | select(.visible == true and .rect.width > 0 and .rect.height > 0)
-    | [(.foreign_toplevel_identifier // ""), (.name // ""),
+    | select((.foreign_toplevel_identifier // "") != "")
+    | [.foreign_toplevel_identifier,
        "\(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"]
     | @tsv
   ')
 
   while IFS= read -r line; do
     id=${line%%$'\t'*}
-    rest=${line#*$'\t'}
-    title=${rest%%$'\t'*}
-    geom=${rest#*$'\t'}
-
+    geom=${line#*$'\t'}
     if [[ -n $id ]]; then
       geom_by_id[$id]=$geom
-    fi
-    if [[ -n $title && -z ${geom_by_title[$title]:-} ]]; then
-      geom_by_title[$title]=$geom
     fi
   done <<<"$views"
 
   for label in "${windows[@]}"; do
     if [[ $label =~ ^Window:\ (.*)\ \((.*)\)$ ]]; then
-      title=${BASH_REMATCH[1]}
       id=${BASH_REMATCH[2]}
     else
       continue
     fi
 
-    geom=""
-    if [[ -n $id ]]; then
-      geom=${geom_by_id[$id]:-}
-    fi
-    if [[ -z $geom && -n $title ]]; then
-      geom=${geom_by_title[$title]:-}
-    fi
+    geom=${geom_by_id[$id]:-}
 
     if [[ -n $geom ]]; then
       printf '%s %s\n' "$geom" "$label"
