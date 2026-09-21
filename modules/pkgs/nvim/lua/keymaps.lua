@@ -23,6 +23,7 @@ vim.keymap.set("n", "<leader>t", "<cmd>enew<cr>")
 vim.keymap.set("n", "<TAB>", "<cmd>bnext<cr>")
 vim.keymap.set("n", "<S-TAB>", "<cmd>bprevious<cr>")
 vim.keymap.set("n", "<leader>d", "<cmd>bdelete<cr>")
+vim.keymap.set("n", "<leader>q", "<cmd>qa<cr>")
 vim.keymap.set("n", "<leader>b", "<cmd>BufferLinePick<cr>")
 
 -- Tinymist pinning

@@ -23,13 +23,8 @@ in
               }).rootCrate.build;
             pi = buildPi pkgs;
             piLinux = buildPi pkgsLinux;
-            piLogoSvg = pkgs.fetchurl {
-              url = "https://pi.dev/logo-auto.svg";
-              hash = "sha256-A9UJwQS5VwBj+iaP0yNe1+DkHa/ZMSTKlMrjcm9Y8Rc=";
-            };
             piLogoPng = pkgs.runCommand "pi-logo.png" { nativeBuildInputs = [ pkgs.resvg ]; } ''
-              sed 's/#000/#fff/' ${piLogoSvg} > logo-white.svg
-              resvg --width 128 --height 128 logo-white.svg $out
+              resvg --width 128 --height 128 ${./pi.svg} $out
             '';
             piWrapper = pkgs.writeShellApplication {
               name = "pi";
