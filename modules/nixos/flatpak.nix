@@ -1,69 +1,45 @@
+{ inputs, ... }:
+
 {
-  flake.nixosModules.flatpak =
-    {
-      pkgs,
-      config,
-      lib,
-      ...
-    }:
-    {
-      options.sprrw.flatpaks = lib.mkOption {
-        type = lib.types.listOf (
-          lib.types.submodule {
-            options = {
-              name = lib.mkOption {
-                type = lib.types.str;
-              };
+  flake.nixosModules.flatpak = {
+    imports = [
+      inputs.nix-flatpak.nixosModules.nix-flatpak
+    ];
 
-              extraCommands = lib.mkOption {
-                type = lib.types.lines;
-                default = "";
-              };
-            };
-          }
-        );
-        default = [ ];
-      };
+    config = {
+      services.flatpak.enable = true;
+    };
+  };
 
-      config = {
-        services.flatpak.enable = true;
-        systemd.services.flatpak-sync = {
-          wantedBy = [ "multi-user.target" ];
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
-          path = [ pkgs.flatpak ];
-          serviceConfig = {
-            Restart = "on-failure";
-            RestartSec = 10;
-          };
-          script = ''
-            flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          ''
-          + (lib.concatMapStrings (
-            { name, extraCommands }:
-            ''
-              flatpak install -y flathub ${name}
-              ${extraCommands}
-            ''
-          ) config.sprrw.flatpaks);
+  flake.nixosModules.apps = {
+    services.flatpak = {
+      packages = [
+        {
+          appId = "dev.vencord.Vesktop";
+          origin = "flathub";
+        }
+        {
+          appId = "org.libreoffice.LibreOffice";
+          origin = "flathub";
+        }
+        {
+          appId = "com.usebruno.Bruno";
+          origin = "flathub";
+        }
+        {
+          appId = "com.valvesoftware.Steam";
+          origin = "flathub";
+        }
+      ];
+
+      overrides = {
+        "dev.vencord.Vesktop".Context = {
+          filesystems = [ "!~/.steam" ];
+        };
+        "com.valvesoftware.Steam".Context = {
+          filesystems = [ "!xdg-config/MangoHud" "!xdg-music" "!xdg-pictures" "!xdg-run/app/com.discordapp.Discord" "!/run/media" "!/mnt" "!/media" ];
         };
       };
     };
-
-  flake.nixosModules.apps = {
-    sprrw.flatpaks = [
-      {
-        name = "dev.vencord.Vesktop";
-        # Maybe should "set" the permissions rather than removing
-        extraCommands = "flatpak override --user --nofilesystem=~/.steam dev.vencord.Vesktop";
-      }
-      {
-        name = "org.libreoffice.LibreOffice";
-      }
-      {
-        name = "com.usebruno.Bruno";
-        # Possibly should remove home directory permission
-      }
-    ];
   };
 }

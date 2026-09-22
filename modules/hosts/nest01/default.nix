@@ -108,19 +108,16 @@ in
               };
             };
 
-          sprrw.flatpaks = [
+          services.flatpak.packages = [
             {
-              name = "org.musescore.MuseScore";
+              appId = "org.musescore.MuseScore";
+              origin = "flathub";
             }
           ];
 
           nix.extraOptions = ''
             builders = ssh-ng://root@stacksparrow4 aarch64-linux
           '';
-
-          programs.steam = {
-            enable = true;
-          };
 
           nixpkgs.config = import ../../../nixpkgs-config.nix;
 

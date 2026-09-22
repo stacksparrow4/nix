@@ -15,6 +15,7 @@
       url = "github:stacksparrow4/NixVirt?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-flatpak.url = "github:gmodena/nix-flatpak?ref=latest";
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
 
     crate2nix = {
