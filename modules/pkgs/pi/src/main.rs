@@ -184,6 +184,7 @@ const DEFAULT_EXTENSIONS: &[&str] = &[
     "footer.ts",
     "notify.ts",
     "subagent.ts",
+    "cache-warming.ts"
 ];
 const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
