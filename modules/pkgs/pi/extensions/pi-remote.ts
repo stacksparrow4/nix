@@ -578,10 +578,17 @@ export default async function(pi: ExtensionAPI) {
 
   pi.on("before_agent_start", async (event) => {
     const remoteCwd = await remotePwdCached();
-    const localLine = `Current working directory: ${process.cwd().replace(/\\/g, "/")}`;
-    const remoteLine = `Current working directory: ${remoteCwd}`;
+
+    const cwdBlockRe = /<cwd>\n[\s\S]*?\n<\/cwd>/;
+    const remoteBlock = `<cwd>\n${remoteCwd}\n</cwd>`;
 
     let systemPrompt = event.systemPrompt;
+
+    const cwdMatch = systemPrompt.match(cwdBlockRe);
+    if (!cwdMatch) {
+      throw new Error("pi-remote: could not find <cwd> block in system prompt");
+    }
+    const blockAnchor = cwdMatch[0];
 
     const context = READ_AGENTS_MD ? await remoteContextFile() : undefined;
 
@@ -591,12 +598,10 @@ export default async function(pi: ExtensionAPI) {
         `<project_instructions path="./AGENTS.md">\n${context}\n</project_instructions>\n\n` +
         "</project_context>\n";
 
-      systemPrompt = systemPrompt.includes(localLine)
-        ? systemPrompt.replace(localLine, `${block}${localLine}`)
-        : `${systemPrompt}\n\n${block}`;
+      systemPrompt = systemPrompt.replace(blockAnchor, `${block}${blockAnchor}`);
     }
 
-    systemPrompt = systemPrompt.replace(localLine, remoteLine);
+    systemPrompt = systemPrompt.replace(cwdBlockRe, remoteBlock);
 
     return { systemPrompt };
   });
