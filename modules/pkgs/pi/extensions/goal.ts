@@ -80,7 +80,7 @@ The vulnerability chain may pass through code in open source third party librari
 
 Use the following directories to store markdown files related to progress (create them if they don't exist):
 ~/box/hunt/progress/ - store progress on leads in markdown files in this directory.
-~/box/hunt/known-findings/ - store a list of known findings here. Check that identified findings are unique against this database of known findings.
+~/box/hunt/known-findings/ - store a list of known findings here. The unique critical finding you are searching for must be separate to the findings that already exist here.
 
 Subagents can be used to investigate multiple paths at once. For more information use the bash command "subagent --help".`;
       startGoal(presetGoal, ctx);
