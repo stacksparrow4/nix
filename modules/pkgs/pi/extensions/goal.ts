@@ -6,10 +6,6 @@ type Goal = {
   status: "active" | "complete";
 };
 
-let goal: Goal | null = null;
-let lastObjective: string | null = null;
-let continuationQueued = false;
-let toolRegistered = false;
 
 function continuationPrompt(objective: string): string {
   return `Continue working toward the active goal.
@@ -22,6 +18,16 @@ Before deciding the goal is achieved, verify against real evidence (files, comma
 }
 
 export default function goalExtension(pi: ExtensionAPI) {
+  // Per-session state. Must live inside the factory: the extension module is
+  // cached across session replacement (/new, fork, switchSession) and the factory
+  // is re-invoked against a fresh session tool registry. Module-level state would
+  // persist a stale `toolRegistered = true`, so the lazy registerTool below would
+  // be skipped and complete_goal would be "not found" in the new session.
+  let goal: Goal | null = null;
+  let lastObjective: string | null = null;
+  let continuationQueued = false;
+  let toolRegistered = false;
+
   // Only load complete_goal tool when /goal is used to avoid polluting context
   // This causes a cache invalidation (increasing token cost), however as i use goal early on its fine.
   function ensureToolRegistered() {
