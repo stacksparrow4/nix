@@ -38,6 +38,7 @@
             text = ''
               export ANDROID_HOME="${sdkRoot}"
               export ANDROID_SDK_ROOT="${sdkRoot}"
+              export QT_QPA_PLATFORM=xcb
               exec "${sdkRoot}/emulator/emulator" -avd "${avdName}" "$@"
             '';
           }
