@@ -141,6 +141,7 @@
               ${
                 if pkgs.stdenv.hostPlatform.isLinux then
                   ''
+                    --prefix PATH : ${lib.makeBinPath [ pkgs.bubblewrap ]} \
                     --set SPRRW_BIN ${bin} \
                     --set SPRRW_ETC ${etc} \
                     --set SPRRW_USR ${usr} \
