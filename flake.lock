@@ -503,11 +503,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790560945,
-        "narHash": "sha256-amQaNxJgqWv0qxB4ewu1Amlm0wnHCDLRQ82mzgywzWs=",
+        "lastModified": 1790632204,
+        "narHash": "sha256-U/+6gE5pRZo9HJ0AHDOpThlR3TqvWIT2wCC1IZjxl9U=",
         "owner": "stacksparrow4",
         "repo": "pwnproxy",
-        "rev": "699a3cf1d81af172f51eb84ac0610cff293ea345",
+        "rev": "91d6007caff5a84192e24f07c3f6bc88d6334da0",
         "type": "github"
       },
       "original": {

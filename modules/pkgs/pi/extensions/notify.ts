@@ -65,4 +65,11 @@ export default function (pi: ExtensionAPI) {
     const preview = firstMessagePreview(ctx);
     notify("Pi turn complete", preview || "");
   });
+
+  pi.on("cache_warming_decision", (event, ctx) => {
+    if (!ctx.hasUI || ctx.mode !== "tui") return;
+    if (event.action !== "warm") return;
+    const preview = firstMessagePreview(ctx);
+    notify("Pi cache warmed", preview || "");
+  });
 }
