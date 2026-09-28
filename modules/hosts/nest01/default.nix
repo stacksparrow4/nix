@@ -77,8 +77,7 @@ in
 
               sprrw = {
                 ai = {
-                  # https://aistudio.google.com/app/api-keys
-                  pi.execModel = "gemini-3.6-flash";
+                  pi.execModel = "gpt-5.6-terra";
                 };
               };
 
