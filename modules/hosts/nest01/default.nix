@@ -125,6 +125,9 @@ in
 
           boot.loader.timeout = lib.mkForce 9999;
 
+          boot.loader.efi.efiSysMountPoint = "/efi";
+          boot.loader.systemd-boot.xbootldrMountPoint = "/boot";
+
           swapDevices = [
             {
               device = "/swapfile";
