@@ -1,0 +1,16 @@
+# Injected into init.rc by magiskinit (overlay.d). Custom rc scripts are placed
+# *before* Magisk's own triggers, so this runs before `magisk --post-fs-data`.
+# ${MAGISKTMP} is substituted by magiskinit (/debug_ramdisk on modern Android).
+
+on post-fs-data
+    exec u:r:magisk:s0 0 0 -- /system/bin/sh ${MAGISKTMP}/nix-magisk/post-fs-data.sh ${MAGISKTMP}
+
+on property:sys.boot_completed=1
+    start nix-magisk-boot-complete
+
+service nix-magisk-boot-complete /system/bin/sh ${MAGISKTMP}/nix-magisk/boot-complete.sh ${MAGISKTMP}
+    user root
+    group root
+    seclabel u:r:magisk:s0
+    oneshot
+    disabled

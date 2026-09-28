@@ -25,6 +25,13 @@
 
       sdk = androidComposition.androidsdk;
       sdkRoot = "${sdk}/libexec/android-sdk";
+
+      # Magisk-rooted copy of the system image's ramdisk, passed to the emulator
+      # via `-ramdisk` so the (read-only) SDK stays untouched.
+      rootedRamdisk = pkgs.callPackage ./_magisk-ramdisk.nix {
+        ramdisk = "${builtins.head androidComposition.system-images}/libexec/android-sdk/system-images/android-${platformVersion}/${systemImageType}/${abiVersion}/ramdisk.img";
+        abi = abiVersion;
+      };
     in
     {
       home.packages = [ sdk ];
@@ -39,7 +46,7 @@
               export ANDROID_HOME="${sdkRoot}"
               export ANDROID_SDK_ROOT="${sdkRoot}"
               export QT_QPA_PLATFORM=xcb
-              exec "${sdkRoot}/emulator/emulator" -avd "${avdName}" "$@"
+              exec "${sdkRoot}/emulator/emulator" -avd "${avdName}" -ramdisk "${rootedRamdisk}" "$@"
             '';
           }
         );
