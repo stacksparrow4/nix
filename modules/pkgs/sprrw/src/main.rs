@@ -1,4 +1,5 @@
 mod config;
+mod flatpak;
 
 use std::path::PathBuf;
 use std::process::Command;
@@ -286,7 +287,7 @@ fn deploy() {
 
 fn update(config: &Config) {
     if cfg!(target_os = "linux") {
-        run_cmd(Command::new("flatpak").arg("update").arg("-y"));
+        flatpak::update();
         run_cmd(Command::new("docker").args(["pull", "ghcr.io/ggml-org/llama.cpp:server-cuda13"]));
     }
     for update_flake in &config.update_flakes {
