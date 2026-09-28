@@ -26,8 +26,6 @@
       sdk = androidComposition.androidsdk;
       sdkRoot = "${sdk}/libexec/android-sdk";
 
-      # Magisk-rooted copy of the system image's ramdisk, passed to the emulator
-      # via `-ramdisk` so the (read-only) SDK stays untouched.
       rootedRamdisk = pkgs.callPackage ./_magisk-ramdisk.nix {
         ramdisk = "${builtins.head androidComposition.system-images}/libexec/android-sdk/system-images/android-${platformVersion}/${systemImageType}/${abiVersion}/ramdisk.img";
         abi = abiVersion;
