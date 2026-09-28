@@ -13,7 +13,6 @@
           home.packages = with pkgs; [
             gimp
             inkscape
-            spotify
             krita
             kdePackages.kdenlive
             kdePackages.filelight

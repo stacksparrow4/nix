@@ -30,6 +30,10 @@
           appId = "com.valvesoftware.Steam";
           origin = "flathub";
         }
+        {
+          appId = "com.spotify.Client";
+          origin = "flathub";
+        }
       ];
 
       overrides = {
@@ -38,6 +42,9 @@
         };
         "com.valvesoftware.Steam".Context = {
           filesystems = [ "!xdg-config/MangoHud" "!xdg-music" "!xdg-pictures" "!xdg-run/app/com.discordapp.Discord" "!/run/media" "!/mnt" "!/media" ];
+        };
+        "com.spotify.Client".Context = {
+          filesystems = [ "!xdg-pictures" "!xdg-music"];
         };
       };
     };
