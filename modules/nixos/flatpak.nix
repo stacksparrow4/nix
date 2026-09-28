@@ -23,10 +23,6 @@
           origin = "flathub";
         }
         {
-          appId = "com.usebruno.Bruno";
-          origin = "flathub";
-        }
-        {
           appId = "com.valvesoftware.Steam";
           origin = "flathub";
         }
@@ -38,12 +34,19 @@
 
       overrides = {
         "dev.vencord.Vesktop".Context = {
+          shared = [ "!ipc" ];
+          sockets = [ "!fallback-x11" ];
           filesystems = [ "!~/.steam" ];
+        };
+        "org.libreoffice.LibreOffice".Context = {
+          shared = [ "!ipc" ];
+          sockets = [ "!fallback-x11" "!cups" ];
         };
         "com.valvesoftware.Steam".Context = {
           filesystems = [ "!xdg-config/MangoHud" "!xdg-music" "!xdg-pictures" "!xdg-run/app/com.discordapp.Discord" "!/run/media" "!/mnt" "!/media" ];
         };
         "com.spotify.Client".Context = {
+          shared = [ "!ipc" ];
           filesystems = [ "!xdg-pictures" "!xdg-music"];
         };
       };
