@@ -30,6 +30,10 @@
           appId = "com.spotify.Client";
           origin = "flathub";
         }
+        {
+          appId = "io.github.seadve.Kooha";
+          origin = "flathub";
+        }
       ];
 
       overrides = {
@@ -48,6 +52,10 @@
         "com.spotify.Client".Context = {
           shared = [ "!ipc" ];
           filesystems = [ "!xdg-pictures" "!xdg-music"];
+        };
+        "io.github.seadve.Kooha".Context = {
+          shared = [ "!ipc" ];
+          sockets = [ "!x11" "!fallback-x11" ];
         };
       };
     };
