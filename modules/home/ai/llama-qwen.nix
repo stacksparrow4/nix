@@ -42,7 +42,7 @@
           {
             name = "qwen3.5";
             path = pkgs.fetchurl {
-              url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-UD-Q3_K_XL.gguf";
+              url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/3885219b6810b007914f3a7950a8d1b469d598a5/Qwen3.5-9B-UD-Q3_K_XL.gguf";
               hash = "sha256-quCHnhvpnOk/DVYhf4GFo5niWtaKjrvAlfNicGKDBi8=";
             };
             options = {
@@ -53,7 +53,7 @@
           {
             name = "qwen3.6";
             path = pkgs.fetchurl {
-              url = "https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/main/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf";
+              url = "https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf";
               hash = "sha256-rA4sEYngVfqjbv82FYDnnFvW+Odr/7TOVH8WfVPjGmE=";
             };
             options = {
@@ -64,7 +64,7 @@
           {
             name = "swift";
             path = pkgs.fetchurl {
-              url = "https://huggingface.co/ukisai/Swift-Qwen3.8-27B-GGUF/resolve/main/Swift-Qwen3.8-27B-Q4_K_M.gguf";
+              url = "https://huggingface.co/ukisai/Swift-Qwen3.8-27B-GGUF/resolve/f8b396d5df72de36889bd572f3117c2bf70e4911/Swift-Qwen3.8-27B-Q4_K_M.gguf";
               hash = "sha256-rVgR4pFDG9DeHOwMQASl6smNrumFCILtrGmoIyCeiKs=";
             };
             options = {
