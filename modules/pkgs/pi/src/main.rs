@@ -176,6 +176,41 @@ fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
     generate_pi_volume(fname, fname, a, t)
 }
 
+const SETTINGS_STRIP_KEYS: &[&str] = &["packages", "extensions", "skills", "prompts", "themes"];
+
+fn prepare_settings_overlay() -> (TempDir, String) {
+    let user_path = env::home_dir()
+        .expect("Could not find home directory")
+        .join(".pi/agent/settings.json");
+
+    let mut settings = std::fs::read_to_string(&user_path)
+        .ok()
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+        .filter(serde_json::Value::is_object)
+        .unwrap_or_else(|| serde_json::json!({}));
+
+    let obj = settings
+        .as_object_mut()
+        .expect("settings overlay is always a JSON object");
+
+    for key in SETTINGS_STRIP_KEYS {
+        obj.remove(*key);
+    }
+
+    obj.insert("cacheWarming".to_string(), serde_json::json!("idle"));
+    obj.insert("showCacheMissNotices".to_string(), serde_json::json!(true));
+
+    let dir = tempdir().expect("Failed to create temporary settings dir");
+    let path = dir.path().join("settings.json");
+    std::fs::write(
+        &path,
+        serde_json::to_string_pretty(&settings).expect("Failed to serialize settings overlay"),
+    )
+    .expect("Failed to write settings overlay");
+
+    (dir, path.to_string_lossy().into_owned())
+}
+
 const DEFAULT_EXTENSIONS: &[&str] = &[
     "ask-mode.ts",
     "save.ts",
@@ -184,7 +219,7 @@ const DEFAULT_EXTENSIONS: &[&str] = &[
     "footer.ts",
     "notify.ts",
     "subagent.ts",
-    "cache-warming.ts"
+    "cache-warming.ts",
 ];
 const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
@@ -627,11 +662,18 @@ fn main() {
     let joined_pi_cmd = shlex::try_join(pi_cmd.iter().map(|s| s.as_str()))
         .expect("Failed to create shell script for pi_cmd");
 
+    let (_settings_overlay_dir, settings_overlay_path) = prepare_settings_overlay();
+
     let _ = Command::new("box")
         .args(
             [
                 generate_pi_mirror_volume("auth.json", VolAccess::RW, VolType::File),
-                generate_pi_mirror_volume("settings.json", VolAccess::RW, VolType::File),
+                generate_absolute_volume(
+                    &settings_overlay_path,
+                    "~/.pi/agent/settings.json",
+                    VolAccess::RW,
+                    VolType::File,
+                ),
                 generate_pi_mirror_volume("models-store.json", VolAccess::RW, VolType::File),
                 generate_pi_mirror_volume("models.json", VolAccess::RO, VolType::File),
                 generate_pi_mirror_volume("sessions", VolAccess::RW, VolType::Dir),
