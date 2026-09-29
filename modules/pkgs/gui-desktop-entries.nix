@@ -2,7 +2,6 @@
   perSystem =
     {
       pkgs,
-      pkgsUnstable,
       lib,
       ...
     }:
@@ -31,27 +30,6 @@
           EOF
           ln -s ${pkgs.lmms-full}/share/icons $out/share/icons
         '';
-
-        signal-desktop-entry =
-          let
-            signal-desktop = pkgsUnstable.signal-desktop;
-          in
-          pkgs.runCommand "signal" { } ''
-            mkdir -p $out/share/applications
-            cat <<EOF > $out/share/applications/signal.desktop
-            [Desktop Entry]
-            Name=Signal
-            Exec=${signal-desktop}/bin/signal-desktop --disable-gpu %U
-            Terminal=false
-            Type=Application
-            Icon=signal-desktop
-            StartupWMClass=signal
-            Comment=Private messaging from your desktop
-            MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
-            Categories=Network;InstantMessaging;Chat;
-            EOF
-            ln -s ${signal-desktop}/share/icons $out/share/icons
-          '';
       };
     };
 }

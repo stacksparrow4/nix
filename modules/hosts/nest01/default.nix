@@ -66,7 +66,6 @@ in
                 sec-gui
 
                 gui
-                gui-signal
                 gui-lmms
 
                 ai
@@ -107,12 +106,28 @@ in
               };
             };
 
-          services.flatpak.packages = [
-            {
-              appId = "org.musescore.MuseScore";
-              origin = "flathub";
-            }
-          ];
+          services.flatpak = {
+            packages = [
+              {
+                appId = "org.musescore.MuseScore";
+                origin = "flathub";
+              }
+              {
+                appId = "org.signal.Signal";
+                origin = "flathub";
+              }
+            ];
+
+            overrides = {
+              "org.musescore.MuseScore".Context = {
+                sockets = [ "!cups" ];
+              };
+              "org.signal.Signal".Context = {
+                shared = [ "!ipc" ];
+                sockets=  ["!fallback-x11"];
+              };
+            };
+          };
 
           nix.extraOptions = ''
             builders = ssh-ng://root@stacksparrow4 aarch64-linux
