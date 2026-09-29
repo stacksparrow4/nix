@@ -171,7 +171,7 @@ fn diff_last_system_closures() {
 fn trim_profiles() {
     run_cmd(
         Command::new("sudo")
-            .args(["nix-env", "--delete-generations", "+2", "--profile"])
+            .args(["nix-env", "--delete-generations", "+3", "--profile"])
             .arg("/nix/var/nix/profiles/system"),
     );
 }
