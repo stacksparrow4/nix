@@ -425,6 +425,7 @@ fn main() {
                 "Avoid recalling information about source available software and \
                 instead answer definitively by cloning the source to /tmp and referring to it",
             );
+            guidelines.push("`uv` is available for Python packages");
         }
 
         if all_tools.contains(&"command".to_string()) {
