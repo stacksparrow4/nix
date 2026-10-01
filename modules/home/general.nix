@@ -49,6 +49,10 @@
           nix-tree
         ]
         ++ (with self'.packages; [ python ]);
+
+      sprrw.term.shellExtra = ''
+        alias yds='ydiff --staged'
+      '';
     }
   );
 
