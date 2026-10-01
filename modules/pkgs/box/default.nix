@@ -22,6 +22,9 @@
                 "${pkgs.foot.terminfo}/share/terminfo"
               else
                 "${pkgsLinux.ghostty.terminfo}/share/terminfo";
+            # Clipboard shims (wl-copy/wl-paste) run *inside* the Linux sandbox, so
+            # always use the Linux build regardless of the host platform.
+            clipShimLinux = self.packages.${pkgsLinux.stdenv.hostPlatform.system}.clip-shim;
             bin = pkgs.runCommand "box-bin" { } ''
               mkdir $out
               ln -s ${pkgs.bash}/bin/sh $out/sh
@@ -141,7 +144,7 @@
               ${
                 if pkgs.stdenv.hostPlatform.isLinux then
                   ''
-                    --prefix PATH : ${lib.makeBinPath [ pkgs.bubblewrap ]} \
+                    --prefix PATH : ${lib.makeBinPath [ pkgs.bubblewrap pkgs.wl-clipboard ]} \
                     --set SPRRW_BIN ${bin} \
                     --set SPRRW_ETC ${etc} \
                     --set SPRRW_USR ${usr} \
@@ -152,6 +155,7 @@
                 else
                   ""
               } \
+              --set SPRRW_CLIP_SHIMS ${clipShimLinux}/shims \
               --set SPRRW_PATH ${packages}/bin \
               --set SPRRW_TERMINFO ${terminfo}
           '';

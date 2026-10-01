@@ -37,6 +37,14 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
 
     container_args.envvars.push("USER=root".to_string());
 
+    if args.clipboard {
+        let bridge = crate::clipboard::start_unix();
+        container_args.envvars.push(bridge.addr_env);
+        if let Some(mount) = bridge.mount {
+            container_args.mounts.push(mount);
+        }
+    }
+
     let mut subprocess_args: Vec<String> = [
         "--unshare-all",
         "--as-pid-1",

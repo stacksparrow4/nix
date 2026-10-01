@@ -50,18 +50,10 @@ vim.api.nvim_create_autocmd('VimResized', {
   command = 'wincmd =',
 })
 
--- Use system clipboard
+-- Use system clipboard. Inside the sandbox, `box --clipboard` sets
+-- WAYLAND_DISPLAY and provides wl-copy/wl-paste shims, so Neovim's built-in
+-- Wayland clipboard provider is auto-detected and bridges to the host.
 vim.opt.clipboard = "unnamedplus"
-
-local clip_shim = vim.env.SPRRW_CLIPBOARD_SHIM
-if clip_shim then
-  vim.g.clipboard = {
-    name = "sprrw-sandbox",
-    copy = { ["+"] = { clip_shim, "copy" } },
-    paste = { ["+"] = { clip_shim, "paste" } },
-    cache_enabled = 0,
-  }
-end
 
 -- Fix cursor to center of screen
 vim.opt.scrolloff = 999

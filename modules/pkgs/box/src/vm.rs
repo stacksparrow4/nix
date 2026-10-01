@@ -9,6 +9,10 @@ use crate::common::{cwd, exit_code};
 use crate::mount::{BOX_VM_CWD, Mount, MountType, build_stage_script, quote};
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
+    if args.clipboard {
+        eprintln!("warning: --clipboard is not supported with the VM backend; ignoring");
+    }
+
     for v in &volume_mounts {
         if v.mount_type != MountType::Dir {
             println!(

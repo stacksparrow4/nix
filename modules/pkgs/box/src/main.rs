@@ -1,4 +1,5 @@
 mod bwrap;
+mod clipboard;
 mod common;
 mod container;
 mod docker;

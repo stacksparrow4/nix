@@ -97,6 +97,13 @@ pub fn get_container_args(
             format!(
                 "PATH={}",
                 std::iter::empty()
+                    // Clipboard shims must win over any real wl-copy/wl-paste that
+                    // might leak in via the host PATH, so they go first.
+                    .chain(if args.clipboard {
+                        std::env::var("SPRRW_CLIP_SHIMS").ok()
+                    } else {
+                        None
+                    })
                     .chain(
                         if !args.reset_env
                             && let Ok(path) = std::env::var("PATH")
@@ -151,6 +158,12 @@ pub fn get_container_args(
             vec!["TERM=xterm-256color".to_string()]
         },
     );
+
+    // A non-empty WAYLAND_DISPLAY is what makes both nvim's provider detection
+    // and Pi's clipboard probing pick the wl-copy/wl-paste shims.
+    if args.clipboard && !args.wayland {
+        envvars.push("WAYLAND_DISPLAY=sprrw-clipboard".to_string());
+    }
 
     let cwd = if args.cwd || args.ro_cwd {
         BOX_CWD

@@ -695,6 +695,7 @@ fn main() {
             .into_iter()
             .flat_map(|v| vec!["-v".to_string(), v]),
         )
+        .arg("--clipboard")
         .args(network_args)
         .args(bridge_args)
         .args(notify_args)

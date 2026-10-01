@@ -146,14 +146,13 @@ in
           }
         ).rootCrate.build;
 
-      clipShimLinux = globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.clip-shim;
-
       mkNvimBoxed =
         { nvim-unboxed }:
+        # Clipboard sharing is handled entirely by `box --clipboard` (invoked by
+        # the wrapper), which injects wl-copy/wl-paste shims into the sandbox.
         (pkgs.runCommand "nvim" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           makeWrapper ${nvimWrapper}/bin/nvim $out/bin/nvim \
             --set SPRRW_NVIM ${nvim-unboxed}/bin/nvim \
-            ${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "--set SPRRW_CLIP_SHIM ${clipShimLinux}/bin/sprrw-clip"} \
             --prefix PATH : ${lib.makeBinPath [ config.packages.box ]}
         '')
         // {

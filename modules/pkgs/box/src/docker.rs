@@ -12,7 +12,7 @@ use crate::container::get_container_args;
 use crate::mount::Mount;
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
-    let container_args = get_container_args(
+    let mut container_args = get_container_args(
         args,
         volume_mounts,
         [
@@ -32,6 +32,17 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .iter()
         .map(|a| a.to_string())
         .collect();
+
+    if args.clipboard {
+        // host.docker.internal reaches the host on Docker Desktop; add an explicit
+        // host-gateway entry so it also resolves on Linux docker.
+        let bridge = crate::clipboard::start_tcp("host.docker.internal");
+        container_args.envvars.push(bridge.addr_env);
+        docker_args.extend([
+            "--add-host".to_string(),
+            "host.docker.internal:host-gateway".to_string(),
+        ]);
+    }
 
     let container_name = Alphanumeric.sample_string(&mut rand::rng(), 8);
     docker_args.extend(["--name".to_string(), container_name.clone()]);
