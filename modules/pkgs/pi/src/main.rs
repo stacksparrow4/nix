@@ -198,12 +198,12 @@ fn prepare_settings_overlay() -> (TempDir, String) {
     }
 
     obj.insert("cacheWarming".to_string(), serde_json::json!("idle"));
-    obj.insert("tuiMode".to_string(), serde_json::json!("fullscreen"));
-    obj.insert(
-        "fullscreenWheelScrollLines".to_string(),
-        serde_json::json!(5),
-    );
     obj.insert("showCacheMissNotices".to_string(), serde_json::json!(true));
+    // obj.insert("tuiMode".to_string(), serde_json::json!("fullscreen"));
+    // obj.insert(
+    //     "fullscreenWheelScrollLines".to_string(),
+    //     serde_json::json!(5),
+    // );
 
     let dir = tempdir().expect("Failed to create temporary settings dir");
     let path = dir.path().join("settings.json");

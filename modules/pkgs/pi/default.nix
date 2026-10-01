@@ -29,7 +29,7 @@ in
             piWrapper = pkgs.writeShellApplication {
               name = "pi";
               text = ''
-                export SPRRW_PI=${pkgsLinuxUnstable.callPackage ./_pi-base.nix { }}/bin/pi
+                export SPRRW_PI=${pkgsLinuxUnstable.pi-coding-agent}/bin/pi
                 export SPRRW_PI_WRAPPER_LINUX=${piLinux}/bin/pi
 
                 export SPRRW_EXTENSIONS=${./extensions}
