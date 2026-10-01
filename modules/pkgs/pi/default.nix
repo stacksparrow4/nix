@@ -34,6 +34,7 @@ in
 
                 export SPRRW_EXTENSIONS=${./extensions}
                 export SPRRW_PROMPTS=${./prompts}
+                export SPRRW_THEMES=${./themes}
 
                 export SPRRW_SUBAGENT_BIN=${
                   globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.subagent

@@ -199,11 +199,7 @@ fn prepare_settings_overlay() -> (TempDir, String) {
 
     obj.insert("cacheWarming".to_string(), serde_json::json!("idle"));
     obj.insert("showCacheMissNotices".to_string(), serde_json::json!(true));
-    // obj.insert("tuiMode".to_string(), serde_json::json!("fullscreen"));
-    // obj.insert(
-    //     "fullscreenWheelScrollLines".to_string(),
-    //     serde_json::json!(5),
-    // );
+    obj.insert("theme".to_string(), serde_json::json!("moonfly"));
 
     let dir = tempdir().expect("Failed to create temporary settings dir");
     let path = dir.path().join("settings.json");
@@ -699,6 +695,12 @@ fn main() {
                 generate_absolute_volume(
                     &std::env::var("SPRRW_PROMPTS").unwrap(),
                     "~/.pi/agent/prompts",
+                    VolAccess::RO,
+                    VolType::Dir,
+                ),
+                generate_absolute_volume(
+                    &std::env::var("SPRRW_THEMES").unwrap(),
+                    "~/.pi/agent/themes",
                     VolAccess::RO,
                     VolType::Dir,
                 ),
