@@ -412,14 +412,20 @@ fn main() {
         .collect();
 
     let system = args.system.unwrap_or_else(|| {
+        let date_suffix = format!(
+            "\n\nCurrent date: {}",
+            chrono::Local::now().format("%A, %B %-d, %Y")
+        );
+
         if args.bare {
             return String::from("You are a technical assistant.");
         }
 
         if args.search {
-            return String::from(
+            return format!(
                 "You are a technical research assistant that searches the web to \
-                provide information.",
+                provide information.{}",
+                date_suffix
             );
         }
 
@@ -466,7 +472,7 @@ fn main() {
         }
 
         format!(
-            "You are a helpful coding assistant.{}{}",
+            "You are a helpful coding assistant.{}{}{}",
             if guidelines.is_empty() {
                 ""
             } else {
@@ -476,7 +482,8 @@ fn main() {
                 .into_iter()
                 .map(|g| format!("- {}", g))
                 .collect::<Vec<String>>()
-                .join("\n")
+                .join("\n"),
+            date_suffix
         )
     });
 
