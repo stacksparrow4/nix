@@ -1,5 +1,85 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+// --- Anthropic usage limits -------------------------------------------------
+// Mirrors the standalone usage-limits extension, but renders the result inline
+// in the custom footer instead of a separate status line. Data comes from the
+// same endpoint Claude Code's /usage uses, authenticated with the OAuth access
+// token Pi already stores in auth.json.
+const USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
+const AUTH_PATH = join(getAgentDir(), "auth.json");
+/** Background refresh cadence. The 5h window moves slowly, so this is plenty. */
+const USAGE_POLL_MS = 120_000;
+/** Don't hammer the endpoint when turns finish back to back. */
+const USAGE_MIN_REFRESH_MS = 20_000;
+const USAGE_FETCH_TIMEOUT_MS = 8000;
+
+interface UsageWindow {
+  utilization: number | null;
+  resets_at: string | null;
+}
+
+interface UsageResponse {
+  five_hour?: UsageWindow | null;
+  seven_day?: UsageWindow | null;
+  seven_day_opus?: UsageWindow | null;
+  extra_usage?: { is_enabled?: boolean; utilization?: number | null } | null;
+}
+
+/** Pi keeps the OAuth credentials in auth.json and refreshes them on use. */
+function readAccessToken(): string | undefined {
+  try {
+    const auth = JSON.parse(readFileSync(AUTH_PATH, "utf8"));
+    const creds = auth?.anthropic;
+    if (!creds || creds.type !== "oauth" || typeof creds.access !== "string") return undefined;
+    // Expired tokens would just 401. Pi rewrites the file after its next
+    // provider request, so skip and let the following poll pick it up.
+    if (typeof creds.expires === "number" && creds.expires <= Date.now()) return undefined;
+    return creds.access;
+  } catch {
+    return undefined;
+  }
+}
+
+async function fetchUsage(): Promise<UsageResponse | undefined> {
+  const token = readAccessToken();
+  if (!token) return undefined;
+  const res = await fetch(USAGE_URL, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "anthropic-beta": "oauth-2025-04-20",
+      "Content-Type": "application/json",
+    },
+    signal: AbortSignal.timeout(USAGE_FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) return undefined;
+  return (await res.json()) as UsageResponse;
+}
+
+/** "2h13m", "18m", "3d4h" — compact time until the reset timestamp. */
+function formatUsageDelta(resetsAt: string | null | undefined): string | undefined {
+  if (!resetsAt) return undefined;
+  const ms = new Date(resetsAt).getTime() - Date.now();
+  if (!Number.isFinite(ms)) return undefined;
+  if (ms <= 0) return "now";
+  const mins = Math.floor(ms / 60_000);
+  const days = Math.floor(mins / 1440);
+  const hours = Math.floor((mins % 1440) / 60);
+  const minutes = mins % 60;
+  if (days > 0) return hours > 0 ? `${days}d${hours}h` : `${days}d`;
+  if (hours > 0) return minutes > 0 ? `${hours}h${minutes}m` : `${hours}h`;
+  return `${minutes}m`;
+}
+
+// "71% (reset 2h13m)" — 5h-window utilization and time until it resets.
+function formatUsage(data: UsageResponse): string | undefined {
+  const w = data.five_hour;
+  if (!w || typeof w.utilization !== "number") return undefined;
+  const reset = formatUsageDelta(w.resets_at);
+  return `${Math.round(w.utilization)}%${reset ? ` (reset ${reset})` : ""}`;
+}
 
 // Mirror of the built-in footer's compact token formatting (not exported).
 function formatTokens(count: number): string {
@@ -62,6 +142,46 @@ export default function (pi: ExtensionAPI) {
   let footerInstalled = false;
   let useStatusFallback = false;
 
+  // Anthropic usage-limit snapshot, refreshed in the background and rendered
+  // inline in the footer below.
+  let usageData: UsageResponse | undefined;
+  let usageLastFetch = 0;
+  let usageInFlight: Promise<void> | undefined;
+  let usageTimer: ReturnType<typeof setInterval> | undefined;
+  let usageTicker: ReturnType<typeof setInterval> | undefined;
+
+  function refreshUsage(force = false): Promise<void> {
+    if (usageInFlight) return usageInFlight;
+    const now = Date.now();
+    if (!force && now - usageLastFetch < USAGE_MIN_REFRESH_MS) return Promise.resolve();
+    usageLastFetch = now;
+    usageInFlight = fetchUsage()
+      .then((data) => {
+        if (data) usageData = data;
+        refresh();
+      })
+      .catch(() => {
+        // Usage display is cosmetic: never surface network/auth noise.
+      })
+      .finally(() => {
+        usageInFlight = undefined;
+      });
+    return usageInFlight;
+  }
+
+  function startUsagePolling() {
+    void refreshUsage(true);
+    if (!usageTimer) {
+      usageTimer = setInterval(() => void refreshUsage(true), USAGE_POLL_MS);
+      usageTimer.unref?.();
+    }
+    // Keep the "resets in" countdown honest between polls.
+    if (!usageTicker) {
+      usageTicker = setInterval(refresh, 30_000);
+      usageTicker.unref?.();
+    }
+  }
+
   function refresh() {
     if (useStatusFallback) {
       lastCtx?.ui?.setStatus?.("tps", tpsText);
@@ -84,6 +204,12 @@ export default function (pi: ExtensionAPI) {
           render(width: number): string[] {
             const c = lastCtx ?? ctx;
             const parts: string[] = [];
+
+            // Anthropic usage limits, e.g. "71% (reset 2h13m)"
+            if (usageData) {
+              const usageStr = formatUsage(usageData);
+              if (usageStr) parts.push(theme.fg("dim", usageStr));
+            }
 
             // Cache hit
             const ch = latestCacheHitRate(c);
@@ -159,6 +285,20 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     lastCtx = ctx;
     if (ctx.hasUI && ctx.mode === "tui") installFooter(ctx);
+    if (ctx.hasUI) startUsagePolling();
+  });
+
+  // A finished turn is exactly when the usage numbers have just changed.
+  pi.on("agent_settled", (_event, ctx) => {
+    lastCtx = ctx;
+    void refreshUsage();
+  });
+
+  pi.on("session_shutdown", () => {
+    if (usageTimer) clearInterval(usageTimer);
+    if (usageTicker) clearInterval(usageTicker);
+    usageTimer = undefined;
+    usageTicker = undefined;
   });
 
   // A new agent run starts a fresh response; reset the average accumulators so
