@@ -199,6 +199,7 @@ fn prepare_settings_overlay() -> (TempDir, String) {
 
     obj.insert("cacheWarming".to_string(), serde_json::json!("idle"));
     obj.insert("showCacheMissNotices".to_string(), serde_json::json!(true));
+    obj.insert("enableInstallTelemetry".to_string(), serde_json::json!(false));
     obj.insert("theme".to_string(), serde_json::json!("moonfly"));
 
     let dir = tempdir().expect("Failed to create temporary settings dir");
