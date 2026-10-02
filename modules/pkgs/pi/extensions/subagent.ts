@@ -15,6 +15,7 @@ import {
 	Container,
 	matchesKey,
 	Spacer,
+	Text,
 	truncateToWidth,
 	type TUI,
 	visibleWidth,
@@ -74,6 +75,48 @@ interface LiveSubagent {
 	transcript: SubagentTranscript;
 }
 
+// The built-in tool renderers (shell `$ cmd`, file paths, …) aren't on the
+// package's public export surface, so `ToolExecutionComponent` would fall back to
+// dumping the raw argument JSON. Supply small native-style `renderCall`s for the
+// tools a subagent actually uses so its transcript reads like a normal Pi chat.
+// Result rendering is left to the component's default (it already shows output).
+function toolCallRenderers(toolName: string): { renderCall: (args: any, theme: any, ctx: any) => Component } | undefined {
+	const reuseText = (ctx: any): Text => (ctx.lastComponent as Text) ?? new Text("", 0, 0);
+	const n = toolName.toLowerCase();
+
+	if (n === "bash" || n === "command" || n === "shell" || n === "powershell") {
+		const prompt = n === "powershell" ? "PS>" : "$";
+		return {
+			renderCall(args, theme, ctx) {
+				const a = args ?? {};
+				const cmd =
+					typeof a.command === "string" ? a.command : typeof a.cmd === "string" ? a.cmd : "";
+				const timeout =
+					typeof a.timeout === "number" ? theme.fg("muted", ` (timeout ${a.timeout}s)`) : "";
+				const text = reuseText(ctx);
+				text.setText(theme.fg("toolTitle", theme.bold(`${prompt} ${cmd || "..."}`)) + timeout);
+				return text;
+			},
+		};
+	}
+
+	if (["read", "write", "edit", "ls", "grep", "find", "glob"].includes(n)) {
+		return {
+			renderCall(args, theme, ctx) {
+				const a = args ?? {};
+				const target = collapseWs(
+					String(a.path ?? a.file ?? a.filePath ?? a.file_path ?? a.pattern ?? a.query ?? ""),
+				);
+				const text = reuseText(ctx);
+				text.setText(theme.fg("toolTitle", theme.bold(target ? `${toolName} ${target}` : toolName)));
+				return text;
+			},
+		};
+	}
+
+	return undefined;
+}
+
 // Pad a (possibly ANSI-styled) line with spaces to `width` so the overlay fully
 // paints over the chat beneath it instead of letting it bleed through.
 function padLine(line: string, width: number): string {
@@ -115,7 +158,7 @@ class SubagentOverlay implements Component {
 					part.id,
 					part.arguments,
 					{},
-					undefined,
+					toolCallRenderers(part.name),
 					this.tui,
 					cwd,
 				);

@@ -51,6 +51,7 @@
         ++ (with self'.packages; [ python ]);
 
       sprrw.term.shellExtra = ''
+        alias yd='ydiff'
         alias yds='ydiff --staged'
       '';
     }
