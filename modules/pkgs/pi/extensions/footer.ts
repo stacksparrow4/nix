@@ -73,12 +73,12 @@ function formatUsageDelta(resetsAt: string | null | undefined): string | undefin
   return `${minutes}m`;
 }
 
-// "71% (reset 2h13m)" — 5h-window utilization and time until it resets.
+// "Usage 71% (reset 2h13m)" — 5h-window utilization and time until it resets.
 function formatUsage(data: UsageResponse): string | undefined {
   const w = data.five_hour;
   if (!w || typeof w.utilization !== "number") return undefined;
   const reset = formatUsageDelta(w.resets_at);
-  return `${Math.round(w.utilization)}%${reset ? ` (reset ${reset})` : ""}`;
+  return `Usage ${Math.round(w.utilization)}%${reset ? ` (reset ${reset})` : ""}`;
 }
 
 // Mirror of the built-in footer's compact token formatting (not exported).
@@ -205,19 +205,9 @@ export default function (pi: ExtensionAPI) {
             const c = lastCtx ?? ctx;
             const parts: string[] = [];
 
-            // Anthropic usage limits, e.g. "71% (reset 2h13m)"
-            if (usageData) {
-              const usageStr = formatUsage(usageData);
-              if (usageStr) parts.push(theme.fg("dim", usageStr));
-            }
-
             // Cache hit
             const ch = latestCacheHitRate(c);
             if (ch !== undefined) parts.push(theme.fg("dim", `CH${ch.toFixed(1)}%`));
-
-            // Cumulative cost, e.g. "$0.123"
-            const cost = totalCost(c);
-            if (cost > 0) parts.push(theme.fg("dim", `$${cost.toFixed(3)}`));
 
             // Context usage, e.g. "1045/1.0M (2.2%)"
             const usage = c.getContextUsage?.();
@@ -232,6 +222,12 @@ export default function (pi: ExtensionAPI) {
 
             // Tokens per second
             if (tpsText) parts.push(theme.fg("dim", tpsText));
+
+            // Anthropic usage limits, e.g. "Usage 71% (reset 2h13m)"
+            if (usageData) {
+              const usageStr = formatUsage(usageData);
+              if (usageStr) parts.push(theme.fg("dim", usageStr));
+            }
 
             const left = parts.join(" ");
 
