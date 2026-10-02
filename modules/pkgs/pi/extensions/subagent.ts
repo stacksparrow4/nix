@@ -3,8 +3,22 @@ import * as fs from "node:fs";
 import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+import {
+	AssistantMessageComponent,
+	getMarkdownTheme,
+	ToolExecutionComponent,
+	UserMessageComponent,
+} from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
+import {
+	type Component,
+	Container,
+	matchesKey,
+	Spacer,
+	truncateToWidth,
+	type TUI,
+	visibleWidth,
+} from "@earendil-works/pi-tui";
 
 const CONTROL_PATH = process.env.PI_SUBAGENT_CONTROL;
 const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
@@ -30,6 +44,16 @@ const SUBAGENT_SYSTEM_PROMPT = [
 
 type ActivityKind = "text" | "thinking" | "tool";
 
+// Minimal, UI-agnostic record of a subagent's conversation, accumulated off the
+// JSON event stream so it can be replayed into native chat components on attach.
+// `message_update` wire events drop the cumulative snapshot, so we finalize at
+// `message_end` (and fill tool results from `tool_execution_end`); the attach
+// view therefore renders per completed message, tail-f style.
+interface SubagentTranscript {
+	messages: any[];
+	toolResults: Map<string, { result: any; isError: boolean }>;
+}
+
 interface LiveSubagent {
 	id: number;
 	task: string;
@@ -46,6 +70,106 @@ interface LiveSubagent {
 	activityKind?: ActivityKind;
 	// Accumulator for the in-flight text/thinking block being streamed.
 	streamBuf: string;
+	// Full conversation replayed into the /sa-attach overlay.
+	transcript: SubagentTranscript;
+}
+
+// Pad a (possibly ANSI-styled) line with spaces to `width` so the overlay fully
+// paints over the chat beneath it instead of letting it bleed through.
+function padLine(line: string, width: number): string {
+	const w = visibleWidth(line);
+	return w < width ? line + " ".repeat(width - w) : line;
+}
+
+// Full-screen, view-only overlay that renders a running subagent's transcript
+// using the host's native chat components, following the tail like `tail -f`.
+// Esc detaches. There is no scrolling by design.
+class SubagentOverlay implements Component {
+	private body = new Container();
+
+	constructor(
+		private tui: TUI,
+		private theme: Theme,
+		private sa: LiveSubagent,
+		private onDetach: () => void,
+	) {
+		this.rebuild();
+	}
+
+	// Rebuild from the accumulated transcript. Rebuilding wholesale (rather than
+	// appending) keeps the logic trivial and is cheap: subagent transcripts are
+	// small and we only refresh on coarse events (message/tool completion).
+	rebuild(): void {
+		const md = getMarkdownTheme();
+		const cwd = process.cwd();
+		this.body.clear();
+		this.body.addChild(new UserMessageComponent(`Task: ${this.sa.task}`, md));
+		for (const message of this.sa.transcript.messages) {
+			if (message.role !== "assistant") continue;
+			this.body.addChild(new Spacer(1));
+			this.body.addChild(new AssistantMessageComponent(message, false, md));
+			for (const part of message.content ?? []) {
+				if (part.type !== "toolCall") continue;
+				const tc = new ToolExecutionComponent(
+					part.name,
+					part.id,
+					part.arguments,
+					{},
+					undefined,
+					this.tui,
+					cwd,
+				);
+				tc.setArgsComplete();
+				const res = this.sa.transcript.toolResults.get(part.id);
+				if (res) {
+					tc.updateResult({
+						content: res.result?.content ?? [],
+						details: res.result?.details,
+						isError: res.isError,
+					});
+				}
+				this.body.addChild(tc);
+			}
+		}
+	}
+
+	refresh(): void {
+		this.rebuild();
+		this.tui.requestRender();
+	}
+
+	private renderHeader(width: number): string[] {
+		const sa = this.sa;
+		const title = `\u26ad subagent #${sa.id} \u00b7 ${sa.done ? "finished" : "running"} \u00b7 ${formatTokens(sa.tokens)} tok`;
+		const hint = "Esc to detach";
+		const gap = Math.max(1, width - visibleWidth(title) - visibleWidth(hint) - 1);
+		const bar = ` ${this.theme.fg("accent", title)}${" ".repeat(gap)}${this.theme.fg("dim", hint)}`;
+		return [bar, this.theme.fg("dim", "\u2500".repeat(width))];
+	}
+
+	render(width: number): string[] {
+		const cols = this.tui.terminal.columns || width;
+		const rows = this.tui.terminal.rows || 24;
+		const header = this.renderHeader(cols);
+		const avail = Math.max(1, rows - header.length);
+		let lines = this.body.render(cols);
+		if (lines.length > avail) lines = lines.slice(lines.length - avail);
+		while (lines.length < avail) lines.push("");
+		return [...header, ...lines].map((l) => padLine(l, cols));
+	}
+
+	handleInput(data: string): void {
+		// Esc detaches; ignore everything else (view-only, no scroll).
+		if (matchesKey(data, "escape")) this.onDetach();
+	}
+
+	// Theme change / forced re-render: rebuild from scratch so native components
+	// pick up new styling. Don't request a render here to avoid re-entrancy.
+	invalidate(): void {
+		this.rebuild();
+	}
+
+	dispose(): void {}
 }
 
 const collapseWs = (s: string): string => s.replace(/\s+/g, " ").trim();
@@ -119,6 +243,27 @@ export default function (pi: ExtensionAPI) {
 	let server: net.Server | undefined;
 	let lastCtx: any;
 	let promptFile: string | undefined;
+	// The currently attached (/sa-attach) overlay, if any. Only one at a time.
+	let attached: { sa: LiveSubagent; overlay: SubagentOverlay } | undefined;
+
+	// Accumulate the subagent's conversation for the attach overlay. We finalize
+	// assistant turns at message_end and fill tool results at tool_execution_end.
+	function captureTranscript(sa: LiveSubagent, event: any) {
+		if (event.type === "message_end" && event.message?.role === "assistant") {
+			sa.transcript.messages.push(event.message);
+			notifyAttached(sa);
+		} else if (event.type === "tool_execution_end" && event.toolCallId) {
+			sa.transcript.toolResults.set(event.toolCallId, {
+				result: event.result,
+				isError: !!event.isError,
+			});
+			notifyAttached(sa);
+		}
+	}
+
+	function notifyAttached(sa: LiveSubagent) {
+		if (attached && attached.sa === sa) attached.overlay.refresh();
+	}
 
 	function recordFinished(id: number, result: SubagentResult) {
 		finished.set(id, result);
@@ -329,6 +474,7 @@ export default function (pi: ExtensionAPI) {
 		} catch {
 			return;
 		}
+		captureTranscript(sa, event);
 		if (event.type === "message_update") {
 			// Streaming deltas: reflect what the subagent is generating right now.
 			const ame = event.assistantMessageEvent;
@@ -450,6 +596,7 @@ export default function (pi: ExtensionAPI) {
 				cost: 0,
 				done: false,
 				streamBuf: "",
+				transcript: { messages: [], toolResults: new Map() },
 				proc: undefined as unknown as ChildProcess,
 			};
 			sa.proc = spawnSubagent(sa);
@@ -485,6 +632,7 @@ export default function (pi: ExtensionAPI) {
 				}
 				live.delete(id);
 				recordFinished(id, { exitCode, stopReason: end.stopReason, aborted: false });
+				notifyAttached(sa);
 				refreshStatus();
 			};
 
@@ -519,7 +667,7 @@ export default function (pi: ExtensionAPI) {
 		sa.done = true;
 		live.delete(sa.id);
 		recordFinished(sa.id, { exitCode: 143, stopReason: "aborted", aborted: true });
-		// If the spawning tool is still connected (e.g. a /subagent-cancel while it
+		// If the spawning tool is still connected (e.g. a /sa-cancel while it
 		// runs), tell it we aborted and close the run stream so it doesn't hang.
 		if (!sa.conn.destroyed) {
 			try {
@@ -537,6 +685,7 @@ export default function (pi: ExtensionAPI) {
 				if (!sa.proc.killed) sa.proc.kill("SIGKILL");
 			} catch {}
 		}, 5000);
+		notifyAttached(sa);
 		refreshStatus();
 	}
 
@@ -562,7 +711,7 @@ export default function (pi: ExtensionAPI) {
 		server = undefined;
 	}
 
-	pi.registerCommand("subagent-cancel", {
+	pi.registerCommand("sa-cancel", {
 		description: "Cancel a running subagent by ID, or all subagents if no ID is given",
 		getArgumentCompletions: (prefix: string) => {
 			const running = [...live.values()].filter((s) => !s.done);
@@ -602,6 +751,70 @@ export default function (pi: ExtensionAPI) {
 			}
 			abortSubagent(sa);
 			ctx.ui.notify(`Cancelled subagent #${id}.`, "info");
+		},
+	});
+
+	pi.registerCommand("sa-attach", {
+		description:
+			"Switch the TUI into a running subagent's live transcript (tail -f, view only; Esc to detach)",
+		getArgumentCompletions: (prefix: string) => {
+			const running = [...live.values()].filter((s) => !s.done);
+			return running
+				.filter((s) => String(s.id).startsWith(prefix.trim()))
+				.map((s) => {
+					const act = collapseWs(s.activity ?? "");
+					return {
+						value: String(s.id),
+						label: `#${s.id}`,
+						description: act ? `${formatTokens(s.tokens)} · ${act}` : formatTokens(s.tokens),
+					};
+				});
+		},
+		handler: async (args: string, ctx: any) => {
+			if (attached) {
+				ctx.ui.notify("Already attached to a subagent. Press Esc to detach first.", "warning");
+				return;
+			}
+			if (!ctx.ui?.custom) {
+				ctx.ui.notify("Attaching is only available in the interactive TUI.", "error");
+				return;
+			}
+			const running = [...live.values()].filter((s) => !s.done);
+			const arg = args.trim();
+			let sa: LiveSubagent | undefined;
+			if (arg) {
+				const id = Number.parseInt(arg, 10);
+				if (!Number.isFinite(id) || String(id) !== arg) {
+					ctx.ui.notify(`Invalid subagent ID: ${arg}`, "error");
+					return;
+				}
+				sa = live.get(id);
+				if (!sa || sa.done) {
+					ctx.ui.notify(`No running subagent #${id}.`, "error");
+					return;
+				}
+			} else if (running.length === 1) {
+				sa = running[0];
+			} else {
+				ctx.ui.notify(
+					running.length === 0 ? "No running subagents to attach to." : "Specify a subagent ID to attach to.",
+					"info",
+				);
+				return;
+			}
+			const target = sa;
+			try {
+				await ctx.ui.custom(
+					(tui: TUI, theme: Theme, _kb: any, done: (r: unknown) => void) => {
+						const overlay = new SubagentOverlay(tui, theme, target, () => done(undefined));
+						attached = { sa: target, overlay };
+						return overlay;
+					},
+					{ overlay: true, overlayOptions: { width: "100%", maxHeight: "100%", anchor: "center" } },
+				);
+			} finally {
+				attached = undefined;
+			}
 		},
 	});
 
