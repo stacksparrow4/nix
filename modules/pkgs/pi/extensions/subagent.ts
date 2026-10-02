@@ -47,12 +47,48 @@ type ActivityKind = "text" | "thinking" | "tool";
 
 // Minimal, UI-agnostic record of a subagent's conversation, accumulated off the
 // JSON event stream so it can be replayed into native chat components on attach.
-// `message_update` wire events drop the cumulative snapshot, so we finalize at
-// `message_end` (and fill tool results from `tool_execution_end`); the attach
-// view therefore renders per completed message, tail-f style.
+// The wire format (`toJsonEvent`) strips the cumulative `partial` snapshot from
+// `message_update` deltas, so we reconstruct the in-flight assistant message from
+// the deltas ourselves (see `applyAssistantDelta`) to stream live, then replace
+// it with the authoritative message at `message_end`.
 interface SubagentTranscript {
+	// Finalized assistant messages (from message_end).
 	messages: any[];
-	toolResults: Map<string, { result: any; isError: boolean }>;
+	// Latest/partial result per tool call id, with a streaming flag.
+	toolResults: Map<string, { result: any; isError: boolean; partial: boolean }>;
+}
+
+// Apply one stripped `assistantMessageEvent` delta to the in-flight message's
+// content, mutating it in place. Content indices can arrive for text, thinking,
+// or tool-call parts; gaps are filtered out at render time.
+function applyAssistantDelta(message: any, ame: any): void {
+	if (!ame || typeof ame.contentIndex !== "number") return;
+	const idx = ame.contentIndex;
+	const content: any[] = message.content ?? (message.content = []);
+	switch (ame.type) {
+		case "text_start":
+			content[idx] = { type: "text", text: "" };
+			break;
+		case "text_delta":
+			if (content[idx]?.type !== "text") content[idx] = { type: "text", text: "" };
+			content[idx].text += ame.delta ?? "";
+			break;
+		case "thinking_start":
+			content[idx] = { type: "thinking", thinking: "" };
+			break;
+		case "thinking_delta":
+			if (content[idx]?.type !== "thinking") content[idx] = { type: "thinking", thinking: "" };
+			content[idx].thinking += ame.delta ?? "";
+			break;
+		case "toolcall_start":
+			// Args stream in as `toolcall_delta` JSON fragments; keep them empty until
+			// `toolcall_end` delivers the parsed arguments object.
+			content[idx] = { type: "toolCall", id: ame.id, name: ame.toolName, arguments: {} };
+			break;
+		case "toolcall_end":
+			if (ame.toolCall) content[idx] = ame.toolCall;
+			break;
+	}
 }
 
 interface LiveSubagent {
@@ -73,6 +109,8 @@ interface LiveSubagent {
 	streamBuf: string;
 	// Full conversation replayed into the /sa-attach overlay.
 	transcript: SubagentTranscript;
+	// In-flight assistant message reconstructed from deltas (undefined between turns).
+	liveMessage?: any;
 }
 
 // The built-in tool renderers (shell `$ cmd`, file paths, …) aren't on the
@@ -147,11 +185,31 @@ class SubagentOverlay implements Component {
 		const cwd = process.cwd();
 		this.body.clear();
 		this.body.addChild(new UserMessageComponent(`Task: ${this.sa.task}`, md));
-		for (const message of this.sa.transcript.messages) {
+
+		// Finalized turns, then the in-flight (streaming) message, if any.
+		const messages = [...this.sa.transcript.messages];
+		if (this.sa.liveMessage) messages.push(this.sa.liveMessage);
+
+		for (const message of messages) {
 			if (message.role !== "assistant") continue;
+			const streaming = message === this.sa.liveMessage;
+			// Drop sparse gaps left by out-of-order content indices.
+			const content = (message.content ?? []).filter(Boolean);
+			const hasAnything = content.some(
+				(c: any) =>
+					(c.type === "text" && c.text?.trim()) ||
+					(c.type === "thinking" && c.thinking?.trim()) ||
+					c.type === "toolCall",
+			);
+			if (streaming && !hasAnything) continue; // nothing to show for this turn yet
+
+			const sanitized = { ...message, content };
 			this.body.addChild(new Spacer(1));
-			this.body.addChild(new AssistantMessageComponent(message, false, md));
-			for (const part of message.content ?? []) {
+			const amc = new AssistantMessageComponent(undefined, false, md);
+			amc.updateContent(sanitized, streaming);
+			this.body.addChild(amc);
+
+			for (const part of content) {
 				if (part.type !== "toolCall") continue;
 				const tc = new ToolExecutionComponent(
 					part.name,
@@ -165,11 +223,14 @@ class SubagentOverlay implements Component {
 				tc.setArgsComplete();
 				const res = this.sa.transcript.toolResults.get(part.id);
 				if (res) {
-					tc.updateResult({
-						content: res.result?.content ?? [],
-						details: res.result?.details,
-						isError: res.isError,
-					});
+					tc.updateResult(
+						{
+							content: res.result?.content ?? [],
+							details: res.result?.details,
+							isError: res.isError,
+						},
+						res.partial,
+					);
 				}
 				this.body.addChild(tc);
 			}
@@ -194,11 +255,12 @@ class SubagentOverlay implements Component {
 		const cols = this.tui.terminal.columns || width;
 		const rows = this.tui.terminal.rows || 24;
 		const header = this.renderHeader(cols);
-		const avail = Math.max(1, rows - header.length);
+		// Reserve one blank row at the bottom so the tail isn't flush against the edge.
+		const avail = Math.max(1, rows - header.length - 1);
 		let lines = this.body.render(cols);
 		if (lines.length > avail) lines = lines.slice(lines.length - avail);
 		while (lines.length < avail) lines.push("");
-		return [...header, ...lines].map((l) => padLine(l, cols));
+		return [...header, ...lines, ""].map((l) => padLine(l, cols));
 	}
 
 	handleInput(data: string): void {
@@ -289,23 +351,76 @@ export default function (pi: ExtensionAPI) {
 	// The currently attached (/sa-attach) overlay, if any. Only one at a time.
 	let attached: { sa: LiveSubagent; overlay: SubagentOverlay } | undefined;
 
-	// Accumulate the subagent's conversation for the attach overlay. We finalize
-	// assistant turns at message_end and fill tool results at tool_execution_end.
+	// Accumulate the subagent's conversation for the attach overlay, streaming the
+	// in-flight assistant message and tool output live. Boundary events (message or
+	// tool completion) refresh immediately; high-frequency deltas are throttled.
 	function captureTranscript(sa: LiveSubagent, event: any) {
-		if (event.type === "message_end" && event.message?.role === "assistant") {
-			sa.transcript.messages.push(event.message);
-			notifyAttached(sa);
-		} else if (event.type === "tool_execution_end" && event.toolCallId) {
-			sa.transcript.toolResults.set(event.toolCallId, {
-				result: event.result,
-				isError: !!event.isError,
-			});
-			notifyAttached(sa);
+		switch (event.type) {
+			case "message_start":
+				if (event.message?.role === "assistant") {
+					if (!Array.isArray(event.message.content)) event.message.content = [];
+					sa.liveMessage = event.message;
+					scheduleAttachRefresh(sa);
+				}
+				break;
+			case "message_update": {
+				if (!sa.liveMessage) sa.liveMessage = { role: "assistant", content: [] };
+				applyAssistantDelta(sa.liveMessage, event.assistantMessageEvent);
+				scheduleAttachRefresh(sa);
+				break;
+			}
+			case "message_end":
+				if (event.message?.role === "assistant") {
+					sa.transcript.messages.push(event.message);
+					sa.liveMessage = undefined;
+					notifyAttached(sa);
+				}
+				break;
+			case "tool_execution_update":
+				if (event.toolCallId) {
+					sa.transcript.toolResults.set(event.toolCallId, {
+						result: event.partialResult,
+						isError: false,
+						partial: true,
+					});
+					scheduleAttachRefresh(sa);
+				}
+				break;
+			case "tool_execution_end":
+				if (event.toolCallId) {
+					sa.transcript.toolResults.set(event.toolCallId, {
+						result: event.result,
+						isError: !!event.isError,
+						partial: false,
+					});
+					notifyAttached(sa);
+				}
+				break;
 		}
 	}
 
 	function notifyAttached(sa: LiveSubagent) {
 		if (attached && attached.sa === sa) attached.overlay.refresh();
+	}
+
+	// Throttle delta-driven refreshes so fast token streams don't rebuild + repaint
+	// the overlay on every chunk (same 80ms cadence as the status widget).
+	let attachRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+	let attachRefreshPending = false;
+	function scheduleAttachRefresh(sa: LiveSubagent) {
+		if (!attached || attached.sa !== sa) return;
+		if (attachRefreshTimer) {
+			attachRefreshPending = true;
+			return;
+		}
+		attached.overlay.refresh();
+		attachRefreshTimer = setTimeout(() => {
+			attachRefreshTimer = undefined;
+			if (attachRefreshPending) {
+				attachRefreshPending = false;
+				scheduleAttachRefresh(sa);
+			}
+		}, 80);
 	}
 
 	function recordFinished(id: number, result: SubagentResult) {
@@ -640,6 +755,7 @@ export default function (pi: ExtensionAPI) {
 				done: false,
 				streamBuf: "",
 				transcript: { messages: [], toolResults: new Map() },
+				liveMessage: undefined,
 				proc: undefined as unknown as ChildProcess,
 			};
 			sa.proc = spawnSubagent(sa);
@@ -746,6 +862,10 @@ export default function (pi: ExtensionAPI) {
 		if (refreshTimer) {
 			clearTimeout(refreshTimer);
 			refreshTimer = undefined;
+		}
+		if (attachRefreshTimer) {
+			clearTimeout(attachRefreshTimer);
+			attachRefreshTimer = undefined;
 		}
 		for (const sa of [...live.values()]) abortSubagent(sa);
 		try {
