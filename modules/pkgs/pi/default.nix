@@ -19,7 +19,7 @@ in
               pkgs:
               ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
                 name = "pi";
-                src = ./.;
+                src = ./wrapper;
               }).rootCrate.build;
             pi = buildPi pkgs;
             piLinux = buildPi pkgsLinux;
