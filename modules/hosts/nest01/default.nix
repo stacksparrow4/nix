@@ -66,7 +66,6 @@ in
                 sec-gui
 
                 gui
-                gui-lmms
 
                 ai
                 ai-llama
