@@ -89,7 +89,6 @@ in
                 ]
                 ++ (with pkgs; [
                   audacity
-                  prismlauncher
                 ])
                 ++ (with self'.packages; [
                   sprrw
@@ -116,6 +115,10 @@ in
                 appId = "org.signal.Signal";
                 origin = "flathub";
               }
+              {
+                appId = "org.prismlauncher.PrismLauncher";
+                origin = "flathub";
+              }
             ];
 
             overrides = {
@@ -124,7 +127,14 @@ in
               };
               "org.signal.Signal".Context = {
                 shared = [ "!ipc" ];
-                sockets=  ["!fallback-x11"];
+                sockets = [ "!fallback-x11" ];
+              };
+              "org.prismlauncher.PrismLauncher".Context = {
+                filesystems = [
+                  "!xdg-run/app/com.discordapp.Discord"
+                  "!xdg-download"
+                  "!~/.ftba"
+                ];
               };
             };
           };
