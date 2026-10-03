@@ -158,7 +158,9 @@ pub fn update() {
             }
         }
 
-        run_cmd(Command::new("flatpak").args([
+        // Requires sudo because flatpak doesn't let you update to a commit without root
+        run_cmd(Command::new("sudo").args([
+            "flatpak",
             "update",
             "--system",
             "-y",
