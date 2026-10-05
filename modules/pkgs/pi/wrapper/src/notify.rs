@@ -10,13 +10,19 @@ pub const SOCKET_NAME: &str = "notify.sock";
 
 pub const SOCKET_PATH_IN_SANDBOX: &str = "/tmp/pi-notify/notify.sock";
 
+fn notify_icon(title: &str) -> String {
+    if title == "Pi cache warmed" {
+        if let Ok(icon) = std::env::var("SPRRW_PI_NOTIFY_ICON_CACHE_WARM") {
+            return icon;
+        }
+    }
+    std::env::var("SPRRW_PI_NOTIFY_ICON").unwrap()
+}
+
 #[cfg(target_os = "linux")]
 fn build_notify_command(title: &str, body: &str) -> Command {
     let mut cmd = Command::new("notify-send");
-    cmd.arg(format!(
-        "--icon={}",
-        std::env::var("SPRRW_PI_NOTIFY_ICON").unwrap()
-    ));
+    cmd.arg(format!("--icon={}", notify_icon(title)));
     cmd.args(["--app-name=", "--", title, body]);
     cmd
 }
@@ -25,7 +31,7 @@ fn build_notify_command(title: &str, body: &str) -> Command {
 fn build_notify_command(title: &str, body: &str) -> Command {
     let mut cmd = Command::new("terminal-notifier");
     cmd.args(["-title", title, "-message", body]);
-    cmd.args(["-appIcon", &std::env::var("SPRRW_PI_NOTIFY_ICON").unwrap()]);
+    cmd.args(["-appIcon", &notify_icon(title)]);
     cmd
 }
 
