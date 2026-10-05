@@ -24,6 +24,7 @@ vim.lsp.config.rust_analyzer = {
       },
       cargo = {
         allFeatures = true,
+        targetDir = true
       },
       procMacro = {
         enable = true,
