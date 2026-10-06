@@ -8,7 +8,6 @@ in
     {
       pkgs,
       pkgsLinux,
-      pkgsLinuxUnstable,
       config,
       ...
     }:
@@ -37,7 +36,7 @@ in
             piWrapper = pkgs.writeShellApplication {
               name = "pi";
               text = ''
-                export SPRRW_PI=${pkgsLinuxUnstable.pi-coding-agent}/bin/pi
+                export SPRRW_PI=${inputs.pi.packages.${pkgsLinux.stdenv.hostPlatform.system}.pi}/bin/pi
                 export SPRRW_PI_WRAPPER_LINUX=${piLinux}/bin/pi
 
                 export SPRRW_EXTENSIONS=${./extensions}
