@@ -663,6 +663,7 @@ fn main() {
             .into_iter()
             .flat_map(|e| vec!["-e".to_string(), format!("~/.pi/agent/extensions/{}", e)]),
     )
+    .chain(["-e".to_string(), "builtin:llama.cpp".to_string()])
     .chain(["--system-prompt".to_string(), system])
     .chain(
         args.models
