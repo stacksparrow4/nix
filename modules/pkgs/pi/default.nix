@@ -30,7 +30,7 @@ in
                 { nativeBuildInputs = with pkgs; [ resvg imagemagick ]; }
                 ''
                   resvg --width 128 --height 128 ${./pi.svg} base.png
-                  resvg --width 100 --height 100 ${./flame.svg} flame.png
+                  resvg --width 64 --height 64 ${./flame.svg} flame.png
                   magick base.png flame.png -gravity SouthEast -composite $out
                 '';
             piWrapper = pkgs.writeShellApplication {
