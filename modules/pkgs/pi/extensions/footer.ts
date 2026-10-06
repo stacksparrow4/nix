@@ -1,6 +1,6 @@
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 // --- Anthropic usage limits -------------------------------------------------
@@ -15,6 +15,54 @@ const USAGE_POLL_MS = 120_000;
 /** Don't hammer the endpoint when turns finish back to back. */
 const USAGE_MIN_REFRESH_MS = 20_000;
 const USAGE_FETCH_TIMEOUT_MS = 8000;
+
+// --- Shared usage cache -----------------------------------------------------
+// The /api/oauth/usage endpoint is rate-limited *per account*, shared across
+// every client that hits it (other Pi sessions, subagents, Claude Code's own
+// /usage). When the limit is already spent, a fresh session's first request
+// gets a 429 and would otherwise render nothing. So we persist the last good
+// snapshot to a file in the host-mirrored sessions/ dir: every instance reads
+// it on startup (showing a last-known value immediately) and only one instance
+// needs to refresh within the freshness window, which keeps us off the limit.
+const USAGE_CACHE_PATH = join(getAgentDir(), "sessions", "usage-cache.json");
+/** If the cached snapshot is younger than this, skip the network entirely. */
+const USAGE_CACHE_FRESH_MS = 90_000;
+/** 429 backoff: start here, double each time, capped below. */
+const USAGE_BACKOFF_BASE_MS = 60_000;
+const USAGE_BACKOFF_MAX_MS = 15 * 60_000;
+
+interface UsageCache {
+  data: UsageResponse;
+  fetchedAt: number;
+}
+
+function loadUsageCache(): UsageCache | undefined {
+  try {
+    const parsed = JSON.parse(readFileSync(USAGE_CACHE_PATH, "utf8"));
+    if (parsed && typeof parsed.fetchedAt === "number" && parsed.data) {
+      return parsed as UsageCache;
+    }
+  } catch {
+    // No cache yet, or unreadable: treat as absent.
+  }
+  return undefined;
+}
+
+function saveUsageCache(data: UsageResponse): void {
+  try {
+    const payload: UsageCache = { data, fetchedAt: Date.now() };
+    writeFileSync(USAGE_CACHE_PATH, JSON.stringify(payload));
+  } catch {
+    // Caching is best-effort; a write failure just means a future cold start
+    // can't reuse this snapshot.
+  }
+}
+
+/** Result of one usage fetch, so callers can distinguish 429 from other misses. */
+type UsageFetch =
+  | { kind: "ok"; data: UsageResponse }
+  | { kind: "rate_limited"; retryAfterMs: number }
+  | { kind: "skip" };
 
 interface UsageWindow {
   utilization: number | null;
@@ -43,9 +91,9 @@ function readAccessToken(): string | undefined {
   }
 }
 
-async function fetchUsage(): Promise<UsageResponse | undefined> {
+async function fetchUsage(): Promise<UsageFetch> {
   const token = readAccessToken();
-  if (!token) return undefined;
+  if (!token) return { kind: "skip" };
   const res = await fetch(USAGE_URL, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -54,8 +102,17 @@ async function fetchUsage(): Promise<UsageResponse | undefined> {
     },
     signal: AbortSignal.timeout(USAGE_FETCH_TIMEOUT_MS),
   });
-  if (!res.ok) return undefined;
-  return (await res.json()) as UsageResponse;
+  if (!res.ok) {
+    if (res.status === 429) {
+      // Header is in seconds and often 0/absent, so fall back to our own backoff.
+      const retryAfterHeader = Number(res.headers.get("retry-after"));
+      const retryAfterMs = Number.isFinite(retryAfterHeader) && retryAfterHeader > 0 ? retryAfterHeader * 1000 : 0;
+      return { kind: "rate_limited", retryAfterMs };
+    }
+    return { kind: "skip" };
+  }
+  const data = (await res.json()) as UsageResponse;
+  return { kind: "ok", data };
 }
 
 /** "2h13m", "18m", "3d4h" — compact time until the reset timestamp. */
@@ -143,25 +200,63 @@ export default function (pi: ExtensionAPI) {
   let useStatusFallback = false;
 
   // Anthropic usage-limit snapshot, refreshed in the background and rendered
-  // inline in the footer below.
+  // inline in the footer below. Seeded from the shared on-disk cache so the
+  // footer shows a last-known value even when our own fetch is rate-limited.
   let usageData: UsageResponse | undefined;
-  let usageLastFetch = 0;
+  let usageFetchedAt = 0;
   let usageInFlight: Promise<void> | undefined;
   let usageTimer: ReturnType<typeof setInterval> | undefined;
   let usageTicker: ReturnType<typeof setInterval> | undefined;
+  // While rate-limited (429) we hold off on network calls until this time.
+  let usageBackoffUntil = 0;
+  let usageBackoffMs = USAGE_BACKOFF_BASE_MS;
+  let usageRetryTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // Adopt the newest snapshot available on disk (possibly written by another
+  // Pi instance). Returns true if that snapshot is fresh enough to skip a fetch.
+  function adoptDiskCache(): boolean {
+    const cache = loadUsageCache();
+    if (cache && cache.fetchedAt > usageFetchedAt) {
+      usageData = cache.data;
+      usageFetchedAt = cache.fetchedAt;
+      refresh();
+    }
+    return usageFetchedAt > 0 && Date.now() - usageFetchedAt < USAGE_CACHE_FRESH_MS;
+  }
 
   function refreshUsage(force = false): Promise<void> {
     if (usageInFlight) return usageInFlight;
     const now = Date.now();
-    if (!force && now - usageLastFetch < USAGE_MIN_REFRESH_MS) return Promise.resolve();
-    usageLastFetch = now;
+    // Respect an active 429 backoff regardless of force.
+    if (now < usageBackoffUntil) {
+      adoptDiskCache();
+      return Promise.resolve();
+    }
+    if (!force && now - usageFetchedAt < USAGE_MIN_REFRESH_MS) return Promise.resolve();
+    // Another instance may have refreshed recently; if so, don't spend a request.
+    if (adoptDiskCache()) return Promise.resolve();
     usageInFlight = fetchUsage()
-      .then((data) => {
-        if (data) usageData = data;
+      .then((result) => {
+        if (result.kind === "ok") {
+          usageData = result.data;
+          usageFetchedAt = Date.now();
+          usageBackoffMs = USAGE_BACKOFF_BASE_MS; // reset backoff on success
+          saveUsageCache(result.data);
+        } else if (result.kind === "rate_limited") {
+          const wait = Math.max(result.retryAfterMs, usageBackoffMs);
+          usageBackoffUntil = Date.now() + wait;
+          usageBackoffMs = Math.min(usageBackoffMs * 2, USAGE_BACKOFF_MAX_MS);
+          // Fall back to whatever another instance may have on disk.
+          adoptDiskCache();
+          scheduleRetry(wait);
+        } else {
+          adoptDiskCache();
+        }
         refresh();
       })
       .catch(() => {
         // Usage display is cosmetic: never surface network/auth noise.
+        adoptDiskCache();
       })
       .finally(() => {
         usageInFlight = undefined;
@@ -169,7 +264,18 @@ export default function (pi: ExtensionAPI) {
     return usageInFlight;
   }
 
+  function scheduleRetry(afterMs: number) {
+    if (usageRetryTimer) clearTimeout(usageRetryTimer);
+    usageRetryTimer = setTimeout(() => {
+      usageRetryTimer = undefined;
+      void refreshUsage(true);
+    }, afterMs + 250);
+    usageRetryTimer.unref?.();
+  }
+
   function startUsagePolling() {
+    // Seed from disk immediately so a value shows up before any network call.
+    adoptDiskCache();
     void refreshUsage(true);
     if (!usageTimer) {
       usageTimer = setInterval(() => void refreshUsage(true), USAGE_POLL_MS);
@@ -293,8 +399,10 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_shutdown", () => {
     if (usageTimer) clearInterval(usageTimer);
     if (usageTicker) clearInterval(usageTicker);
+    if (usageRetryTimer) clearTimeout(usageRetryTimer);
     usageTimer = undefined;
     usageTicker = undefined;
+    usageRetryTimer = undefined;
   });
 
   // A new agent run starts a fresh response; reset the average accumulators so
