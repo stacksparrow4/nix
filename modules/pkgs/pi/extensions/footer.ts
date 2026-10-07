@@ -3,31 +3,53 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Anthropic account usage, from the same endpoint Claude Code's /usage uses,
-// authenticated with the OAuth token Pi stores in auth.json. The endpoint is
-// rate-limited per account across all clients, so snapshots are shared on disk
-// (see USAGE_CACHE_PATH) to keep every instance off the limit.
-const USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
+// Subscription usage for the active provider, authenticated with the OAuth
+// tokens Pi stores in auth.json:
+//  - Anthropic: the endpoint Claude Code's /usage uses.
+//  - OpenAI (ChatGPT plan): the endpoint Codex's /status uses.
+// Both are rate-limited per account across all clients, so snapshots are
+// shared on disk (see usageCachePath) to keep every instance off the limit.
+const ANTHROPIC_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
+const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
+const OPENAI_JWT_CLAIM = "https://api.openai.com/auth";
 const AUTH_PATH = join(getAgentDir(), "auth.json");
 const USAGE_POLL_MS = 120_000;
 const USAGE_MIN_REFRESH_MS = 20_000;
 const USAGE_FETCH_TIMEOUT_MS = 8000;
 
-const USAGE_CACHE_PATH = join(getAgentDir(), "sessions", "usage-cache.json");
 // Skip the network when the shared snapshot is younger than this.
 const USAGE_CACHE_FRESH_MS = 90_000;
 // 429 backoff: start here, double each failure, capped below.
 const USAGE_BACKOFF_BASE_MS = 60_000;
 const USAGE_BACKOFF_MAX_MS = 15 * 60_000;
 
+type UsageSource = "anthropic" | "openai";
+const USAGE_SOURCES: UsageSource[] = ["anthropic", "openai"];
+
+// Provider-neutral view of one limit window.
+interface UsageWindow {
+  percent: number;
+  resetsAt?: number; // epoch ms
+}
+
+// primary is the short (5h) window shown in the footer; secondary is weekly.
+interface UsageSnapshot {
+  primary?: UsageWindow;
+  secondary?: UsageWindow;
+}
+
 interface UsageCache {
-  data: UsageResponse;
+  data: UsageSnapshot;
   fetchedAt: number;
 }
 
-function loadUsageCache(): UsageCache | undefined {
+function usageCachePath(source: UsageSource): string {
+  return join(getAgentDir(), "sessions", `usage-cache-${source}.json`);
+}
+
+function loadUsageCache(source: UsageSource): UsageCache | undefined {
   try {
-    const parsed = JSON.parse(readFileSync(USAGE_CACHE_PATH, "utf8"));
+    const parsed = JSON.parse(readFileSync(usageCachePath(source), "utf8"));
     if (parsed && typeof parsed.fetchedAt === "number" && parsed.data) {
       return parsed as UsageCache;
     }
@@ -37,10 +59,10 @@ function loadUsageCache(): UsageCache | undefined {
   return undefined;
 }
 
-function saveUsageCache(data: UsageResponse): void {
+function saveUsageCache(source: UsageSource, data: UsageSnapshot): void {
   try {
     const payload: UsageCache = { data, fetchedAt: Date.now() };
-    writeFileSync(USAGE_CACHE_PATH, JSON.stringify(payload));
+    writeFileSync(usageCachePath(source), JSON.stringify(payload));
   } catch {
     // Best-effort; a write failure only costs a future cold start its snapshot.
   }
@@ -48,47 +70,41 @@ function saveUsageCache(data: UsageResponse): void {
 
 // A distinct rate_limited result lets callers apply backoff instead of retrying.
 type UsageFetch =
-  | { kind: "ok"; data: UsageResponse }
+  | { kind: "ok"; data: UsageSnapshot }
   | { kind: "rate_limited"; retryAfterMs: number }
   | { kind: "skip" };
 
-interface UsageWindow {
-  utilization: number | null;
-  resets_at: string | null;
+interface OAuthCred {
+  access: string;
+  accountId?: string;
 }
 
-interface UsageResponse {
-  five_hour?: UsageWindow | null;
-  seven_day?: UsageWindow | null;
-  seven_day_opus?: UsageWindow | null;
-  extra_usage?: { is_enabled?: boolean; utilization?: number | null } | null;
-}
-
-function readAccessToken(): string | undefined {
+function readOAuth(providerId: string): OAuthCred | undefined {
   try {
     const auth = JSON.parse(readFileSync(AUTH_PATH, "utf8"));
-    const creds = auth?.anthropic;
+    const creds = auth?.[providerId];
     if (!creds || creds.type !== "oauth" || typeof creds.access !== "string") return undefined;
     // Expired tokens just 401; Pi rewrites auth.json on its next provider
     // request, so skip and let a later poll pick up the refreshed token.
     if (typeof creds.expires === "number" && creds.expires <= Date.now()) return undefined;
-    return creds.access;
+    return { access: creds.access, accountId: typeof creds.accountId === "string" ? creds.accountId : undefined };
   } catch {
     return undefined;
   }
 }
 
-async function fetchUsage(): Promise<UsageFetch> {
-  const token = readAccessToken();
-  if (!token) return { kind: "skip" };
-  const res = await fetch(USAGE_URL, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "anthropic-beta": "oauth-2025-04-20",
-      "Content-Type": "application/json",
-    },
-    signal: AbortSignal.timeout(USAGE_FETCH_TIMEOUT_MS),
-  });
+function jwtAccountId(token: string): string | undefined {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString("utf8"));
+    const id = payload?.[OPENAI_JWT_CLAIM]?.chatgpt_account_id;
+    return typeof id === "string" && id.length > 0 ? id : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function getJson(url: string, headers: Record<string, string>): Promise<{ kind: "ok"; body: any } | Exclude<UsageFetch, { kind: "ok" }>> {
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(USAGE_FETCH_TIMEOUT_MS) });
   if (!res.ok) {
     if (res.status === 429) {
       // retry-after is in seconds and often 0/absent; callers fall back to backoff.
@@ -98,14 +114,67 @@ async function fetchUsage(): Promise<UsageFetch> {
     }
     return { kind: "skip" };
   }
-  const data = (await res.json()) as UsageResponse;
-  return { kind: "ok", data };
+  return { kind: "ok", body: await res.json() };
 }
 
+// { utilization: 71.0, resets_at: "2026-10-07T05:00:00Z" }
+function anthropicWindow(w: any): UsageWindow | undefined {
+  if (!w || typeof w.utilization !== "number") return undefined;
+  const resetsAt = w.resets_at ? new Date(w.resets_at).getTime() : NaN;
+  return { percent: w.utilization, resetsAt: Number.isFinite(resetsAt) ? resetsAt : undefined };
+}
+
+// { used_percent: 71, limit_window_seconds: 18000, reset_at: 1791349200 }
+function openaiWindow(w: any): UsageWindow | undefined {
+  if (!w || typeof w.used_percent !== "number") return undefined;
+  const resetsAt = typeof w.reset_at === "number" && w.reset_at > 0 ? w.reset_at * 1000 : undefined;
+  return { percent: w.used_percent, resetsAt };
+}
+
+async function fetchAnthropicUsage(): Promise<UsageFetch> {
+  const cred = readOAuth("anthropic");
+  if (!cred) return { kind: "skip" };
+  const res = await getJson(ANTHROPIC_USAGE_URL, {
+    Authorization: `Bearer ${cred.access}`,
+    "anthropic-beta": "oauth-2025-04-20",
+    "Content-Type": "application/json",
+  });
+  if (res.kind !== "ok") return res;
+  return {
+    kind: "ok",
+    data: { primary: anthropicWindow(res.body?.five_hour), secondary: anthropicWindow(res.body?.seven_day) },
+  };
+}
+
+async function fetchOpenAIUsage(): Promise<UsageFetch> {
+  // The ChatGPT-plan login lives under "openai-codex"; the newer "Sign in with
+  // ChatGPT" credential on "openai" works too when its JWT carries an account.
+  for (const providerId of ["openai-codex", "openai"]) {
+    const cred = readOAuth(providerId);
+    const accountId = cred && (cred.accountId ?? jwtAccountId(cred.access));
+    if (!cred || !accountId) continue;
+    const res = await getJson(OPENAI_USAGE_URL, {
+      Authorization: `Bearer ${cred.access}`,
+      "ChatGPT-Account-Id": accountId,
+      "User-Agent": "codex-cli",
+    });
+    if (res.kind === "skip") continue;
+    if (res.kind !== "ok") return res;
+    const rl = res.body?.rate_limit;
+    return { kind: "ok", data: { primary: openaiWindow(rl?.primary_window), secondary: openaiWindow(rl?.secondary_window) } };
+  }
+  return { kind: "skip" };
+}
+
+const USAGE_FETCHERS: Record<UsageSource, () => Promise<UsageFetch>> = {
+  anthropic: fetchAnthropicUsage,
+  openai: fetchOpenAIUsage,
+};
+
 /** "2h13m", "18m", "3d4h" — compact time until the reset timestamp. */
-function formatUsageDelta(resetsAt: string | null | undefined): string | undefined {
-  if (!resetsAt) return undefined;
-  const ms = new Date(resetsAt).getTime() - Date.now();
+function formatUsageDelta(resetsAt: number | undefined): string | undefined {
+  if (resetsAt === undefined) return undefined;
+  const ms = resetsAt - Date.now();
   if (!Number.isFinite(ms)) return undefined;
   if (ms <= 0) return "now";
   const mins = Math.floor(ms / 60_000);
@@ -117,20 +186,22 @@ function formatUsageDelta(resetsAt: string | null | undefined): string | undefin
   return `${minutes}m`;
 }
 
-// Usage is an Anthropic account limit, so only surface it for Claude models.
-function isClaudeModel(model: any): boolean {
-  if (!model) return false;
+// Usage is a subscription limit, so only surface it for providers that have one.
+function usageSourceFor(model: any): UsageSource | undefined {
+  if (!model) return undefined;
   const id = String(model.id ?? "").toLowerCase();
   const provider = String(model.provider ?? "").toLowerCase();
-  return provider === "anthropic" || id.includes("claude");
+  if (provider === "anthropic" || id.includes("claude")) return "anthropic";
+  if (provider === "openai-codex" || provider === "openai") return "openai";
+  return undefined;
 }
 
 // "Usage 71% (reset 2h13m)" — 5h-window utilization and time until it resets.
-function formatUsage(data: UsageResponse): string | undefined {
-  const w = data.five_hour;
-  if (!w || typeof w.utilization !== "number") return undefined;
-  const reset = formatUsageDelta(w.resets_at);
-  return `Usage ${Math.round(w.utilization)}%${reset ? ` (reset ${reset})` : ""}`;
+function formatUsage(data: UsageSnapshot): string | undefined {
+  const w = data.primary;
+  if (!w) return undefined;
+  const reset = formatUsageDelta(w.resetsAt);
+  return `Usage ${Math.round(w.percent)}%${reset ? ` (reset ${reset})` : ""}`;
 }
 
 // Mirrors the built-in footer's compact token formatting.
@@ -189,81 +260,97 @@ export default function (pi: ExtensionAPI) {
   let footerInstalled = false;
   let useStatusFallback = false;
 
-  // Background usage snapshot, seeded from the shared on-disk cache so a
-  // last-known value shows even while our own fetch is rate-limited.
-  let usageData: UsageResponse | undefined;
-  let usageFetchedAt = 0;
-  let usageInFlight: Promise<void> | undefined;
+  // Background usage snapshots, one per provider, seeded from the shared
+  // on-disk cache so a last-known value shows even while a fetch is rate-limited.
+  interface UsageState {
+    data?: UsageSnapshot;
+    fetchedAt: number;
+    inFlight?: Promise<void>;
+    backoffUntil: number;
+    backoffMs: number;
+    retryTimer?: ReturnType<typeof setTimeout>;
+  }
+  const usageState = Object.fromEntries(
+    USAGE_SOURCES.map((s) => [s, { fetchedAt: 0, backoffUntil: 0, backoffMs: USAGE_BACKOFF_BASE_MS }]),
+  ) as Record<UsageSource, UsageState>;
   let usageTimer: ReturnType<typeof setInterval> | undefined;
   let usageTicker: ReturnType<typeof setInterval> | undefined;
-  let usageBackoffUntil = 0;
-  let usageBackoffMs = USAGE_BACKOFF_BASE_MS;
-  let usageRetryTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // Only the active model's provider is polled.
+  function activeSource(): UsageSource | undefined {
+    return usageSourceFor(lastCtx?.model);
+  }
 
   // Adopt the newest on-disk snapshot (possibly from another Pi instance).
   // Returns true when it's fresh enough to skip a network fetch.
-  function adoptDiskCache(): boolean {
-    const cache = loadUsageCache();
-    if (cache && cache.fetchedAt > usageFetchedAt) {
-      usageData = cache.data;
-      usageFetchedAt = cache.fetchedAt;
+  function adoptDiskCache(source: UsageSource): boolean {
+    const st = usageState[source];
+    const cache = loadUsageCache(source);
+    if (cache && cache.fetchedAt > st.fetchedAt) {
+      st.data = cache.data;
+      st.fetchedAt = cache.fetchedAt;
       refresh();
     }
-    return usageFetchedAt > 0 && Date.now() - usageFetchedAt < USAGE_CACHE_FRESH_MS;
+    return st.fetchedAt > 0 && Date.now() - st.fetchedAt < USAGE_CACHE_FRESH_MS;
   }
 
-  function refreshUsage(force = false): Promise<void> {
-    if (usageInFlight) return usageInFlight;
+  function refreshUsage(source: UsageSource | undefined, force = false): Promise<void> {
+    if (!source) return Promise.resolve();
+    const st = usageState[source];
+    if (st.inFlight) return st.inFlight;
     const now = Date.now();
     // An active 429 backoff wins even over a forced refresh.
-    if (now < usageBackoffUntil) {
-      adoptDiskCache();
+    if (now < st.backoffUntil) {
+      adoptDiskCache(source);
       return Promise.resolve();
     }
-    if (!force && now - usageFetchedAt < USAGE_MIN_REFRESH_MS) return Promise.resolve();
-    if (adoptDiskCache()) return Promise.resolve();
-    usageInFlight = fetchUsage()
+    if (!force && now - st.fetchedAt < USAGE_MIN_REFRESH_MS) return Promise.resolve();
+    if (adoptDiskCache(source)) return Promise.resolve();
+    st.inFlight = USAGE_FETCHERS[source]()
       .then((result) => {
         if (result.kind === "ok") {
-          usageData = result.data;
-          usageFetchedAt = Date.now();
-          usageBackoffMs = USAGE_BACKOFF_BASE_MS;
-          saveUsageCache(result.data);
+          st.data = result.data;
+          st.fetchedAt = Date.now();
+          st.backoffMs = USAGE_BACKOFF_BASE_MS;
+          saveUsageCache(source, result.data);
         } else if (result.kind === "rate_limited") {
-          const wait = Math.max(result.retryAfterMs, usageBackoffMs);
-          usageBackoffUntil = Date.now() + wait;
-          usageBackoffMs = Math.min(usageBackoffMs * 2, USAGE_BACKOFF_MAX_MS);
-          adoptDiskCache();
-          scheduleRetry(wait);
+          const wait = Math.max(result.retryAfterMs, st.backoffMs);
+          st.backoffUntil = Date.now() + wait;
+          st.backoffMs = Math.min(st.backoffMs * 2, USAGE_BACKOFF_MAX_MS);
+          adoptDiskCache(source);
+          scheduleRetry(source, wait);
         } else {
-          adoptDiskCache();
+          adoptDiskCache(source);
         }
         refresh();
       })
       .catch(() => {
         // Usage display is cosmetic: never surface network/auth noise.
-        adoptDiskCache();
+        adoptDiskCache(source);
       })
       .finally(() => {
-        usageInFlight = undefined;
+        st.inFlight = undefined;
       });
-    return usageInFlight;
+    return st.inFlight;
   }
 
-  function scheduleRetry(afterMs: number) {
-    if (usageRetryTimer) clearTimeout(usageRetryTimer);
-    usageRetryTimer = setTimeout(() => {
-      usageRetryTimer = undefined;
-      void refreshUsage(true);
+  function scheduleRetry(source: UsageSource, afterMs: number) {
+    const st = usageState[source];
+    if (st.retryTimer) clearTimeout(st.retryTimer);
+    st.retryTimer = setTimeout(() => {
+      st.retryTimer = undefined;
+      // Skip if the user has since switched to another provider.
+      if (activeSource() === source) void refreshUsage(source, true);
     }, afterMs + 250);
-    usageRetryTimer.unref?.();
+    st.retryTimer.unref?.();
   }
 
   function startUsagePolling() {
-    adoptDiskCache();
-    void refreshUsage(true);
+    const source = activeSource();
+    if (source) adoptDiskCache(source);
+    void refreshUsage(source, true);
     if (!usageTimer) {
-      usageTimer = setInterval(() => void refreshUsage(true), USAGE_POLL_MS);
+      usageTimer = setInterval(() => void refreshUsage(activeSource(), true), USAGE_POLL_MS);
       usageTimer.unref?.();
     }
     // Re-render between polls so the "resets in" countdown stays honest.
@@ -311,9 +398,12 @@ export default function (pi: ExtensionAPI) {
 
             if (tpsText) parts.push(theme.fg("dim", tpsText));
 
-            // Account usage, e.g. "Usage 71% (reset 2h13m)", Claude models only.
+            // Subscription usage, e.g. "Usage 71% (reset 2h13m)", for the
+            // active model's provider only.
             const model = c.model;
-            if (usageData && isClaudeModel(model)) {
+            const source = usageSourceFor(model);
+            const usageData = source && usageState[source].data;
+            if (usageData) {
               const usageStr = formatUsage(usageData);
               if (usageStr) parts.push(theme.fg("dim", usageStr));
             }
@@ -373,16 +463,27 @@ export default function (pi: ExtensionAPI) {
   // A settled turn is when the account usage numbers have just moved.
   pi.on("agent_settled", (_event, ctx) => {
     lastCtx = ctx;
-    void refreshUsage();
+    void refreshUsage(activeSource());
+  });
+
+  // Switching provider should show that provider's usage straight away.
+  pi.on("model_select", (event, ctx) => {
+    lastCtx = ctx;
+    const source = usageSourceFor(event.model);
+    if (source) adoptDiskCache(source);
+    void refreshUsage(source);
+    refresh();
   });
 
   pi.on("session_shutdown", () => {
     if (usageTimer) clearInterval(usageTimer);
     if (usageTicker) clearInterval(usageTicker);
-    if (usageRetryTimer) clearTimeout(usageRetryTimer);
+    for (const st of Object.values(usageState)) {
+      if (st.retryTimer) clearTimeout(st.retryTimer);
+      st.retryTimer = undefined;
+    }
     usageTimer = undefined;
     usageTicker = undefined;
-    usageRetryTimer = undefined;
   });
 
   // Reset the average accumulators so "avg" covers only this response's turns.
