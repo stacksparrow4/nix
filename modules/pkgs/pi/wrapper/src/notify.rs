@@ -11,7 +11,7 @@ pub const SOCKET_NAME: &str = "notify.sock";
 pub const SOCKET_PATH_IN_SANDBOX: &str = "/tmp/pi-notify/notify.sock";
 
 fn notify_icon(title: &str) -> String {
-    if title == "Pi cache warmed" {
+    if title == "Warming pi cache" {
         if let Ok(icon) = std::env::var("SPRRW_PI_NOTIFY_ICON_CACHE_WARM") {
             return icon;
         }

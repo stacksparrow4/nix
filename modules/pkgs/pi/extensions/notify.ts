@@ -69,6 +69,6 @@ export default function (pi: ExtensionAPI) {
   pi.on("cache_warming_decision", (_event, ctx) => {
     if (!ctx.hasUI || ctx.mode !== "tui") return;
     const preview = firstMessagePreview(ctx);
-    notify("Pi cache warmed", preview || "");
+    notify("Warming pi cache", preview || "");
   });
 }

@@ -39,7 +39,6 @@ in
 
             sprrw = {
               term.tmux.defaultTerm = "xterm-ghostty";
-              ai.pi.execModel = "gemini-3.6-flash";
             };
 
             home = {

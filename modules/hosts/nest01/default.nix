@@ -73,12 +73,6 @@ in
                 ai-llama-qwen
               ];
 
-              sprrw = {
-                ai = {
-                  pi.execModel = "gpt-5.6-terra";
-                };
-              };
-
               home = {
                 username = "sprrw";
                 homeDirectory = "/home/sprrw";

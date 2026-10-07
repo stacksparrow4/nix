@@ -18,10 +18,6 @@
           type = lib.types.attrsOf lib.types.anything;
           default = { };
         };
-
-        execModel = lib.mkOption {
-          type = lib.types.str;
-        };
       };
 
       config = {
@@ -50,10 +46,6 @@
 
         home.packages = [
           self'.packages.pi
-          (import ./_pi-convert.nix {
-            inherit pkgs;
-            model = cfg.execModel;
-          })
         ]
         ++ (if pkgs.stdenv.hostPlatform.isLinux then (
           let
@@ -67,7 +59,6 @@
             (import ./_pi-exec.nix {
               inherit pkgs;
               name = "pi-exec";
-              model = cfg.execModel;
               system = execSystemPrompt {
                 shell = "bash";
                 example = ''
@@ -79,7 +70,6 @@
             (import ./_pi-exec.nix {
               inherit pkgs;
               name = "pi-exec-pwsh";
-              model = cfg.execModel;
               system = execSystemPrompt {
                 shell = "PowerShell";
                 example = ''
