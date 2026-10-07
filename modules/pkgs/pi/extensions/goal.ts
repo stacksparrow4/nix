@@ -50,7 +50,7 @@ export default function goalExtension(pi: ExtensionAPI) {
         }
         goal = { ...goal, status: "complete" };
         continuationQueued = false;
-        return { content: [{ type: "text", text: "Goal marked complete." }] };
+        return { content: [{ type: "text", text: "Goal marked complete." }], terminate: true };
       },
     });
   }

@@ -21,6 +21,7 @@ in
                 src = ./wrapper;
               }).rootCrate.build;
             pi = buildPi pkgs;
+            piUpstream = inputs.pi.packages.${pkgsLinux.stdenv.hostPlatform.system}.pi;
             piLinux = buildPi pkgsLinux;
             piLogoPng = pkgs.runCommand "pi-logo.png" { nativeBuildInputs = [ pkgs.resvg ]; } ''
               resvg --width 128 --height 128 ${./pi.svg} $out
@@ -28,7 +29,8 @@ in
             piWrapper = pkgs.writeShellApplication {
               name = "pi";
               text = ''
-                export SPRRW_PI=${inputs.pi.packages.${pkgsLinux.stdenv.hostPlatform.system}.pi}/bin/pi
+                export SPRRW_PI=${piUpstream}/bin/pi
+                export SPRRW_PI_VERSION=${piUpstream.version}
                 export SPRRW_PI_WRAPPER_LINUX=${piLinux}/bin/pi
 
                 export SPRRW_EXTENSIONS=${./extensions}

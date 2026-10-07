@@ -197,7 +197,10 @@ fn prepare_settings_overlay() -> (TempDir, String) {
         obj.remove(*key);
     }
 
-    obj.insert("lastChangelogVersion".to_string(), serde_json::json!("1.0.4"));
+    obj.insert(
+        "lastChangelogVersion".to_string(),
+        serde_json::json!(std::env::var("SPRRW_PI_VERSION").unwrap()),
+    );
     obj.insert("cacheWarming".to_string(), serde_json::json!("idle"));
     obj.insert("showCacheMissNotices".to_string(), serde_json::json!(true));
     obj.insert("enableInstallTelemetry".to_string(), serde_json::json!(false));
