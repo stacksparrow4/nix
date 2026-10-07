@@ -25,14 +25,6 @@ in
             piLogoPng = pkgs.runCommand "pi-logo.png" { nativeBuildInputs = [ pkgs.resvg ]; } ''
               resvg --width 128 --height 128 ${./pi.svg} $out
             '';
-            piCacheWarmPng =
-              pkgs.runCommand "pi-cache-warm.png"
-                { nativeBuildInputs = with pkgs; [ resvg imagemagick ]; }
-                ''
-                  resvg --width 128 --height 128 ${./pi.svg} base.png
-                  resvg --width 64 --height 64 ${./flame.svg} flame.png
-                  magick base.png flame.png -gravity SouthEast -composite $out
-                '';
             piWrapper = pkgs.writeShellApplication {
               name = "pi";
               text = ''
@@ -48,7 +40,7 @@ in
                 }/bin
 
                 export SPRRW_PI_NOTIFY_ICON=${piLogoPng}
-                export SPRRW_PI_NOTIFY_ICON_CACHE_WARM=${piCacheWarmPng}
+                export SPRRW_PI_NOTIFY_ICON_CACHE_WARM=${./pi-cache-warm.png}
 
                 export PATH="${pkgs.lib.makeBinPath (
                   [ config.packages.box ]
