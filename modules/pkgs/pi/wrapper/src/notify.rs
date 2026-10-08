@@ -52,8 +52,8 @@ pub fn start_notify_server() -> Option<tempfile::TempDir> {
                     return;
                 }
 
-                let line = line.trim_end();
-                let (title, body) = line.split_once('\t').unwrap_or(("Pi turn complete", ""));
+                let line = line.trim_end_matches(['\n', '\r']);
+                let (title, body) = line.split_once('\t').unwrap_or(("Pi", ""));
 
                 let _ = build_notify_command(title, body)
                     .stdin(Stdio::null())
