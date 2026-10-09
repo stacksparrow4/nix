@@ -56,7 +56,8 @@ in
               macos-option-as-alt = true
             '';
 
-            home.file.".aerospace.toml".source = ./aerospace.toml;
+            home.file.".config/aerospace/aerospace.toml".source = ./aerospace.toml;
+            home.file.".config/aerospace/ghostty.sh".source = ./aerospace-ghostty.sh;
 
             home.file.".terminfo".source =
               config.lib.file.mkOutOfStoreSymlink "/Applications/Ghostty.app/Contents/Resources/terminfo";

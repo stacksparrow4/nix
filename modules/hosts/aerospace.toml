@@ -35,7 +35,7 @@ gaps.outer.top =        0
 gaps.outer.right =      0
 
 [mode.main.binding]
-    alt-enter = 'exec-and-forget open -na Ghostty'
+    alt-enter = 'exec-and-forget ~/.config/aerospace/ghostty.sh'
 
     alt-h = 'focus left'
     alt-j = 'focus down'
