@@ -51,6 +51,8 @@ vim.lsp.config.jdtls = {}
 vim.lsp.enable("jdtls")
 vim.lsp.config.roslyn_ls = {}
 vim.lsp.enable("roslyn_ls")
+vim.lsp.config.dafny = {}
+vim.lsp.enable("dafny")
 
 -- Setup Lua LSP for neovim dev
 vim.lsp.config.lua_ls = {

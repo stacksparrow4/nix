@@ -57,6 +57,7 @@ in
                 nixfmt
                 # C
                 gcc
+                clang-tools
                 # Rust
                 cargo
                 rustc
@@ -68,6 +69,8 @@ in
                 # Typst
                 tinymist
                 typstyle
+                # Dafny
+                dafny
               ]
               ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.wl-clipboard
             )}"

@@ -18,6 +18,7 @@
       programming-typst
       programming-xml
       programming-zig
+      programming-dafny
     ];
   };
 }
