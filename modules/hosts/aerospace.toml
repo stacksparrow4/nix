@@ -38,7 +38,6 @@ gaps.outer.right =      0
     alt-enter = 'exec-and-forget ~/.config/aerospace/ghostty.sh'
 
     alt-f = 'fullscreen'
-    alt-d = 'exec-and-forget open -a Spotlight'
     alt-shift-r = 'reload-config'
 
     alt-h = 'focus left'
