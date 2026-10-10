@@ -107,6 +107,7 @@ in
               yazi-nvim
               trouble-nvim
               conform-nvim
+              vim-loves-dafny
               inputs'.nvim-http-client.packages.default
             ]
             ++ additionalPlugins
