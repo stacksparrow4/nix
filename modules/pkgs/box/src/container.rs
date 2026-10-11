@@ -1,6 +1,7 @@
 use std::{fs, path::Path};
 
 use crate::{
+    clipboard::DUMMY_DISPLAY,
     common::{Cli, cwd, find_symlinks, get_nix_argument},
     mount::{BOX_CWD, BOX_HOME, Mount, MountType},
 };
@@ -60,10 +61,14 @@ pub fn get_container_args(
         ));
     }
 
+    let mut wayland_shared = false;
+    let mut x11_shared = false;
+
     if args.wayland
         && let Ok(xdg_runtime_dir) = std::env::var("XDG_RUNTIME_DIR")
         && let Ok(wl_display) = std::env::var("WAYLAND_DISPLAY")
     {
+        wayland_shared = true;
         mounts.push(Mount::new(
             &format!("{}/{}", xdg_runtime_dir, wl_display),
             "/tmp/wayland-1",
@@ -83,6 +88,7 @@ pub fn get_container_args(
     if args.x11
         && let Ok(display) = std::env::var("DISPLAY")
     {
+        x11_shared = true;
         mounts.push(Mount::new(
             "/tmp/.X11-unix",
             "/tmp/.X11-unix",
@@ -97,6 +103,11 @@ pub fn get_container_args(
             format!(
                 "PATH={}",
                 std::iter::empty()
+                    .chain(if args.clipboard {
+                        Some(get_nix_argument("SPRRW_CLIP_SHIMS"))
+                    } else {
+                        None
+                    })
                     .chain(
                         if !args.reset_env
                             && let Ok(path) = std::env::var("PATH")
@@ -151,6 +162,18 @@ pub fn get_container_args(
             vec!["TERM=xterm-256color".to_string()]
         },
     );
+
+    if args.clipboard {
+        if !wayland_shared {
+            envvars.extend([
+                format!("WAYLAND_DISPLAY={}", DUMMY_DISPLAY),
+                "XDG_RUNTIME_DIR=/tmp".to_string(),
+            ]);
+        }
+        if !x11_shared {
+            envvars.push(format!("DISPLAY={}", DUMMY_DISPLAY));
+        }
+    }
 
     let cwd = if args.cwd || args.ro_cwd {
         BOX_CWD

@@ -6,6 +6,8 @@ use crate::common::{exit_code, get_nix_argument};
 use crate::container::get_container_args;
 use crate::mount::{BOX_HOME, Mount, MountType};
 
+const CLIPBOARD_SOCKET: &str = "/tmp/sprrw-clipboard.sock";
+
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let mut container_args = get_container_args(args, volume_mounts, vec![]);
 
@@ -36,6 +38,13 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     }
 
     container_args.envvars.push("USER=root".to_string());
+
+    let clipboard = args.clipboard.then(|| {
+        let bridge = crate::clipboard::start_unix(CLIPBOARD_SOCKET);
+        container_args.envvars.push(bridge.addr_env.clone());
+        container_args.mounts.extend(bridge.mount.clone());
+        bridge
+    });
 
     let mut subprocess_args: Vec<String> = [
         "--unshare-all",
@@ -72,6 +81,11 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         subprocess_args.extend(m.to_bwrap_args());
     }
 
+    for var in ["WAYLAND_DISPLAY", "DISPLAY", "XDG_RUNTIME_DIR"] {
+        subprocess_args.push("--unsetenv".to_string());
+        subprocess_args.push(var.to_string());
+    }
+
     subprocess_args.push("/usr/bin/env".to_string());
     subprocess_args.extend(container_args.envvars);
     subprocess_args.extend(args.exec.clone());
@@ -93,13 +107,17 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     // Ignore SIGINT (it will be handled by child)
     unsafe { libc::signal(libc::SIGINT, libc::SIG_IGN) };
 
-    match child.wait() {
-        Ok(status) => std::process::exit(exit_code(&status)),
+    let code = match child.wait() {
+        Ok(status) => exit_code(&status),
         Err(err) => {
             println!("{err}");
             let _ = child.kill();
             let _ = child.wait();
-            std::process::exit(1)
+            1
         }
-    }
+    };
+
+    // process::exit skips destructors; drop explicitly to remove the socket dir.
+    drop(clipboard);
+    std::process::exit(code)
 }

@@ -40,6 +40,10 @@ pub struct Cli {
     #[arg(short = 'x', long)]
     pub x11: bool,
 
+    /// Share only the clipboard (via a host-side bridge, not the whole display)
+    #[arg(short = 'C', long)]
+    pub clipboard: bool,
+
     /// Share volumes, form hostpath:boxpath:ro/rw:type
     #[arg(short = 'v', long = "volume")]
     pub volumes: Vec<String>,

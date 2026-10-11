@@ -21,7 +21,10 @@ in
                 src = ./wrapper;
               }).rootCrate.build;
             pi = buildPi pkgs;
-            piUpstream = inputs.pi.packages.${pkgsLinux.stdenv.hostPlatform.system}.pi;
+            piUpstream = inputs.pi.packages.${pkgsLinux.stdenv.hostPlatform.system}.pi.override {
+              wl-clipboard = pkgsLinux.emptyDirectory;
+              xclip = pkgsLinux.emptyDirectory;
+            };
             piLinux = buildPi pkgsLinux;
             piLogoPng = pkgs.runCommand "pi-logo.png" { nativeBuildInputs = [ pkgs.resvg ]; } ''
               resvg --width 128 --height 128 ${./pi.svg} $out
