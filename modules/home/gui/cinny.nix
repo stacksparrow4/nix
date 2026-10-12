@@ -12,8 +12,8 @@
       url = "http://${host}:${toString port}";
 
       cinnyConf = {
-        # defaultHomeserver = 0;
-        # homeserverList = [ "stacksparrow4.xyz" ];
+        defaultHomeserver = 0;
+        homeserverList = [ "stacksparrow4.xyz" ];
       };
 
       elementCall = pkgs.fetchzip {
@@ -32,13 +32,14 @@
         };
       };
 
-      cinny-unwrapped =
+      cinny =
         pkgs.runCommand "cinny-unwrapped-ec"
           {
             inherit (pkgs.cinny-unwrapped) version meta;
             nativeBuildInputs = [ pkgs.jq ];
             elementCallConf = builtins.toJSON elementCallConf;
-            passAsFile = [ "elementCallConf" ];
+            cinnyConf = builtins.toJSON cinnyConf;
+            passAsFile = [ "elementCallConf" "cinnyConf" ];
           }
           ''
             cp -r ${pkgs.cinny-unwrapped} $out
@@ -51,12 +52,11 @@
             jq -s '.[0] * .[1]' \
               ${elementCall}/dist/config.json "$elementCallConfPath" \
               > $out/public/element-call/config.json
-          '';
 
-      cinny = pkgs.cinny.override {
-        inherit cinny-unwrapped;
-        conf = cinnyConf;
-      };
+            jq -s '.[0] * .[1]' \
+              ${pkgs.cinny-unwrapped}/config.json "$cinnyConfPath" \
+              > $out/config.json
+          '';
 
       launcher = pkgs.writeShellScriptBin "cinny" ''
         exec ${lib.getExe pkgs.chromium} \
