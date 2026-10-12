@@ -71,6 +71,8 @@ in
                 ai-llama
                 ai-pi
                 ai-llama-qwen
+
+                sops
               ];
 
               home = {
@@ -96,6 +98,8 @@ in
                 file.".config/noctalia/nest01.toml".source =
                   config.lib.file.mkOutOfStoreSymlink "${repo}/noctalia.toml";
               };
+
+              sprrw.sops.opRef = "op://Private/nbui3ljmiwkx4aw2tvym6kkg4y";
             };
 
           services.flatpak = {
@@ -167,7 +171,7 @@ in
 
           boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
-          boot.loader.timeout = lib.mkForce 9999;
+          boot.loader.timeout = lib.mkForce 1;
 
           boot.loader.efi.efiSysMountPoint = "/efi";
           boot.loader.systemd-boot.xbootldrMountPoint = "/boot";
