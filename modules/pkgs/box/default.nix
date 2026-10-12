@@ -128,6 +128,7 @@
                   gawk
                   ripgrep
                   brave-search-cli
+                  uv
                 ]
                 ++ (with self.packages.${pkgsLinux.stdenv.hostPlatform.system}; [ python ]);
             };

@@ -203,7 +203,10 @@ fn prepare_settings_overlay() -> (TempDir, String) {
     );
     obj.insert("cacheWarming".to_string(), serde_json::json!("idle"));
     obj.insert("showCacheMissNotices".to_string(), serde_json::json!(true));
-    obj.insert("enableInstallTelemetry".to_string(), serde_json::json!(false));
+    obj.insert(
+        "enableInstallTelemetry".to_string(),
+        serde_json::json!(false),
+    );
     obj.insert("theme".to_string(), serde_json::json!("moonfly"));
     obj.insert("tuiMode".to_string(), serde_json::json!("regular"));
 
@@ -433,7 +436,10 @@ fn main() {
 
         let mut guidelines = vec![];
 
-        if all_tools.contains(&"bash".to_string()) && args.local.is_none() {
+        if all_tools.contains(&"bash".to_string())
+            && let Target::Sandbox = target
+            && args.local.is_none()
+        {
             guidelines.push(
                 "Avoid recalling information about source available software and \
                 instead answer definitively by cloning the source to /tmp and referring to it",
