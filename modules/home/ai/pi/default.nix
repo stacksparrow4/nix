@@ -14,16 +14,14 @@
     in
     {
       options.sprrw.ai.pi = {
-        extraModels = lib.mkOption {
+        models = lib.mkOption {
           type = lib.types.attrsOf lib.types.anything;
           default = { };
         };
       };
 
       config = {
-        home.file.".pi/agent/models.json".text = builtins.toJSON {
-          providers = cfg.extraModels;
-        };
+        home.file.".pi/agent/models.json".text = builtins.toJSON cfg.models;
 
         systemd.user = lib.mkIf pkgs.stdenv.isLinux {
           services.pi-clean-sessions = {

@@ -3,7 +3,7 @@
     { pkgs, ... }:
     {
       sprrw.ai = {
-        pi.extraModels."llama.cpp".modelOverrides = {
+        pi.models.providers."llama.cpp".modelOverrides = {
           "qwen3.5" = {
             reasoning = true;
             compat.thinkingFormat = "qwen-chat-template";

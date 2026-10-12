@@ -11,7 +11,10 @@
       port = 8787;
       url = "http://${host}:${toString port}";
 
-      cinnyConf = { };
+      cinnyConf = {
+        # defaultHomeserver = 0;
+        # homeserverList = [ "stacksparrow4.xyz" ];
+      };
 
       elementCall = pkgs.fetchzip {
         url = "https://registry.npmjs.org/@element-hq/element-call-embedded/-/element-call-embedded-0.26.1.tgz";
