@@ -153,6 +153,9 @@ in
                   "!~/.steam"
                 ];
               };
+              "in.cinny.Cinny".Environment = {
+                WEBKIT_DISABLE_DMABUF_RENDERER = "1";
+              };
             };
           };
 
