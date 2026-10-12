@@ -34,6 +34,10 @@
           appId = "io.github.seadve.Kooha";
           origin = "flathub";
         }
+        {
+          appId = "in.cinny.Cinny";
+          origin = "flathub";
+        }
       ];
 
       overrides = {
@@ -44,18 +48,41 @@
         };
         "org.libreoffice.LibreOffice".Context = {
           shared = [ "!ipc" ];
-          sockets = [ "!fallback-x11" "!cups" ];
+          sockets = [
+            "!fallback-x11"
+            "!cups"
+          ];
         };
         "com.valvesoftware.Steam".Context = {
-          filesystems = [ "!xdg-config/MangoHud" "!xdg-music" "!xdg-pictures" "!xdg-run/app/com.discordapp.Discord" "!/run/media" "!/mnt" "!/media" ];
+          filesystems = [
+            "!xdg-config/MangoHud"
+            "!xdg-music"
+            "!xdg-pictures"
+            "!xdg-run/app/com.discordapp.Discord"
+            "!/run/media"
+            "!/mnt"
+            "!/media"
+          ];
         };
         "com.spotify.Client".Context = {
           shared = [ "!ipc" ];
-          filesystems = [ "!xdg-pictures" "!xdg-music"];
+          filesystems = [
+            "!xdg-pictures"
+            "!xdg-music"
+          ];
         };
         "io.github.seadve.Kooha".Context = {
           shared = [ "!ipc" ];
-          sockets = [ "!x11" "!fallback-x11" ];
+          sockets = [
+            "!x11"
+            "!fallback-x11"
+          ];
+        };
+        "in.cinny.Cinny".Context = {
+          shared = [ "!ipc" ];
+          sockets = [
+            "!fallback-x11"
+          ];
         };
       };
     };
