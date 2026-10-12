@@ -104,8 +104,8 @@ in
                 sops.opRef = "op://Private/nbui3ljmiwkx4aw2tvym6kkg4y";
                 ai.pi.models.providers.openrouter.modelOverrides."deepseek/deepseek-v4.1-flash".compat.openRouterRouting =
                   {
-                    only = [ "coreweave" ];
-                    quantizations = "fp8";
+                    only = [ "inference-net" ];
+                    quantizations = ["fp8"];
                     allow_fallbacks = false;
                   };
               };
