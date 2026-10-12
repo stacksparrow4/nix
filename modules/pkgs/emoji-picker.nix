@@ -38,7 +38,7 @@
             selected=$(echo "$emojis" | ${pkgs.rofi}/bin/rofi -dmenu -i -p "Emoji")
         
             if [ -n "$selected" ]; then
-              echo "$selected" | cut -d' ' -f1 | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy
+              echo "$selected" | cut -d' ' -f1 | tr -d '\n' | ${pkgs.wl-clipboard}/bin/wl-copy --type text/plain
             fi
           '';
         };
