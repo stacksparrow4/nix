@@ -78,12 +78,6 @@
             "!fallback-x11"
           ];
         };
-        "in.cinny.Cinny".Context = {
-          shared = [ "!ipc" ];
-          sockets = [
-            "!fallback-x11"
-          ];
-        };
       };
     };
   };

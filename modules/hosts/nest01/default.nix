@@ -112,6 +112,10 @@ in
                 appId = "org.prismlauncher.PrismLauncher";
                 origin = "flathub";
               }
+              {
+                appId = "com.heroicgameslauncher.hgl";
+                origin = "flathub";
+              }
             ];
 
             overrides = {
@@ -127,6 +131,26 @@ in
                   "!xdg-run/app/com.discordapp.Discord"
                   "!xdg-download"
                   "!~/.ftba"
+                ];
+              };
+              "com.heroicgameslauncher.hgl".Context = {
+                features = [ "!bluetooth" ];
+                filesystems = [
+                  "!/run/media"
+                  "!~/.local/share/applications"
+                  "!xdg-run/gamescope-0"
+                  "!~/.local/share/lutris"
+                  "!~/.steam/steam"
+                  "!/mnt"
+                  "!~/Games/Heroic"
+                  "!xdg-documents"
+                  "!/media"
+                  "!~/.var/app/com.valvesoftware.Steam"
+                  "!xdg-desktop"
+                  "!xdg-config/MangoHud"
+                  "!xdg-run/app/com.discordapp.Discord"
+                  "!xdg-data/umu"
+                  "!~/.steam"
                 ];
               };
             };
