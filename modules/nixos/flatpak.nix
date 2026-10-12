@@ -34,10 +34,6 @@
           appId = "io.github.seadve.Kooha";
           origin = "flathub";
         }
-        {
-          appId = "in.cinny.Cinny";
-          origin = "flathub";
-        }
       ];
 
       overrides = {
