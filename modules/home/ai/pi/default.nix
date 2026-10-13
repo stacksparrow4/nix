@@ -16,7 +16,7 @@
       options.sprrw.ai.pi = {
         models = lib.mkOption {
           type = lib.types.attrsOf lib.types.anything;
-          default = { };
+          default = { providers = {}; };
         };
       };
 
