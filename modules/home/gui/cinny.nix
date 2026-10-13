@@ -14,44 +14,23 @@
       cinnyConf = {
         defaultHomeserver = 0;
         homeserverList = [ "stacksparrow4.xyz" ];
-      };
-
-      elementCall = pkgs.fetchzip {
-        url = "https://registry.npmjs.org/@element-hq/element-call-embedded/-/element-call-embedded-0.26.1.tgz";
-        hash = "sha256-AMGSDVR/+hAG2QDODRrRwoDOu2QuxYtGZe1c0zkC5V0=";
-      };
-
-      elementCallConf = {
-        media_quality = {
-          # video_codec = "vp9"; # LiveKit server must allow it
-          screen_share = {
-            max_resolution = 1440; # height in px (EC default 1080)
-            max_framerate = 60; # EC default 30
-            max_bitrate = 8000000; # bps (EC default 5 Mbps)
-          };
+        hashRouter = {
+          enabled = true;
+          basename = "/";
         };
       };
 
       cinny =
-        pkgs.runCommand "cinny-unwrapped-ec"
+        pkgs.runCommand "cinny"
           {
             inherit (pkgs.cinny-unwrapped) version meta;
             nativeBuildInputs = [ pkgs.jq ];
-            elementCallConf = builtins.toJSON elementCallConf;
             cinnyConf = builtins.toJSON cinnyConf;
-            passAsFile = [ "elementCallConf" "cinnyConf" ];
+            passAsFile = [ "cinnyConf" ];
           }
           ''
             cp -r ${pkgs.cinny-unwrapped} $out
             chmod -R u+w $out
-
-            rm -rf $out/public/element-call
-            cp -r ${elementCall}/dist $out/public/element-call
-            chmod -R u+w $out/public/element-call
-
-            jq -s '.[0] * .[1]' \
-              ${elementCall}/dist/config.json "$elementCallConfPath" \
-              > $out/public/element-call/config.json
 
             jq -s '.[0] * .[1]' \
               ${pkgs.cinny-unwrapped}/config.json "$cinnyConfPath" \
@@ -80,8 +59,6 @@
             (toString port)
             "--root"
             "${cinny}"
-            "--page-fallback"
-            "${cinny}/index.html"
             "--log-level"
             "error"
           ];
