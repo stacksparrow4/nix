@@ -1,4 +1,6 @@
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { getAgentDir, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 // Ports the algorithm from openrouter_clean_providers.py: scrape a model's
 // OpenRouter page for its per-endpoint data policies and pricing, drop every
@@ -45,6 +47,49 @@ type Endpoint = Record<string, any>;
 // model id -> in-flight/complete routing (undefined when no clean endpoint).
 const cache = new Map<string, Promise<Routing | undefined>>();
 const warned = new Set<string>();
+
+// --- On-disk routing cache ------------------------------------------------
+// The scrape is best-effort, so when it fails we fall back to the last routing
+// that scraped cleanly for this model rather than OpenRouter's default
+// (unfiltered) provider set. One JSON file per model, mirroring the footer's
+// per-source usage snapshots; discrete files mean a concurrent writer can only
+// ever clobber an equally-good entry for the same model.
+interface RoutingCacheEntry {
+  routing: Routing;
+  fetchedAt: number;
+}
+
+function routingCachePath(model: string): string {
+  return join(getAgentDir(), "sessions", `openrouter-routing-${encodeURIComponent(model)}.json`);
+}
+
+function loadRoutingCache(model: string): Routing | undefined {
+  try {
+    const parsed = JSON.parse(readFileSync(routingCachePath(model), "utf8"));
+    if (parsed && parsed.routing && Array.isArray(parsed.routing.only)) {
+      return parsed.routing as Routing;
+    }
+  } catch {
+    // No cache yet, or unreadable.
+  }
+  return undefined;
+}
+
+function writeRoutingCache(model: string, routing: Routing | undefined): void {
+  const path = routingCachePath(model);
+  try {
+    if (routing) {
+      const entry: RoutingCacheEntry = { routing, fetchedAt: Date.now() };
+      writeFileSync(path, JSON.stringify(entry));
+    } else {
+      // A clean scrape that found no qualifying endpoint must not leave a stale
+      // entry behind for the next failure to resurrect.
+      rmSync(path, { force: true });
+    }
+  } catch {
+    // Best-effort; a write failure only costs a future cold start its fallback.
+  }
+}
 
 function quantBits(quant: unknown): number | null {
   if (typeof quant !== "string" || quant.length === 0) return null;
@@ -187,7 +232,11 @@ async function computeRouting(model: string): Promise<Routing | undefined> {
   const response = await fetch(`${MODEL_PAGE}${model}`, { headers: { "user-agent": USER_AGENT } });
   if (!response.ok) throw new Error(`OpenRouter model page returned ${response.status}`);
   const endpoints = extractEndpoints(await response.text(), model);
-  return buildRouting(endpoints);
+  const routing = buildRouting(endpoints);
+  // Only reached on a fully successful scrape (parsing included); a failure
+  // leaves the previous entry intact for the fallback path below.
+  writeRoutingCache(model, routing);
+  return routing;
 }
 
 /** Compute once per model per process; a failure is not cached so it can retry. */
@@ -196,6 +245,11 @@ function routingFor(model: string): Promise<Routing | undefined> {
   if (cached) return cached;
   const promise = computeRouting(model).catch((error) => {
     cache.delete(model);
+    // Network/scrape failure: prefer the last routing that scraped cleanly over
+    // OpenRouter's default provider set. Left uncached so the next request
+    // still retries the scrape and can pick up fresh pricing/providers.
+    const fallback = loadRoutingCache(model);
+    if (fallback) return fallback;
     throw error;
   });
   cache.set(model, promise);

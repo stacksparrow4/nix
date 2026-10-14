@@ -450,7 +450,7 @@ export default function (pi: ExtensionAPI) {
     if (footerInstalled || useStatusFallback) return;
     footerInstalled = true;
     try {
-      ctx.ui.setFooter((tui: any, theme: any, footerData: any) => {
+      ctx.ui.setFooter((tui: any, theme: any, _footerData: any) => {
         capturedTui = tui;
         return {
           render(width: number): string[] {
@@ -494,16 +494,10 @@ export default function (pi: ExtensionAPI) {
               const level = c.thinkingLevel || "off";
               right = level === "off" ? `${modelName} • thinking off` : `${modelName} • ${level}`;
             }
-            // Prefix the provider when several are configured, or whenever an
-            // OpenRouter upstream was resolved, and it fits.
-            const providerCount = footerData?.getAvailableProviderCount?.() ?? 1;
-            const showProvider = providerCount > 1 || (model?.provider === "openrouter" && routedProvider);
-            if (showProvider && model?.provider) {
-              const label =
-                model.provider === "openrouter" && routedProvider
-                  ? `openrouter→${routedProvider}`
-                  : model.provider;
-              const withProvider = `(${label}) ${right}`;
+            // Prefix the resolved OpenRouter upstream provider, when one was
+            // resolved and it fits.
+            if (model?.provider === "openrouter" && routedProvider) {
+              const withProvider = `(${routedProvider}) ${right}`;
               if (visibleWidth(left) + 2 + visibleWidth(withProvider) <= width) {
                 right = withProvider;
               }
