@@ -12,6 +12,8 @@ import { join } from "node:path";
 const ANTHROPIC_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const OPENAI_JWT_CLAIM = "https://api.openai.com/auth";
+// OpenRouter is pay-as-you-go: this returns purchased credits and all-time usage.
+const OPENROUTER_CREDITS_URL = "https://openrouter.ai/api/v1/credits";
 const AUTH_PATH = join(getAgentDir(), "auth.json");
 const USAGE_POLL_MS = 120_000;
 const USAGE_MIN_REFRESH_MS = 20_000;
@@ -23,8 +25,8 @@ const USAGE_CACHE_FRESH_MS = 90_000;
 const USAGE_BACKOFF_BASE_MS = 60_000;
 const USAGE_BACKOFF_MAX_MS = 15 * 60_000;
 
-type UsageSource = "anthropic" | "openai";
-const USAGE_SOURCES: UsageSource[] = ["anthropic", "openai"];
+type UsageSource = "anthropic" | "openai" | "openrouter";
+const USAGE_SOURCES: UsageSource[] = ["anthropic", "openai", "openrouter"];
 
 // Provider-neutral view of one limit window.
 interface UsageWindow {
@@ -36,6 +38,8 @@ interface UsageWindow {
 interface UsageSnapshot {
   primary?: UsageWindow;
   secondary?: UsageWindow;
+  // OpenRouter has no rate-limit window; it exposes an account credit balance.
+  credits?: { totalCredits: number; totalUsage: number };
 }
 
 interface UsageCache {
@@ -91,6 +95,21 @@ function readOAuth(providerId: string): OAuthCred | undefined {
   } catch {
     return undefined;
   }
+}
+
+// Stored API-key credential (optionally sourced from the provider's env var).
+function readApiKey(providerId: string, envVar: string): string | undefined {
+  try {
+    const auth = JSON.parse(readFileSync(AUTH_PATH, "utf8"));
+    const creds = auth?.[providerId];
+    if (creds?.type === "api_key" && typeof creds.key === "string" && creds.key.length > 0) {
+      return creds.key;
+    }
+  } catch {
+    // Fall through to the environment.
+  }
+  const fromEnv = process.env[envVar];
+  return fromEnv && fromEnv.length > 0 ? fromEnv : undefined;
 }
 
 function jwtAccountId(token: string): string | undefined {
@@ -166,9 +185,24 @@ async function fetchOpenAIUsage(): Promise<UsageFetch> {
   return { kind: "skip" };
 }
 
+async function fetchOpenRouterCredits(): Promise<UsageFetch> {
+  const key = readApiKey("openrouter", "OPENROUTER_API_KEY");
+  if (!key) return { kind: "skip" };
+  const res = await getJson(OPENROUTER_CREDITS_URL, {
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+  });
+  if (res.kind !== "ok") return res;
+  const totalCredits = res.body?.data?.total_credits;
+  const totalUsage = res.body?.data?.total_usage;
+  if (typeof totalCredits !== "number" || typeof totalUsage !== "number") return { kind: "skip" };
+  return { kind: "ok", data: { credits: { totalCredits, totalUsage } } };
+}
+
 const USAGE_FETCHERS: Record<UsageSource, () => Promise<UsageFetch>> = {
   anthropic: fetchAnthropicUsage,
   openai: fetchOpenAIUsage,
+  openrouter: fetchOpenRouterCredits,
 };
 
 /** "2h13m", "18m", "3d4h" — compact time until the reset timestamp. */
@@ -191,8 +225,12 @@ function usageSourceFor(model: any): UsageSource | undefined {
   if (!model) return undefined;
   const id = String(model.id ?? "").toLowerCase();
   const provider = String(model.provider ?? "").toLowerCase();
-  if (provider === "anthropic" || id.includes("claude")) return "anthropic";
+  // Explicit providers win over the id heuristic so OpenRouter-routed Claude
+  // models (provider "openrouter", id "anthropic/claude-...") aren't misread.
+  if (provider === "anthropic") return "anthropic";
   if (provider === "openai-codex" || provider === "openai") return "openai";
+  if (provider === "openrouter") return "openrouter";
+  if (id.includes("claude")) return "anthropic";
   return undefined;
 }
 
@@ -202,6 +240,14 @@ function formatUsage(data: UsageSnapshot): string | undefined {
   if (!w) return undefined;
   const reset = formatUsageDelta(w.resetsAt);
   return `Usage ${Math.round(w.percent)}%${reset ? ` (reset ${reset})` : ""}`;
+}
+
+// "$0.042 used ($12.34 left)" — this session's spend and the account balance
+// remaining (purchased credits minus all-time usage).
+function formatOpenRouterCredit(credits: UsageSnapshot["credits"], sessionCost: number): string | undefined {
+  if (!credits) return undefined;
+  const remaining = credits.totalCredits - credits.totalUsage;
+  return `$${sessionCost.toFixed(3)} used ($${remaining.toFixed(2)} left)`;
 }
 
 // Mirrors the built-in footer's compact token formatting.
@@ -404,7 +450,10 @@ export default function (pi: ExtensionAPI) {
             const source = usageSourceFor(model);
             const usageData = source && usageState[source].data;
             if (usageData) {
-              const usageStr = formatUsage(usageData);
+              const usageStr =
+                source === "openrouter"
+                  ? formatOpenRouterCredit(usageData.credits, totalCost(c))
+                  : formatUsage(usageData);
               if (usageStr) parts.push(theme.fg("dim", usageStr));
             }
 
