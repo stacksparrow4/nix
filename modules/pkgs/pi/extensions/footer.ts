@@ -14,6 +14,10 @@ const OPENAI_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const OPENAI_JWT_CLAIM = "https://api.openai.com/auth";
 // OpenRouter is pay-as-you-go: this returns purchased credits and all-time usage.
 const OPENROUTER_CREDITS_URL = "https://openrouter.ai/api/v1/credits";
+// OpenRouter prices and balances are USD; the footer shows them in AUD.
+// Static approximation (1 USD ≈ 1.44 AUD, mid-Oct 2026) — it will drift, so
+// treat the converted figures as a rough guide, not a live quote.
+const USD_TO_AUD = 1.44;
 const AUTH_PATH = join(getAgentDir(), "auth.json");
 const USAGE_POLL_MS = 120_000;
 const USAGE_MIN_REFRESH_MS = 20_000;
@@ -242,12 +246,12 @@ function formatUsage(data: UsageSnapshot): string | undefined {
   return `Usage ${Math.round(w.percent)}%${reset ? ` (reset ${reset})` : ""}`;
 }
 
-// "$0.042 used ($12.34 left)" — this session's spend and the account balance
-// remaining (purchased credits minus all-time usage).
+// "A$0.060 used (A$17.77 left)" — this session's spend and the account balance
+// remaining (purchased credits minus all-time usage), converted to AUD.
 function formatOpenRouterCredit(credits: UsageSnapshot["credits"], sessionCost: number): string | undefined {
   if (!credits) return undefined;
   const remaining = credits.totalCredits - credits.totalUsage;
-  return `$${sessionCost.toFixed(3)} used ($${remaining.toFixed(2)} left)`;
+  return `A$${(sessionCost * USD_TO_AUD).toFixed(3)} used (A$${(remaining * USD_TO_AUD).toFixed(2)} left)`;
 }
 
 // Mirrors the built-in footer's compact token formatting.
