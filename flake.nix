@@ -17,7 +17,7 @@
     };
     nix-flatpak.url = "github:gmodena/nix-flatpak?ref=latest";
     pi = {
-      url = "github:earendil-works/pi/stable";
+      url = "github:earendil-works/pi";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     noctalia.url = "github:noctalia-dev/noctalia/cachix";

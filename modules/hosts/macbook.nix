@@ -26,7 +26,6 @@ in
               sandbox
 
               ai-pi
-              openrouter
 
               term-aliases
               term-bash

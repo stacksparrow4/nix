@@ -72,7 +72,6 @@ in
                 ai-llama
                 ai-pi
                 ai-llama-qwen
-                openrouter
 
                 sops
               ];

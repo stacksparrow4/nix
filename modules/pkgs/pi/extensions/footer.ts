@@ -293,11 +293,36 @@ function latestCacheHitRate(ctx: any): number | undefined {
   return undefined;
 }
 
+// OpenRouter reports the endpoint that served a request in `openrouter_metadata`
+// on the final stream chunk (opted into by the openrouter extension). Fall back
+// to the top-level `provider` field that some responses carry.
+function routedProviderFromMetadata(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") return undefined;
+  const chunk = data as {
+    provider?: unknown;
+    openrouter_metadata?: {
+      endpoints?: { available?: Array<{ provider?: unknown; selected?: unknown }> };
+      attempts?: Array<{ provider?: unknown }>;
+    };
+  };
+  const metadata = chunk.openrouter_metadata;
+  if (metadata) {
+    const selected = metadata.endpoints?.available?.find((endpoint) => endpoint?.selected)?.provider;
+    if (typeof selected === "string") return selected;
+    const attempts = metadata.attempts ?? [];
+    const last = attempts[attempts.length - 1]?.provider;
+    if (typeof last === "string") return last;
+  }
+  return typeof chunk.provider === "string" ? chunk.provider : undefined;
+}
+
 export default function (pi: ExtensionAPI) {
   // Timing for the in-flight assistant response; firstToken excludes TTFT.
   let firstToken: number | undefined;
   let tracking = false;
   let tpsText: string | undefined;
+  // Upstream OpenRouter provider that served the current response, if resolved.
+  let routedProvider: string | undefined;
 
   // Running totals for the average tok/s, reset when a new agent run starts.
   let totalOutput = 0;
@@ -469,10 +494,16 @@ export default function (pi: ExtensionAPI) {
               const level = c.thinkingLevel || "off";
               right = level === "off" ? `${modelName} • thinking off` : `${modelName} • ${level}`;
             }
-            // Prefix the provider only when several are configured and it fits.
+            // Prefix the provider when several are configured, or whenever an
+            // OpenRouter upstream was resolved, and it fits.
             const providerCount = footerData?.getAvailableProviderCount?.() ?? 1;
-            if (providerCount > 1 && model?.provider) {
-              const withProvider = `(${model.provider}) ${right}`;
+            const showProvider = providerCount > 1 || (model?.provider === "openrouter" && routedProvider);
+            if (showProvider && model?.provider) {
+              const label =
+                model.provider === "openrouter" && routedProvider
+                  ? `openrouter→${routedProvider}`
+                  : model.provider;
+              const withProvider = `(${label}) ${right}`;
               if (visibleWidth(left) + 2 + visibleWidth(withProvider) <= width) {
                 right = withProvider;
               }
@@ -522,6 +553,7 @@ export default function (pi: ExtensionAPI) {
   // Switching provider should show that provider's usage straight away.
   pi.on("model_select", (event, ctx) => {
     lastCtx = ctx;
+    routedProvider = undefined;
     const source = usageSourceFor(event.model);
     if (source) adoptDiskCache(source);
     void refreshUsage(source);
@@ -553,8 +585,19 @@ export default function (pi: ExtensionAPI) {
 
     firstToken = undefined;
     tracking = true;
+    routedProvider = undefined;
     // Keep the previous tok/s visible until this turn computes a fresh rate.
     refresh();
+  });
+
+  // OpenRouter's final stream chunk names the endpoint that served the request.
+  pi.on("provider_stream_event", (event) => {
+    if (event.provider !== "openrouter") return;
+    const provider = routedProviderFromMetadata(event.data);
+    if (provider && provider !== routedProvider) {
+      routedProvider = provider;
+      refresh();
+    }
   });
 
   // Anchor tok/s to the first streamed chunk so the rate excludes TTFT.
