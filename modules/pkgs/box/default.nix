@@ -127,6 +127,9 @@
                   gnused
                   gawk
                   ripgrep
+                  jq
+                  file
+                  diffutils
                   brave-search-cli
                   uv
                 ]
