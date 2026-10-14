@@ -2,11 +2,21 @@ import { connect } from "node:net";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const SOCKET_PATH = process.env.PI_NOTIFY_SOCKET;
+const TCP_ADDR = process.env.PI_NOTIFY_ADDR;
 
 function notify(title: string, body: string): void {
-  if (!SOCKET_PATH) return;
+  let sock;
+  if (TCP_ADDR) {
+    const [host, port] = TCP_ADDR.split(":");
+    const portNumber = Number(port);
+    if (!host || !Number.isInteger(portNumber)) return;
+    sock = connect(portNumber, host);
+  } else if (SOCKET_PATH) {
+    sock = connect(SOCKET_PATH);
+  } else {
+    return;
+  }
   try {
-    const sock = connect(SOCKET_PATH);
     sock.on("error", () => {});
     sock.on("connect", () => {
       sock.end(`${title}\t${body}\n`);

@@ -621,23 +621,8 @@ fn main() {
         format!("{}:{}:ro:dir", bridge_dir.path().display(), BRIDGE_DIR),
     ];
 
-    let notify_dir = start_notify_server();
-    let notify_args: Vec<String> = match &notify_dir {
-        Some(dir) => {
-            let socket_mount_dir = std::path::Path::new(notify::SOCKET_PATH_IN_SANDBOX)
-                .parent()
-                .unwrap()
-                .to_string_lossy()
-                .to_string();
-            vec![
-                "-v".to_string(),
-                format!("{}:{}:ro:dir", dir.path().display(), socket_mount_dir),
-                "--env".to_string(),
-                format!("PI_NOTIFY_SOCKET={}", notify::SOCKET_PATH_IN_SANDBOX),
-            ]
-        }
-        None => vec![],
-    };
+    let _notify_server = start_notify_server();
+    let notify_args: Vec<String> = _notify_server.as_ref().map_or_else(Vec::new, |s| s.box_args());
 
     let subagent_args: Vec<String> = match &subagent_pipe_dir {
         Some(dir) => {
