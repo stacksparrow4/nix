@@ -94,8 +94,11 @@ fn notify_rebuild_complete() {
 
 #[cfg(target_os = "macos")]
 fn notify_rebuild_complete() {
-    let _ = Command::new("terminal-notifier")
-        .args(["-title", "NixOS", "-message", "Nixos rebuild complete"])
+    let _ = Command::new("osascript")
+        .args([
+            "-e",
+            "display notification \"Nix build complete\" with title \"Nix\"",
+        ])
         .status();
 }
 
@@ -217,9 +220,9 @@ fn build(config: &Config) {
 
         diff_last_system_closures();
         trim_profiles();
-
-        notify_rebuild_complete();
     }
+
+    notify_rebuild_complete();
 }
 
 fn deploy() {

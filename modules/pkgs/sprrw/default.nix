@@ -10,8 +10,7 @@
           src = ./.;
         }).rootCrate.build;
 
-      notifier =
-        if pkgs.stdenv.isDarwin then pkgs.terminal-notifier else pkgs.libnotify;
+      notifier = pkgs.lib.optional (!pkgs.stdenv.isDarwin) pkgs.libnotify;
     in
     {
       packages.sprrw = pkgs.stdenv.mkDerivation {
@@ -32,7 +31,7 @@
           cp ${sprrw-unwrapped}/bin/sprrw $out/bin/sprrw
 
           wrapProgram $out/bin/sprrw \
-            --prefix PATH : ${pkgs.lib.makeBinPath [ notifier ]}
+            --prefix PATH : ${pkgs.lib.makeBinPath notifier}
 
           installShellCompletion --cmd sprrw \
             --bash <($out/bin/sprrw completions bash) \

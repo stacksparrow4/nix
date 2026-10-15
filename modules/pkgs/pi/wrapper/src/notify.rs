@@ -25,6 +25,7 @@ fn handle_connection<S: std::io::Read>(stream: S) {
         .status();
 }
 
+#[cfg(target_os = "linux")]
 fn notify_icon(title: &str) -> String {
     if title == "Warming pi cache" {
         if let Ok(icon) = std::env::var("SPRRW_PI_NOTIFY_ICON_CACHE_WARM") {
@@ -44,9 +45,14 @@ fn build_notify_command(title: &str, body: &str) -> Command {
 
 #[cfg(target_os = "macos")]
 fn build_notify_command(title: &str, body: &str) -> Command {
-    let mut cmd = Command::new("terminal-notifier");
-    cmd.args(["-title", title, "-message", body]);
-    cmd.args(["-appIcon", &notify_icon(title)]);
+    let escape = |s: &str| s.replace('\\', "\\\\").replace('"', "\\\"");
+    let script = format!(
+        "display notification \"{}\" with title \"{}\"",
+        escape(body),
+        escape(title)
+    );
+    let mut cmd = Command::new("osascript");
+    cmd.arg("-e").arg(script);
     cmd
 }
 

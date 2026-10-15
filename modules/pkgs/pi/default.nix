@@ -50,7 +50,6 @@ in
                 export PATH="${pkgs.lib.makeBinPath (
                   [ config.packages.box ]
                   ++ pkgs.lib.optional pkgs.stdenv.isLinux pkgs.libnotify
-                  ++ pkgs.lib.optional pkgs.stdenv.isDarwin pkgs.terminal-notifier
                 )}:$PATH"
 
                 ${pi}/bin/pi "$@"
