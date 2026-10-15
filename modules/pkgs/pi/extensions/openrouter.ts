@@ -53,7 +53,6 @@ interface Row {
   quant: string;
   bits: number | null;
   context: number | null;
-  tps: number | null;
   cost: number;
 }
 
@@ -163,7 +162,6 @@ function buildRows(model: string, endpoints: Endpoint[]): Row[] {
       quant: quant.toLowerCase(),
       bits: quantBits(quant),
       context: typeof endpoint.context_length === "number" ? endpoint.context_length : null,
-      tps: typeof endpoint.throughput_last_30m === "number" ? endpoint.throughput_last_30m : null,
       cost: estimatedCost(input, output, cacheRead),
     });
   }
@@ -178,10 +176,6 @@ function formatTokens(tokens: number | null): string {
   if (tokens >= 1_000_000) return `${Number((tokens / 1_000_000).toFixed(1))}M`;
   if (tokens >= 1_000) return `${Math.round(tokens / 1_000)}K`;
   return String(tokens);
-}
-
-function formatTps(tps: number | null): string {
-  return tps === null ? "-" : `${Math.round(tps)}/s`;
 }
 
 function formatCost(cost: number): string {
@@ -261,7 +255,7 @@ class ProviderPicker implements Component, Focusable {
 
   render(width: number): string[] {
     const theme = this.theme;
-    const header = ["provider", "quant", "context", "tokens/s", "est. cost"];
+    const header = ["provider", "quant", "context", "est. cost"];
     const lines = [...this.border.render(width)];
     lines.push(theme.fg("accent", theme.bold(`OpenRouter endpoints — ${this.model}`)));
     lines.push(
@@ -292,7 +286,6 @@ class ProviderPicker implements Component, Focusable {
         row.provider,
         row.quant,
         formatTokens(row.context),
-        formatTps(row.tps),
         formatCost(row.cost),
       ]);
       const widths = header.map((title, index) =>
