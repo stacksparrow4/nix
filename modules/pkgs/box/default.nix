@@ -132,6 +132,7 @@
                   diffutils
                   brave-search-cli
                   uv
+                  nodejs
                 ]
                 ++ (with self.packages.${pkgsLinux.stdenv.hostPlatform.system}; [ python ]);
             };
