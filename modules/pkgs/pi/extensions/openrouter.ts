@@ -1,11 +1,40 @@
-import { getAgentDir, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  BorderedLoader,
+  DynamicBorder,
+  getAgentDir,
+  type ExtensionAPI,
+  type ExtensionContext,
+  type Theme,
+} from "@earendil-works/pi-coding-agent";
+import {
+  type Component,
+  type Focusable,
+  Input,
+  type TUI,
+  fuzzyFilter,
+  getKeybindings,
+  truncateToWidth,
+  visibleWidth,
+} from "@earendil-works/pi-tui";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+
+// OpenRouter requests are pinned to a single ZDR endpoint. There is no
+// automatic routing: a model with no pin raises an error telling the user to
+// run /or-model, and the picked endpoint is written to a shared save file so
+// pins survive restarts. Only the openai-completions transport honours the
+// `provider` routing field, so only those models are pinned/blocked.
+
+const PROVIDER = "openrouter";
+const ROUTING_API = "openai-completions";
 
 // The ZDR list is exactly the model pages' `!(training || retainsPrompts)` set;
 // `zdr`/`data_collection` also make OpenRouter enforce it server-side.
-
 const ZDR_ENDPOINTS = "https://openrouter.ai/api/v1/endpoints/zdr";
+
+const PINS_FILE = "openrouter-pins.json";
+const MIN_QUANT_BITS = 8;
+const MAX_VISIBLE_ROWS = 14;
 
 // Derived from a 31-call agentic session: 32,350 fresh input and 25,030 output
 // tokens, scaled to a 100k-token final context with perfect prompt caching.
@@ -16,111 +45,58 @@ const EMPIRICAL_CALLS = 31;
 const GROWTH_PER_CALL = (EMPIRICAL_INPUT_TOKENS + EMPIRICAL_OUTPUT_TOKENS) / EMPIRICAL_CALLS;
 const INPUT_SHARE = EMPIRICAL_INPUT_TOKENS / (EMPIRICAL_INPUT_TOKENS + EMPIRICAL_OUTPUT_TOKENS);
 
-const MIN_QUANT_BITS = 8;
-
-interface Routing {
-  only: string[];
-  order: string[];
-  quantizations: string[];
-  allow_fallbacks: boolean;
-  zdr: true;
-  data_collection: "deny";
-}
-
 type Endpoint = Record<string, any>;
 
-const cache = new Map<string, Promise<Routing | undefined>>();
-const warned = new Set<string>();
-
-interface RoutingCacheEntry {
-  routing: Routing;
-  fetchedAt: number;
+interface Row {
+  tag: string;
+  provider: string;
+  quant: string;
+  bits: number | null;
+  context: number | null;
+  tps: number | null;
+  cost: number;
 }
 
-function routingCachePath(model: string): string {
-  return join(getAgentDir(), "sessions", `openrouter-routing-${encodeURIComponent(model)}.json`);
+interface Pin {
+  tag: string;
+  provider: string;
+  quant: string;
+  pinnedAt: number;
 }
 
-function loadRoutingCache(model: string): Routing | undefined {
+type PinStore = Record<string, Pin>;
+
+// --- Pin store ------------------------------------------------------------
+
+function pinsPath(): string {
+  return join(getAgentDir(), "sessions", PINS_FILE);
+}
+
+function loadPins(): PinStore {
   try {
-    const parsed = JSON.parse(readFileSync(routingCachePath(model), "utf8"));
-    if (parsed && parsed.routing && Array.isArray(parsed.routing.only)) {
-      return parsed.routing as Routing;
-    }
+    const parsed = JSON.parse(readFileSync(pinsPath(), "utf8"));
+    if (parsed && typeof parsed === "object") return parsed as PinStore;
   } catch {}
-  return undefined;
+  return {};
 }
 
-function writeRoutingCache(model: string, routing: Routing | undefined): void {
-  const path = routingCachePath(model);
+function savePins(store: PinStore): void {
   try {
-    if (routing) {
-      const entry: RoutingCacheEntry = { routing, fetchedAt: Date.now() };
-      writeFileSync(path, JSON.stringify(entry));
-    } else {
-      // A clean fetch with no qualifying endpoint must not leave a stale entry
-      // behind for the next failure to resurrect.
-      rmSync(path, { force: true });
-    }
-  } catch {}
-}
-
-function quantBits(quant: unknown): number | null {
-  if (typeof quant !== "string" || quant.length === 0) return null;
-  const match = /^(?:fp|bf|int)(\d+)/.exec(quant.toLowerCase());
-  return match ? Number(match[1]) : null;
-}
-
-function estimatedCost(inputPerM: number, outputPerM: number, cacheReadPerM: number): number {
-  const turns = CONTEXT_TOKENS / GROWTH_PER_CALL;
-  const cacheTokens = (CONTEXT_TOKENS * (turns - 1)) / 2;
-  const inputTokens = INPUT_SHARE * CONTEXT_TOKENS;
-  const outputTokens = (1 - INPUT_SHARE) * CONTEXT_TOKENS;
-  // Providers that report no cache-read price get no caching discount.
-  const cachePrice = cacheReadPerM || inputPerM;
-  return (cachePrice * cacheTokens + inputPerM * inputTokens + outputPerM * outputTokens) / 1e6;
-}
-
-function endpointSlug(endpoint: Endpoint): string {
-  const tag = typeof endpoint.tag === "string" ? endpoint.tag : "";
-  if (tag) return tag;
-  return typeof endpoint.provider_name === "string" ? endpoint.provider_name : "";
-}
-
-function buildRouting(endpoints: Endpoint[]): Routing | undefined {
-  const ranked: { slug: string; quant: string; cost: number }[] = [];
-  for (const endpoint of endpoints) {
-    const quant = typeof endpoint.quantization === "string" ? endpoint.quantization : "unknown";
-    if ((quantBits(quant) ?? 0) < MIN_QUANT_BITS) continue;
-
-    const pricing = (endpoint.pricing ?? {}) as Record<string, unknown>;
-    const input = Number(pricing.prompt ?? 0) * 1e6;
-    const output = Number(pricing.completion ?? 0) * 1e6;
-    const cacheRead = Number(pricing.input_cache_read ?? 0) * 1e6;
-
-    const slug = endpointSlug(endpoint);
-    if (!slug) continue;
-    ranked.push({ slug, quant: quant.toLowerCase(), cost: estimatedCost(input, output, cacheRead) });
+    writeFileSync(pinsPath(), `${JSON.stringify(store, null, 2)}\n`);
+  } catch {
+    // Best-effort; a write failure only costs the pin on the next restart.
   }
-  if (ranked.length === 0) return undefined;
-
-  ranked.sort((a, b) => a.cost - b.cost);
-  const only: string[] = [];
-  const quantizations = new Set<string>();
-  for (const row of ranked) {
-    if (!only.includes(row.slug)) only.push(row.slug);
-    quantizations.add(row.quant);
-  }
-
-  return {
-    only,
-    order: [...only],
-    quantizations: [...quantizations],
-    allow_fallbacks: true,
-    zdr: true,
-    data_collection: "deny",
-  };
 }
+
+let pins: PinStore = loadPins();
+
+function isRoutingModel(
+  model: ExtensionContext["model"],
+): model is NonNullable<ExtensionContext["model"]> {
+  return !!model && model.provider === PROVIDER && model.api === ROUTING_API;
+}
+
+// --- Endpoint data --------------------------------------------------------
 
 let zdrList: Promise<Endpoint[]> | undefined;
 
@@ -144,69 +120,342 @@ function zdrEndpoints(): Promise<Endpoint[]> {
   return zdrList;
 }
 
-async function computeRouting(model: string): Promise<Routing | undefined> {
-  const endpoints = (await zdrEndpoints()).filter((endpoint) => endpoint.model_id === model);
-  const routing = buildRouting(endpoints);
-  writeRoutingCache(model, routing);
-  return routing;
+function quantBits(quant: unknown): number | null {
+  if (typeof quant !== "string" || quant.length === 0) return null;
+  const match = /^(?:fp|bf|int)(\d+)/.exec(quant.toLowerCase());
+  return match ? Number(match[1]) : null;
 }
 
-function routingFor(model: string): Promise<Routing | undefined> {
-  const cached = cache.get(model);
-  if (cached) return cached;
-  const promise = computeRouting(model).catch((error) => {
-    cache.delete(model);
-    const fallback = loadRoutingCache(model);
-    if (fallback) return fallback;
-    throw error;
+function estimatedCost(inputPerM: number, outputPerM: number, cacheReadPerM: number): number {
+  const turns = CONTEXT_TOKENS / GROWTH_PER_CALL;
+  const cacheTokens = (CONTEXT_TOKENS * (turns - 1)) / 2;
+  const inputTokens = INPUT_SHARE * CONTEXT_TOKENS;
+  const outputTokens = (1 - INPUT_SHARE) * CONTEXT_TOKENS;
+  // Providers that report no cache-read price get no caching discount.
+  const cachePrice = cacheReadPerM || inputPerM;
+  return (cachePrice * cacheTokens + inputPerM * inputTokens + outputPerM * outputTokens) / 1e6;
+}
+
+/**
+ * ZDR, tool-capable endpoints for `model`, cheapest first. Quantization is kept
+ * on each row so the picker can default to >= 8-bit and toggle the rest with tab.
+ */
+function buildRows(model: string, endpoints: Endpoint[]): Row[] {
+  const rows: Row[] = [];
+  for (const endpoint of endpoints) {
+    if (endpoint.model_id !== model) continue;
+
+    const params = Array.isArray(endpoint.supported_parameters) ? endpoint.supported_parameters : [];
+    if (!params.includes("tools")) continue;
+
+    const tag = typeof endpoint.tag === "string" ? endpoint.tag : "";
+    if (!tag) continue;
+
+    const quant = typeof endpoint.quantization === "string" ? endpoint.quantization : "unknown";
+    const pricing = (endpoint.pricing ?? {}) as Record<string, unknown>;
+    const input = Number(pricing.prompt ?? 0) * 1e6;
+    const output = Number(pricing.completion ?? 0) * 1e6;
+    const cacheRead = Number(pricing.input_cache_read ?? 0) * 1e6;
+
+    rows.push({
+      tag,
+      provider: typeof endpoint.provider_name === "string" ? endpoint.provider_name : tag,
+      quant: quant.toLowerCase(),
+      bits: quantBits(quant),
+      context: typeof endpoint.context_length === "number" ? endpoint.context_length : null,
+      tps: typeof endpoint.throughput_last_30m === "number" ? endpoint.throughput_last_30m : null,
+      cost: estimatedCost(input, output, cacheRead),
+    });
+  }
+  rows.sort((left, right) => left.cost - right.cost);
+  return rows;
+}
+
+// --- Formatting -----------------------------------------------------------
+
+function formatTokens(tokens: number | null): string {
+  if (!tokens) return "?";
+  if (tokens >= 1_000_000) return `${Number((tokens / 1_000_000).toFixed(1))}M`;
+  if (tokens >= 1_000) return `${Math.round(tokens / 1_000)}K`;
+  return String(tokens);
+}
+
+function formatTps(tps: number | null): string {
+  return tps === null ? "-" : `${Math.round(tps)}/s`;
+}
+
+function formatCost(cost: number): string {
+  if (cost === 0) return "$0";
+  if (cost < 0.01) return `$${cost.toFixed(4)}`;
+  return `$${cost.toFixed(cost < 1 ? 3 : 2)}`;
+}
+
+// --- Picker ---------------------------------------------------------------
+
+class ProviderPicker implements Component, Focusable {
+  private readonly input = new Input();
+  private readonly border: DynamicBorder;
+  private readonly all: Row[];
+  private readonly currentTag: string | undefined;
+  private visible: Row[] = [];
+  private selected = 0;
+  private showAll = false;
+  private isFocused = false;
+
+  get focused(): boolean {
+    return this.isFocused;
+  }
+
+  set focused(value: boolean) {
+    this.isFocused = value;
+    this.input.focused = value;
+  }
+
+  constructor(
+    private readonly model: string,
+    rows: Row[],
+    currentTag: string | undefined,
+    private readonly tui: TUI,
+    private readonly theme: Theme,
+    private readonly done: (tag: string | undefined) => void,
+  ) {
+    this.border = new DynamicBorder((text) => theme.fg("border", text));
+    this.all = rows;
+    this.currentTag = currentTag;
+    this.refreshVisible();
+  }
+
+  /** Rows after the >= 8-bit filter (unless tab showed everything) and the search query. */
+  private refreshVisible(): void {
+    const base = this.showAll
+      ? this.all
+      : this.all.filter((row) => row.bits !== null && row.bits >= MIN_QUANT_BITS);
+    const query = this.input.getValue().trim();
+    this.visible = query ? fuzzyFilter(base, query, (row) => `${row.provider} ${row.quant} ${row.tag}`) : base;
+
+    const pinned = this.visible.findIndex((row) => row.tag === this.currentTag);
+    if (pinned >= 0) this.selected = pinned;
+    else this.selected = Math.min(Math.max(this.selected, 0), Math.max(0, this.visible.length - 1));
+  }
+
+  handleInput(data: string): void {
+    const keybindings = getKeybindings();
+    if (keybindings.matches(data, "tui.input.tab")) {
+      this.showAll = !this.showAll;
+      this.refreshVisible();
+    } else if (keybindings.matches(data, "tui.select.up")) {
+      if (this.visible.length) this.selected = (this.selected - 1 + this.visible.length) % this.visible.length;
+    } else if (keybindings.matches(data, "tui.select.down")) {
+      if (this.visible.length) this.selected = (this.selected + 1) % this.visible.length;
+    } else if (keybindings.matches(data, "tui.select.confirm")) {
+      this.done(this.visible[this.selected]?.tag);
+    } else if (keybindings.matches(data, "tui.select.cancel")) {
+      this.done(undefined);
+    } else {
+      const before = this.input.getValue();
+      this.input.handleInput(data);
+      if (this.input.getValue() !== before) this.refreshVisible();
+    }
+    this.tui.requestRender();
+  }
+
+  render(width: number): string[] {
+    const theme = this.theme;
+    const header = ["provider", "quant", "context", "tokens/s", "est. cost"];
+    const lines = [...this.border.render(width)];
+    lines.push(theme.fg("accent", theme.bold(`OpenRouter endpoints — ${this.model}`)));
+    lines.push(
+      theme.fg(
+        "muted",
+        this.showAll
+          ? "all ZDR · tool-capable · cheapest first"
+          : "ZDR · ≥ 8-bit · tool-capable · cheapest first",
+      ),
+    );
+    lines.push("");
+    lines.push(...this.input.render(width));
+    lines.push("");
+
+    if (this.visible.length === 0) {
+      const hint =
+        !this.showAll && this.all.length > 0
+          ? "  no ≥ 8-bit endpoints — press tab to show all quants"
+          : "  no matching endpoints";
+      lines.push(theme.fg("muted", hint));
+    } else {
+      const start = Math.max(
+        0,
+        Math.min(this.selected - Math.floor(MAX_VISIBLE_ROWS / 2), this.visible.length - MAX_VISIBLE_ROWS),
+      );
+      const end = Math.min(start + MAX_VISIBLE_ROWS, this.visible.length);
+      const cells = this.visible.map((row) => [
+        row.provider,
+        row.quant,
+        formatTokens(row.context),
+        formatTps(row.tps),
+        formatCost(row.cost),
+      ]);
+      const widths = header.map((title, index) =>
+        Math.max(visibleWidth(title), ...cells.map((row) => visibleWidth(row[index] ?? ""))),
+      );
+      const format = (row: string[]) =>
+        row.map((cell, index) => (index === row.length - 1 ? cell : cell.padEnd(widths[index]))).join("  ");
+
+      lines.push(`  ${theme.fg("muted", format(header))}`);
+      for (let index = start; index < end; index++) {
+        const isSelected = index === this.selected;
+        const isPinned = this.visible[index].tag === this.currentTag;
+        const text = format(cells[index]);
+        const cursor = isSelected ? theme.fg("accent", "→ ") : "  ";
+        const marker = isPinned ? theme.fg("success", "✓ ") : "  ";
+        lines.push(`${cursor}${marker}${isSelected ? theme.fg("accent", text) : text}`);
+      }
+      if (start > 0 || end < this.visible.length) {
+        lines.push(theme.fg("dim", `  (${this.selected + 1}/${this.visible.length})`));
+      }
+    }
+
+    lines.push("");
+    lines.push(theme.fg("dim", "tab all quants · type to filter · ↑↓ move · enter pin · esc cancel"));
+    lines.push(...this.border.render(width));
+    return lines.map((line) => truncateToWidth(line, width));
+  }
+
+  invalidate(): void {
+    this.input.invalidate();
+    this.border.invalidate();
+  }
+}
+
+/** Run a request behind a cancellable spinner. Resolves undefined when cancelled or failed. */
+async function load<T>(
+  ctx: ExtensionContext,
+  message: string,
+  task: (signal: AbortSignal) => Promise<T>,
+): Promise<T | undefined> {
+  let failure: unknown;
+  const result = await ctx.ui.custom<T | undefined>((tui, theme, _keybindings, done) => {
+    let settled = false;
+    const finish = (value: T | undefined) => {
+      if (settled) return;
+      settled = true;
+      done(value);
+    };
+    const loader = new BorderedLoader(tui, theme, message);
+    loader.onAbort = () => finish(undefined);
+    task(loader.signal).then(finish, (error: unknown) => {
+      failure = error;
+      finish(undefined);
+    });
+    return loader;
   });
-  cache.set(model, promise);
-  return promise;
+  if (failure && !(failure instanceof Error && failure.name === "AbortError")) {
+    ctx.ui.notify(`OpenRouter: ${failure instanceof Error ? failure.message : String(failure)}`, "error");
+  }
+  return result;
 }
 
-function warnOnce(model: string, error: unknown, ctx: ExtensionContext): void {
-  if (warned.has(model)) return;
-  warned.add(model);
-  const message = error instanceof Error ? error.message : String(error);
-  if (ctx.hasUI) ctx.ui.notify(`OpenRouter routing for ${model}: ${message}`, "warning");
+// --- Status / warnings ----------------------------------------------------
+
+function refreshStatus(ctx: ExtensionContext): void {
+  if (!ctx.hasUI) return;
+  const model = ctx.model;
+  if (!model || model.provider !== PROVIDER) {
+    ctx.ui.setStatus("openrouter", undefined);
+    return;
+  }
+  const pin = pins[model.id];
+  if (pin) {
+    ctx.ui.setStatus("openrouter", `or: ${pin.provider} ${pin.quant}`);
+  } else {
+    ctx.ui.setStatus("openrouter", isRoutingModel(model) ? "or: unpinned" : undefined);
+  }
 }
 
-function prefetch(model: string | undefined, ctx: ExtensionContext): void {
-  if (!model) return;
-  void routingFor(model).catch((error) => warnOnce(model, error, ctx));
+/** Routing-capable OpenRouter models cannot be used until a provider is pinned. */
+function warnIfUnpinned(ctx: ExtensionContext): void {
+  const model = ctx.model;
+  if (!isRoutingModel(model) || pins[model.id]) return;
+  if (ctx.hasUI) ctx.ui.notify(`No OpenRouter provider pinned for ${model.id}. Run /or-model to pin one.`, "error");
 }
+
+// --- Extension ------------------------------------------------------------
 
 export default function (pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
-    if (ctx.model?.provider === "openrouter") prefetch(ctx.model.id, ctx);
+    pins = loadPins();
+    refreshStatus(ctx);
+    warnIfUnpinned(ctx);
   });
 
-  pi.on("model_select", (event, ctx) => {
-    if (event.model.provider === "openrouter") prefetch(event.model.id, ctx);
+  pi.on("model_select", (_event, ctx) => {
+    refreshStatus(ctx);
+    warnIfUnpinned(ctx);
   });
 
-  // Report which endpoint served each request (read by the footer).
+  pi.on("session_shutdown", (_event, ctx) => {
+    if (ctx.hasUI) ctx.ui.setStatus("openrouter", undefined);
+  });
+
+  pi.registerCommand("or-model", {
+    description: "Pin the OpenRouter endpoint used for the current model",
+    handler: async (_args, ctx) => {
+      const model = ctx.model;
+      if (!model || model.provider !== PROVIDER) {
+        ctx.ui.notify("/or-model: select an OpenRouter model first.", "error");
+        return;
+      }
+      if (model.api !== ROUTING_API) {
+        ctx.ui.notify(`${model.id} uses ${model.api}, which ignores OpenRouter provider routing.`, "error");
+        return;
+      }
+      if (ctx.mode !== "tui") {
+        ctx.ui.notify("/or-model needs the interactive terminal UI.", "error");
+        return;
+      }
+
+      const endpoints = await load(ctx, `Fetching ZDR endpoints for ${model.id}…`, () => zdrEndpoints());
+      if (!endpoints) return;
+
+      const rows = buildRows(model.id, endpoints);
+      if (rows.length === 0) {
+        ctx.ui.notify(`No ZDR, tool-capable endpoints for ${model.id}.`, "warning");
+        return;
+      }
+
+      const tag = await ctx.ui.custom<string | undefined>(
+        (tui, theme, _keybindings, done) =>
+          new ProviderPicker(model.id, rows, pins[model.id]?.tag, tui, theme, done),
+      );
+      if (!tag) return;
+
+      const row = rows.find((candidate) => candidate.tag === tag);
+      if (!row) return;
+
+      pins[model.id] = { tag: row.tag, provider: row.provider, quant: row.quant, pinnedAt: Date.now() };
+      savePins(pins);
+      ctx.ui.notify(`${model.id} → ${row.provider} (${row.quant})`, "info");
+      refreshStatus(ctx);
+    },
+  });
+
   pi.on("before_provider_headers", (event, ctx) => {
-    if (ctx.model?.provider !== "openrouter") return;
+    if (ctx.model?.provider !== PROVIDER) return;
     event.headers["x-openrouter-metadata"] = "enabled";
   });
 
-  pi.on("before_provider_request", async (event, ctx) => {
+  pi.on("before_provider_request", (event, ctx) => {
     const model = ctx.model;
-    if (!model || model.provider !== "openrouter" || model.api !== "openai-completions") return;
+    if (!isRoutingModel(model)) return;
+
+    const pin = pins[model.id];
+    if (!pin) {
+      throw new Error(`No OpenRouter provider pinned for ${model.id}. Run /or-model to pin an endpoint.`);
+    }
+
     const payload = event.payload as { provider?: Record<string, unknown> } | null;
     if (!payload || typeof payload !== "object") return;
-
-    let routing: Routing | undefined;
-    try {
-      routing = await routingFor(model.id);
-    } catch (error) {
-      warnOnce(model.id, error, ctx);
-      return;
-    }
-    if (!routing) return;
-
-    payload.provider = { ...payload.provider, ...routing };
+    payload.provider = { only: [pin.tag], allow_fallbacks: false };
     return payload;
   });
 }
