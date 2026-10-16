@@ -66,7 +66,6 @@ in
                 sec-gui
 
                 gui
-                cinny
 
                 ai
                 llama
@@ -121,6 +120,10 @@ in
               }
               {
                 appId = "com.heroicgameslauncher.hgl";
+                origin = "flathub";
+              }
+              {
+                appId = "moe.sable.client";
                 origin = "flathub";
               }
             ];
