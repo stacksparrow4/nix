@@ -6,6 +6,25 @@ use crate::{
     mount::{BOX_CWD, BOX_HOME, Mount, MountType},
 };
 
+const HOST_PATH_BLOCKLIST: [&str; 6] = [
+    "/bin",
+    "/usr/bin",
+    "/sbin",
+    "/usr/sbin",
+    "/usr/local/bin",
+    "/usr/local/sbin",
+];
+
+fn inherit_host_path() -> Option<String> {
+    let path = std::env::var("PATH").ok()?;
+    Some(
+        path.split(':')
+            .filter(|entry| !HOST_PATH_BLOCKLIST.contains(&entry.trim_end_matches('/')))
+            .collect::<Vec<_>>()
+            .join(":"),
+    )
+}
+
 pub struct ContainerArgs {
     pub mounts: Vec<Mount>,
     pub envvars: Vec<String>,
@@ -108,15 +127,11 @@ pub fn get_container_args(
                     } else {
                         None
                     })
-                    .chain(
-                        if !args.reset_env
-                            && let Ok(path) = std::env::var("PATH")
-                        {
-                            Some(path)
-                        } else {
-                            None
-                        }
-                    )
+                    .chain(if !args.reset_env {
+                        inherit_host_path()
+                    } else {
+                        None
+                    })
                     .chain(std::env::var("SPRRW_PATH").ok())
                     .chain(std::env::var("SPRRW_ADDITIONAL_PATH").ok())
                     .chain(
