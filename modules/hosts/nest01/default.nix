@@ -167,7 +167,7 @@ in
           };
 
           nix.extraOptions = ''
-            builders = ssh-ng://root@stacksparrow4 aarch64-linux
+            builders = ssh-ng://root@stacksparrow4 aarch64-linux /home/sprrw/.ssh/stacksparrow4
           '';
 
           nixpkgs.config = import ../../../nixpkgs-config.nix;
