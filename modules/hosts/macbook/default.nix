@@ -25,16 +25,16 @@ in
               nvim
               sandbox
 
-              ai-pi
+              pi
 
-              term-aliases
-              term-bash
-              term-zshrc
-              term-yazi
-              term-tmux
+              aliases
+              bash
+              zshrc
+              yazi
+              tmux
 
-              programming-git
-              programming-rust
+              git
+              rust
             ];
 
             sprrw = {

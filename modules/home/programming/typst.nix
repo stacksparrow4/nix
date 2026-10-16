@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-typst =
+  flake.homeModules.typst =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

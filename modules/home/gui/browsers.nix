@@ -15,7 +15,7 @@
 # map k scrollUp
 # map f LinkHints.activateMode
 {
-  flake.homeModules.gui-browsers = moduleWithSystem (
+  flake.homeModules.browsers = moduleWithSystem (
     { pkgsUnstable, ... }:
     { pkgs, lib, ... }:
     {

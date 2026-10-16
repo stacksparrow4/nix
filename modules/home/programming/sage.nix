@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.programming-sage = moduleWithSystem (
+  flake.homeModules.sage = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-jwttool = moduleWithSystem (
+  flake.homeModules.jwttool = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

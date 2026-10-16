@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-xml =
+  flake.homeModules.xml =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

@@ -1,5 +1,5 @@
 {
-  flake.homeModules.term-navi =
+  flake.homeModules.navi =
     { pkgs, config, ... }:
     {
       home.packages = [ pkgs.navi ];

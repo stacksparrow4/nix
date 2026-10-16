@@ -1,5 +1,5 @@
 {
-  flake.homeModules.term-bash =
+  flake.homeModules.bash =
     { config, lib, ... }:
     {
       options.sprrw.term.bash.ps1 = lib.mkOption {

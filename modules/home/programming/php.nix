@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-php =
+  flake.homeModules.php =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

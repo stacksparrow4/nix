@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-web = moduleWithSystem (
+  flake.homeModules.web = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

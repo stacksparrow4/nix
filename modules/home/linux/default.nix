@@ -3,10 +3,10 @@
 {
   flake.homeModules.linux = {
     imports = with config.flake.homeModules; [
-      linux-desktop-entries
-      linux-rofi
-      linux-sway
-      linux-term
+      desktop-entries
+      rofi
+      sway
+      linux-tools
 
       (
         { pkgs, config, ... }:

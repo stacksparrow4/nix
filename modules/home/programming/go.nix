@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-go =
+  flake.homeModules.go =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

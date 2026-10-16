@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.term-yazi = moduleWithSystem (
+  flake.homeModules.yazi = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

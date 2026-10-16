@@ -1,5 +1,5 @@
 {
-  flake.homeModules.linux-yubikey =
+  flake.homeModules.yubikey =
     { pkgs, ... }:
     {
       home.packages = [ pkgs.yubioath-flutter ];

@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-pwn = moduleWithSystem (
+  flake.homeModules.pwn = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-git = {
+  flake.homeModules.git = {
     programs.git = {
       enable = true;
       settings = {

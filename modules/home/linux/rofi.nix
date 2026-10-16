@@ -1,5 +1,5 @@
 {
-  flake.homeModules.linux-rofi =
+  flake.homeModules.rofi =
     { pkgs, ... }:
     {
       home.file.".config/rofi/config.rasi".text = ''

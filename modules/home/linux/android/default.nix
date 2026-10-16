@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.linux-android = moduleWithSystem (
+  flake.homeModules.android = moduleWithSystem (
     { pkgs, ... }:
     { lib, ... }:
     let

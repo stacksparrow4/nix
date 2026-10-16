@@ -1,10 +1,10 @@
 { config, moduleWithSystem, ... }:
 
 {
-  flake.homeModules.linux-sway = {
+  flake.homeModules.sway = {
     # The bar/shell is part of the sway session, so it comes along with it.
     imports = [
-      config.flake.homeModules.linux-noctalia
+      config.flake.homeModules.noctalia
 
       (moduleWithSystem (
         { self', ... }:

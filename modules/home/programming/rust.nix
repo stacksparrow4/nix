@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-rust =
+  flake.homeModules.rust =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-dafny =
+  flake.homeModules.dafny =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

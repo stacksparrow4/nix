@@ -1,7 +1,7 @@
 { inputs, moduleWithSystem, ... }:
 
 {
-  flake.homeModules.linux-noctalia = moduleWithSystem (
+  flake.homeModules.noctalia = moduleWithSystem (
     { self', ... }:
     { config, ... }:
     {

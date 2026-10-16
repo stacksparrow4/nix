@@ -1,5 +1,5 @@
 {
-  flake.homeModules.term-tmux =
+  flake.homeModules.tmux =
     {
       config,
       lib,

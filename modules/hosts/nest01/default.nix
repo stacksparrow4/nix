@@ -55,23 +55,23 @@ in
                 sandbox
 
                 term
-                term-yazi-linux
+                yazi-linux
                 linux
                 nvim
 
                 programming
-                programming-sage
+                sage
 
                 sec
                 sec-gui
 
                 gui
-                gui-cinny
+                cinny
 
                 ai
-                ai-llama
-                ai-pi
-                ai-llama-qwen
+                llama
+                pi
+                llama-qwen
 
                 sops
               ];

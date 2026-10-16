@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.ai-llama = moduleWithSystem (
+  flake.homeModules.llama = moduleWithSystem (
     { self', ... }:
     {
       pkgs,

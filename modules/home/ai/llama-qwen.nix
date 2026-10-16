@@ -1,5 +1,5 @@
 {
-  flake.homeModules.ai-llama-qwen =
+  flake.homeModules.llama-qwen =
     { pkgs, ... }:
     {
       sprrw.ai = {

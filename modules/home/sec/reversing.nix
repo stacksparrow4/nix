@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-reversing = moduleWithSystem (
+  flake.homeModules.reversing = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

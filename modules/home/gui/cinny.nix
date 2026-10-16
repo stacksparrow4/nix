@@ -1,5 +1,5 @@
 {
-  flake.homeModules.gui-cinny =
+  flake.homeModules.cinny =
     {
       pkgs,
       lib,

@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-metasploit = moduleWithSystem (
+  flake.homeModules.metasploit = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

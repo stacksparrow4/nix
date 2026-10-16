@@ -1,5 +1,5 @@
 {
-  flake.homeModules.term-yazi-linux = {
+  flake.homeModules.yazi-linux = {
     xdg.mimeApps = {
       enable = true;
       defaultApplications."inode/directory" = "yazi.desktop";

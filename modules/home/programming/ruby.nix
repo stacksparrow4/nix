@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-ruby =
+  flake.homeModules.ruby =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

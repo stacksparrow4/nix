@@ -36,8 +36,8 @@ in
                 misc
 
                 term
-                term-yazi-linux
-                linux-term
+                yazi-linux
+                linux-tools
                 nvim
 
                 programming

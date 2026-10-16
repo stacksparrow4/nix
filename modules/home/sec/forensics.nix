@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-forensics = moduleWithSystem (
+  flake.homeModules.forensics = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

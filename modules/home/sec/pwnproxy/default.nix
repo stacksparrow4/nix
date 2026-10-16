@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-pwnproxy = moduleWithSystem (
+  flake.homeModules.pwnproxy = moduleWithSystem (
     { self', ... }:
     { config, lib, ... }:
     {

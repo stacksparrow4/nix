@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-windows = moduleWithSystem (
+  flake.homeModules.windows = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

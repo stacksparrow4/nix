@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-c =
+  flake.homeModules.c =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

@@ -3,8 +3,8 @@
 {
   flake.homeModules.gui = {
     imports = with config.flake.homeModules; [
-      gui-browsers
-      gui-emoji-picker
+      browsers
+      emoji-picker
 
       (moduleWithSystem (
         { self', pkgsUnstable, ... }:

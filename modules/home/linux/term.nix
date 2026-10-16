@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.linux-term = moduleWithSystem (
+  flake.homeModules.linux-tools = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

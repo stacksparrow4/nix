@@ -1,7 +1,7 @@
 { config, ... }:
 
 {
-  flake.homeModules.term-aliases = {
+  flake.homeModules.aliases = {
     sprrw.term.shellExtra = ''
       alias ls='ls --color=auto'
 
@@ -60,13 +60,13 @@
 
   flake.homeModules.term = {
     imports = with config.flake.homeModules; [
-      term-aliases
-      term-bash
-      term-foot
-      term-navi
-      term-tmux
-      term-yazi
-      term-zshrc
+      aliases
+      bash
+      foot
+      navi
+      tmux
+      yazi
+      zshrc
     ];
   };
 }

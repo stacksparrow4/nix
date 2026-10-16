@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.gui-emoji-picker = moduleWithSystem (
+  flake.homeModules.emoji-picker = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

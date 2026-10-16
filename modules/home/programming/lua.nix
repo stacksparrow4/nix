@@ -1,5 +1,5 @@
 {
-  flake.homeModules.programming-lua =
+  flake.homeModules.lua =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

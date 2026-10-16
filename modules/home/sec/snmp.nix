@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-snmp = moduleWithSystem (
+  flake.homeModules.snmp = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

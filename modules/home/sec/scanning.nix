@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-scanning = moduleWithSystem (
+  flake.homeModules.scanning = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

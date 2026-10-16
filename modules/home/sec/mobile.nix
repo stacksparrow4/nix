@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-mobile = moduleWithSystem (
+  flake.homeModules.mobile = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {
