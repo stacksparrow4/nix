@@ -23,6 +23,36 @@
       config = {
         home.file.".pi/agent/models.json".text = builtins.toJSON cfg.models;
 
+        # Remove when upstrema
+        sprrw.ai.pi.models.providers.openrouter.models = [
+          {
+            id = "deepseek/deepseek-v4.1-flash-1017";
+            name = "DeepSeek: DeepSeek V4.1 Flash 1017";
+            reasoning = true;
+            thinkingLevelMap = {
+              off = "none";
+              minimal = null;
+              low = "low";
+              medium = null;
+              high = "high";
+              xhigh = null;
+              max = "max";
+            };
+            input = [
+              "text"
+              "image"
+            ];
+            cost = {
+              input = 0.15;
+              output = 0.6;
+              cacheRead = 0.003;
+              cacheWrite = 0;
+            };
+            contextWindow = 1048576;
+            maxTokens = 393216;
+          }
+        ];
+
         systemd.user = lib.mkIf pkgs.stdenv.isLinux {
           services.pi-clean-sessions = {
             Unit.Description = "Clear pi session logs older than 1 week";
