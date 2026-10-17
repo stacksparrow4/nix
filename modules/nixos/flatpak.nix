@@ -19,6 +19,14 @@
           origin = "flathub";
         }
         {
+          appId = "org.freedesktop.Platform.VulkanLayer.gamescope//26.08";
+          origin = "flathub";
+        }
+        {
+          appId = "com.valvesoftware.Steam.CompatibilityTool.Proton-GE";
+          origin = "flathub";
+        }
+        {
           appId = "org.libreoffice.LibreOffice";
           origin = "flathub";
         }
