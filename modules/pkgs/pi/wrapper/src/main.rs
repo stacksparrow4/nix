@@ -446,21 +446,16 @@ fn main() {
                 instead answer definitively by cloning the source to /tmp and referring to it",
             );
             guidelines.push("`uv` is available for Python packages");
+            guidelines.push(
+                "You are in an Alpine linux container with a read-only /nix volume \
+                mounted in. Use apk to install packages.",
+            );
         }
 
         if all_tools.contains(&"command".to_string()) {
             guidelines.push(
                 "The command tool is not necessarily bash (although this is the most \
                 common option), it could also be other shells such as Windows Powershell",
-            );
-        }
-
-        if let Target::Sandbox = target
-            && args.local.is_none()
-        {
-            guidelines.push(
-                "You are in an Alpine linux container with a read-only /nix volume \
-                mounted in. Use apk to install packages.",
             );
         }
 
@@ -622,7 +617,9 @@ fn main() {
     ];
 
     let _notify_server = start_notify_server();
-    let notify_args: Vec<String> = _notify_server.as_ref().map_or_else(Vec::new, |s| s.box_args());
+    let notify_args: Vec<String> = _notify_server
+        .as_ref()
+        .map_or_else(Vec::new, |s| s.box_args());
 
     let subagent_args: Vec<String> = match &subagent_pipe_dir {
         Some(dir) => {
