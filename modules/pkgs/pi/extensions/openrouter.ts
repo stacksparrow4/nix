@@ -32,6 +32,7 @@ const ROUTING_API = "openai-completions";
 // `zdr`/`data_collection` also make OpenRouter enforce it server-side.
 const ZDR_ENDPOINTS = "https://openrouter.ai/api/v1/endpoints/zdr";
 
+const AUTH_PATH = join(getAgentDir(), "auth.json");
 const PINS_FILE = "openrouter-pins.json";
 const MIN_QUANT_BITS = 8;
 const MAX_VISIBLE_ROWS = 14;
@@ -54,7 +55,10 @@ interface Row {
   bits: number | null;
   context: number | null;
   cost: number;
+  throughput: Record<string, number | null>;
 }
+
+const THROUGHPUT_PERCENTILE = /^p\d+$/;
 
 interface Pin {
   tag: string;
@@ -97,11 +101,28 @@ function isRoutingModel(
 
 // --- Endpoint data --------------------------------------------------------
 
+// Throughput/latency stats are only populated for authenticated requests.
+function openRouterApiKey(): string | undefined {
+  try {
+    const auth = JSON.parse(readFileSync(AUTH_PATH, "utf8"));
+    const creds = auth?.openrouter;
+    if (creds?.type === "api_key" && typeof creds.key === "string" && creds.key.length > 0) {
+      return creds.key;
+    }
+  } catch {
+    // Fall through to the environment.
+  }
+  const fromEnv = process.env.OPENROUTER_API_KEY;
+  return fromEnv && fromEnv.length > 0 ? fromEnv : undefined;
+}
+
 let zdrList: Promise<Endpoint[]> | undefined;
 
 function zdrEndpoints(): Promise<Endpoint[]> {
   if (!zdrList) {
-    zdrList = fetch(ZDR_ENDPOINTS)
+    const key = openRouterApiKey();
+    const headers: Record<string, string> = key ? { Authorization: `Bearer ${key}` } : {};
+    zdrList = fetch(ZDR_ENDPOINTS, { headers })
       .then((response) => {
         if (!response.ok) throw new Error(`OpenRouter ZDR endpoint list returned ${response.status}`);
         return response.json();
@@ -155,6 +176,13 @@ function buildRows(model: string, endpoints: Endpoint[]): Row[] {
     const input = Number(pricing.prompt ?? 0) * 1e6;
     const output = Number(pricing.completion ?? 0) * 1e6;
     const cacheRead = Number(pricing.input_cache_read ?? 0) * 1e6;
+    const throughputStats = (endpoint.throughput_last_30m ?? {}) as Record<string, unknown>;
+    const throughput: Record<string, number | null> = {};
+    for (const [level, value] of Object.entries(throughputStats)) {
+      if (!THROUGHPUT_PERCENTILE.test(level)) continue;
+      const tokensPerSecond = Number(value);
+      throughput[level] = Number.isFinite(tokensPerSecond) && tokensPerSecond > 0 ? tokensPerSecond : null;
+    }
 
     rows.push({
       tag,
@@ -163,6 +191,7 @@ function buildRows(model: string, endpoints: Endpoint[]): Row[] {
       bits: quantBits(quant),
       context: typeof endpoint.context_length === "number" ? endpoint.context_length : null,
       cost: estimatedCost(input, output, cacheRead),
+      throughput,
     });
   }
   rows.sort((left, right) => left.cost - right.cost);
@@ -182,6 +211,20 @@ function formatCost(cost: number): string {
   if (cost === 0) return "$0";
   if (cost < 0.01) return `$${cost.toFixed(4)}`;
   return `$${cost.toFixed(cost < 1 ? 3 : 2)}`;
+}
+
+function formatThroughput(tokensPerSecond: number | null): string {
+  if (tokensPerSecond === null) return "?";
+  return String(Math.round(tokensPerSecond));
+}
+
+/** Percentile levels present in any row, ordered numerically (p50, p75, p90, p99). */
+function throughputLevels(rows: Row[]): string[] {
+  const levels = new Set<string>();
+  for (const row of rows) {
+    for (const level of Object.keys(row.throughput)) levels.add(level);
+  }
+  return [...levels].sort((left, right) => Number(left.slice(1)) - Number(right.slice(1)));
 }
 
 // --- Picker ---------------------------------------------------------------
@@ -255,7 +298,14 @@ class ProviderPicker implements Component, Focusable {
 
   render(width: number): string[] {
     const theme = this.theme;
-    const header = ["provider", "quant", "context", "est. cost"];
+    const levels = throughputLevels(this.all);
+    const header = [
+      "provider",
+      "quant",
+      "context",
+      "est. cost",
+      ...levels.map((level) => `${level} tok/s`),
+    ];
     const lines = [...this.border.render(width)];
     lines.push(theme.fg("accent", theme.bold(`OpenRouter endpoints — ${this.model}`)));
     lines.push(
@@ -287,6 +337,7 @@ class ProviderPicker implements Component, Focusable {
         row.quant,
         formatTokens(row.context),
         formatCost(row.cost),
+        ...levels.map((level) => formatThroughput(row.throughput[level] ?? null)),
       ]);
       const widths = header.map((title, index) =>
         Math.max(visibleWidth(title), ...cells.map((row) => visibleWidth(row[index] ?? ""))),
