@@ -19,22 +19,24 @@ import {
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-// OpenRouter requests are pinned to a single ZDR endpoint. There is no
-// automatic routing: a model with no pin raises an error telling the user to
-// run /or-model, and the picked endpoint is written to a shared save file so
-// pins survive restarts. Only the openai-completions transport honours the
-// `provider` routing field, so only those models are pinned/blocked.
+// OpenRouter requests are pinned to a single endpoint. There is no automatic
+// routing: a model with no pin raises an error telling the user to run
+// /or-model, and the picked endpoint is written to a shared save file so pins
+// survive restarts. Only the openai-completions transport honours the
+// `provider` routing field, so only those models are pinned/blocked. Other
+// transports still show the endpoint/cost table in view-only mode.
 
 const PROVIDER = "openrouter";
 const ROUTING_API = "openai-completions";
+const OPENROUTER_API = "https://openrouter.ai/api/v1";
 
 // The ZDR list is exactly the model pages' `!(training || retainsPrompts)` set;
-// `zdr`/`data_collection` also make OpenRouter enforce it server-side.
-const ZDR_ENDPOINTS = "https://openrouter.ai/api/v1/endpoints/zdr";
+// it is fetched separately because the per-model endpoint response does not
+// include data-retention information.
+const ZDR_ENDPOINTS = `${OPENROUTER_API}/endpoints/zdr`;
 
 const AUTH_PATH = join(getAgentDir(), "auth.json");
 const PINS_FILE = "openrouter-pins.json";
-const MIN_QUANT_BITS = 8;
 const MAX_VISIBLE_ROWS = 14;
 
 // OpenRouter prices are USD; the picker shows estimated costs in AUD.
@@ -57,7 +59,7 @@ interface Row {
   tag: string;
   provider: string;
   quant: string;
-  bits: number | null;
+  zdr: boolean | null;
   context: number | null;
   cost: number;
   throughput: Record<string, number | null>;
@@ -121,13 +123,16 @@ function openRouterApiKey(): string | undefined {
   return fromEnv && fromEnv.length > 0 ? fromEnv : undefined;
 }
 
+function authHeaders(): Record<string, string> {
+  const key = openRouterApiKey();
+  return key ? { Authorization: `Bearer ${key}` } : {};
+}
+
 let zdrList: Promise<Endpoint[]> | undefined;
 
 function zdrEndpoints(): Promise<Endpoint[]> {
   if (!zdrList) {
-    const key = openRouterApiKey();
-    const headers: Record<string, string> = key ? { Authorization: `Bearer ${key}` } : {};
-    zdrList = fetch(ZDR_ENDPOINTS, { headers })
+    zdrList = fetch(ZDR_ENDPOINTS, { headers: authHeaders() })
       .then((response) => {
         if (!response.ok) throw new Error(`OpenRouter ZDR endpoint list returned ${response.status}`);
         return response.json();
@@ -145,10 +150,43 @@ function zdrEndpoints(): Promise<Endpoint[]> {
   return zdrList;
 }
 
-function quantBits(quant: unknown): number | null {
-  if (typeof quant !== "string" || quant.length === 0) return null;
-  const match = /^(?:fp|bf|int)(\d+)/.exec(quant.toLowerCase());
-  return match ? Number(match[1]) : null;
+function modelEndpoints(model: string): Promise<Endpoint[]> {
+  const path = model.split("/").map(encodeURIComponent).join("/");
+  return fetch(`${OPENROUTER_API}/models/${path}/endpoints`, { headers: authHeaders() })
+    .then((response) => {
+      if (!response.ok) throw new Error(`OpenRouter endpoint list returned ${response.status}`);
+      return response.json();
+    })
+    .then((body) => {
+      const endpoints = (body as { data?: { endpoints?: unknown } }).data?.endpoints;
+      if (!Array.isArray(endpoints)) throw new Error("unexpected endpoint list shape");
+      return endpoints as Endpoint[];
+    });
+}
+
+interface EndpointData {
+  endpoints: Endpoint[];
+  /** ZDR endpoint tags for this model, or null when the ZDR list could not be fetched. */
+  zdrTags: Set<string> | null;
+}
+
+async function loadEndpoints(model: string): Promise<EndpointData> {
+  const [endpoints, zdr] = await Promise.all([
+    modelEndpoints(model),
+    // ZDR status is informational: still show the full endpoint list if it fails.
+    zdrEndpoints().catch(() => undefined),
+  ]);
+  // The per-model response can use the canonical slug even when the requested
+  // model ID is an alias, so key the ZDR list off the returned model ID.
+  const endpointModel = endpoints.find((endpoint) => typeof endpoint.model_id === "string")?.model_id;
+  const zdrTags = zdr
+    ? new Set(
+        zdr
+          .filter((endpoint) => !endpointModel || endpoint.model_id === endpointModel)
+          .map((endpoint) => String(endpoint.tag)),
+      )
+    : null;
+  return { endpoints, zdrTags };
 }
 
 function estimatedCost(inputPerM: number, outputPerM: number, cacheReadPerM: number): number {
@@ -162,14 +200,12 @@ function estimatedCost(inputPerM: number, outputPerM: number, cacheReadPerM: num
 }
 
 /**
- * ZDR, tool-capable endpoints for `model`, cheapest first. Quantization is kept
- * on each row so the picker can default to >= 8-bit and toggle the rest with tab.
+ * Tool-capable endpoints, cheapest first. All quantization levels and ZDR/non-ZDR
+ * endpoints are included; the picker marks ZDR status per row.
  */
-function buildRows(model: string, endpoints: Endpoint[]): Row[] {
+function buildRows(endpoints: Endpoint[], zdrTags: Set<string> | null): Row[] {
   const rows: Row[] = [];
   for (const endpoint of endpoints) {
-    if (endpoint.model_id !== model) continue;
-
     const params = Array.isArray(endpoint.supported_parameters) ? endpoint.supported_parameters : [];
     if (!params.includes("tools")) continue;
 
@@ -193,7 +229,7 @@ function buildRows(model: string, endpoints: Endpoint[]): Row[] {
       tag,
       provider: typeof endpoint.provider_name === "string" ? endpoint.provider_name : tag,
       quant: quant.toLowerCase(),
-      bits: quantBits(quant),
+      zdr: zdrTags ? zdrTags.has(tag) : null,
       context: typeof endpoint.context_length === "number" ? endpoint.context_length : null,
       cost: estimatedCost(input, output, cacheRead),
       throughput,
@@ -224,6 +260,11 @@ function formatThroughput(tokensPerSecond: number | null): string {
   return String(Math.round(tokensPerSecond));
 }
 
+function formatZdr(zdr: boolean | null): string {
+  if (zdr === null) return "?";
+  return zdr ? "yes" : "no";
+}
+
 /** Percentile levels present in any row, ordered numerically (p50, p75, p90, p99). */
 function throughputLevels(rows: Row[]): string[] {
   const levels = new Set<string>();
@@ -242,7 +283,6 @@ class ProviderPicker implements Component, Focusable {
   private readonly currentTag: string | undefined;
   private visible: Row[] = [];
   private selected = 0;
-  private showAll = false;
   private isFocused = false;
 
   get focused(): boolean {
@@ -258,6 +298,7 @@ class ProviderPicker implements Component, Focusable {
     private readonly model: string,
     rows: Row[],
     currentTag: string | undefined,
+    private readonly allowPin: boolean,
     private readonly tui: TUI,
     private readonly theme: Theme,
     private readonly done: (tag: string | undefined) => void,
@@ -268,13 +309,12 @@ class ProviderPicker implements Component, Focusable {
     this.refreshVisible();
   }
 
-  /** Rows after the >= 8-bit filter (unless tab showed everything) and the search query. */
+  /** Rows matching the search query. */
   private refreshVisible(): void {
-    const base = this.showAll
-      ? this.all
-      : this.all.filter((row) => row.bits !== null && row.bits >= MIN_QUANT_BITS);
     const query = this.input.getValue().trim();
-    this.visible = query ? fuzzyFilter(base, query, (row) => `${row.provider} ${row.quant} ${row.tag}`) : base;
+    this.visible = query
+      ? fuzzyFilter(this.all, query, (row) => `${row.provider} ${row.quant} ${row.tag}`)
+      : this.all;
 
     const pinned = this.visible.findIndex((row) => row.tag === this.currentTag);
     if (pinned >= 0) this.selected = pinned;
@@ -283,15 +323,13 @@ class ProviderPicker implements Component, Focusable {
 
   handleInput(data: string): void {
     const keybindings = getKeybindings();
-    if (keybindings.matches(data, "tui.input.tab")) {
-      this.showAll = !this.showAll;
-      this.refreshVisible();
-    } else if (keybindings.matches(data, "tui.select.up")) {
+    if (keybindings.matches(data, "tui.select.up")) {
       if (this.visible.length) this.selected = (this.selected - 1 + this.visible.length) % this.visible.length;
     } else if (keybindings.matches(data, "tui.select.down")) {
       if (this.visible.length) this.selected = (this.selected + 1) % this.visible.length;
     } else if (keybindings.matches(data, "tui.select.confirm")) {
-      this.done(this.visible[this.selected]?.tag);
+      // View-only mode has nothing to select, so enter just closes the picker.
+      this.done(this.allowPin ? this.visible[this.selected]?.tag : undefined);
     } else if (keybindings.matches(data, "tui.select.cancel")) {
       this.done(undefined);
     } else {
@@ -308,30 +346,26 @@ class ProviderPicker implements Component, Focusable {
     const header = [
       "provider",
       "quant",
+      "zdr",
       "context",
       "est. cost",
       ...levels.map((level) => `${level} tok/s`),
     ];
     const lines = [...this.border.render(width)];
-    lines.push(theme.fg("accent", theme.bold(`OpenRouter endpoints — ${this.model}`)));
     lines.push(
       theme.fg(
-        "muted",
-        this.showAll
-          ? "all ZDR · tool-capable · cheapest first"
-          : "ZDR · ≥ 8-bit · tool-capable · cheapest first",
+        "accent",
+        theme.bold(`OpenRouter endpoints — ${this.model}${this.allowPin ? "" : " (view only)"}`),
       ),
     );
+    const filter = "all quants · tool-capable · cheapest first";
+    lines.push(theme.fg("muted", this.allowPin ? filter : `${filter} · routing ignored by this transport`));
     lines.push("");
     lines.push(...this.input.render(width));
     lines.push("");
 
     if (this.visible.length === 0) {
-      const hint =
-        !this.showAll && this.all.length > 0
-          ? "  no ≥ 8-bit endpoints — press tab to show all quants"
-          : "  no matching endpoints";
-      lines.push(theme.fg("muted", hint));
+      lines.push(theme.fg("muted", "  no matching endpoints"));
     } else {
       const start = Math.max(
         0,
@@ -341,6 +375,7 @@ class ProviderPicker implements Component, Focusable {
       const cells = this.visible.map((row) => [
         row.provider,
         row.quant,
+        formatZdr(row.zdr),
         formatTokens(row.context),
         formatCost(row.cost),
         ...levels.map((level) => formatThroughput(row.throughput[level] ?? null)),
@@ -366,7 +401,14 @@ class ProviderPicker implements Component, Focusable {
     }
 
     lines.push("");
-    lines.push(theme.fg("dim", "tab all quants · type to filter · ↑↓ move · enter pin · esc cancel"));
+    lines.push(
+      theme.fg(
+        "dim",
+        this.allowPin
+          ? "type to filter · ↑↓ move · enter pin · esc cancel"
+          : "type to filter · ↑↓ move · enter/esc close",
+      ),
+    );
     lines.push(...this.border.render(width));
     return lines.map((line) => truncateToWidth(line, width));
   }
@@ -414,7 +456,8 @@ function refreshStatus(ctx: ExtensionContext): void {
     ctx.ui.setStatus("openrouter", undefined);
     return;
   }
-  const pin = pins[model.id];
+  // A pin on a non-routing transport would be ignored, so never claim it is active.
+  const pin = isRoutingModel(model) ? pins[model.id] : undefined;
   if (pin) {
     ctx.ui.setStatus("openrouter", `or: ${pin.provider} ${pin.quant}`);
   } else {
@@ -448,15 +491,11 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerCommand("or-model", {
-    description: "Pin the OpenRouter endpoint used for the current model",
+    description: "View OpenRouter endpoints and pin the active one where supported",
     handler: async (_args, ctx) => {
       const model = ctx.model;
       if (!model || model.provider !== PROVIDER) {
         ctx.ui.notify("/or-model: select an OpenRouter model first.", "error");
-        return;
-      }
-      if (model.api !== ROUTING_API) {
-        ctx.ui.notify(`${model.id} uses ${model.api}, which ignores OpenRouter provider routing.`, "error");
         return;
       }
       if (ctx.mode !== "tui") {
@@ -464,20 +503,32 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
-      const endpoints = await load(ctx, `Fetching ZDR endpoints for ${model.id}…`, () => zdrEndpoints());
-      if (!endpoints) return;
+      // Only openai-completions honours OpenRouter's `provider` routing field;
+      // other transports can still browse endpoints, but cannot be pinned.
+      const canPin = isRoutingModel(model);
 
-      const rows = buildRows(model.id, endpoints);
+      const data = await load(ctx, `Fetching endpoints for ${model.id}…`, () => loadEndpoints(model.id));
+      if (!data) return;
+
+      const rows = buildRows(data.endpoints, data.zdrTags);
       if (rows.length === 0) {
-        ctx.ui.notify(`No ZDR, tool-capable endpoints for ${model.id}.`, "warning");
+        ctx.ui.notify(`No tool-capable endpoints for ${model.id}.`, "warning");
         return;
       }
 
       const tag = await ctx.ui.custom<string | undefined>(
         (tui, theme, _keybindings, done) =>
-          new ProviderPicker(model.id, rows, pins[model.id]?.tag, tui, theme, done),
+          new ProviderPicker(
+            model.id,
+            rows,
+            canPin ? pins[model.id]?.tag : undefined,
+            canPin,
+            tui,
+            theme,
+            done,
+          ),
       );
-      if (!tag) return;
+      if (!tag || !canPin) return;
 
       const row = rows.find((candidate) => candidate.tag === tag);
       if (!row) return;
