@@ -36,6 +36,7 @@
           "x-scheme-handler/https"
           "x-scheme-handler/about"
           "x-scheme-handler/unknown"
+          "application/pdf"
         ] (_: "brave-browser.desktop");
       };
     }
