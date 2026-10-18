@@ -37,6 +37,11 @@ const PINS_FILE = "openrouter-pins.json";
 const MIN_QUANT_BITS = 8;
 const MAX_VISIBLE_ROWS = 14;
 
+// OpenRouter prices are USD; the picker shows estimated costs in AUD.
+// Static approximation (1 USD ≈ 1.44 AUD, mid-Oct 2026) — it will drift, so
+// treat the converted figures as a rough guide, not a live quote.
+const USD_TO_AUD = 1.44;
+
 // Derived from a 31-call agentic session: 32,350 fresh input and 25,030 output
 // tokens, scaled to a 100k-token final context with perfect prompt caching.
 const CONTEXT_TOKENS = 100_000;
@@ -207,10 +212,11 @@ function formatTokens(tokens: number | null): string {
   return String(tokens);
 }
 
-function formatCost(cost: number): string {
-  if (cost === 0) return "$0";
-  if (cost < 0.01) return `$${cost.toFixed(4)}`;
-  return `$${cost.toFixed(cost < 1 ? 3 : 2)}`;
+function formatCost(costUsd: number): string {
+  const cost = costUsd * USD_TO_AUD;
+  if (cost === 0) return "A$0";
+  if (cost < 0.01) return `A$${cost.toFixed(4)}`;
+  return `A$${cost.toFixed(cost < 1 ? 3 : 2)}`;
 }
 
 function formatThroughput(tokensPerSecond: number | null): string {
