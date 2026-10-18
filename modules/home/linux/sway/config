@@ -23,7 +23,7 @@ bindsym $mod+Return exec --no-startup-id "foot bash -c 'sleep 0.03 && tmux'"
 bindsym $mod+b exec --no-startup-id "brave"
 bindsym $mod+p exec --no-startup-id "1password"
 
-bindsym $mod+backslash exec --no-startup-id "swaylock -f -F -c 000000 --ring-color 005577 --key-hl-color 444444"
+bindsym $mod+backslash exec --no-startup-id "noctalia msg session lock"
 
 bindsym Ctrl+Shift+space exec --no-startup-id "1password --quick-access"
 

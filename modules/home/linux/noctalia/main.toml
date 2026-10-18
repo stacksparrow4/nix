@@ -35,6 +35,10 @@ stat = "disk_free"
 [desktop_widgets]
 enabled = false
 
+[lockscreen]
+transition_duration = 500
+wallpaper = "/home/sprrw/.background-image"
+
 [shell]
 clipboard_enabled = false
 font_family = "IosevkaTerm NF"
