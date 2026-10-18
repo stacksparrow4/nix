@@ -36,7 +36,8 @@ stat = "disk_free"
 enabled = false
 
 [lockscreen]
-transition_duration = 500
+transition = [ "stripes" ]
+transition_duration = 700
 wallpaper = "/home/sprrw/.background-image"
 
 [shell]
