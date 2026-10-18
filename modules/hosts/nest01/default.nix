@@ -111,10 +111,6 @@ in
                 origin = "flathub";
               }
               {
-                appId = "org.signal.Signal";
-                origin = "flathub";
-              }
-              {
                 appId = "org.prismlauncher.PrismLauncher";
                 origin = "flathub";
               }
@@ -131,10 +127,6 @@ in
             overrides = {
               "org.musescore.MuseScore".Context = {
                 sockets = [ "!cups" ];
-              };
-              "org.signal.Signal".Context = {
-                shared = [ "!ipc" ];
-                sockets = [ "!fallback-x11" ];
               };
               "org.prismlauncher.PrismLauncher".Context = {
                 filesystems = [
