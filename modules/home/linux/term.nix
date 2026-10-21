@@ -5,16 +5,15 @@
     { self', ... }:
     { pkgs, ... }:
     {
-      home.packages = [
-        pkgs.ltrace
-        pkgs.linux-manual
-        pkgs.man-pages
-        pkgs.man-pages-posix
-        pkgs.netcat-openbsd
-        pkgs.lsof
-        pkgs.traceroute
-        pkgs.bubblewrap
-
+      home.packages = with pkgs; [
+        ltrace
+        man-pages
+        man-pages-posix
+        netcat-openbsd
+        lsof
+        traceroute
+        bubblewrap
+      ] ++ [
         self'.packages.proxychains
       ];
     }
