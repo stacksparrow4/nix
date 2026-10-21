@@ -55,6 +55,26 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .keep();
     let stage = stage.to_string_lossy().into_owned();
 
+    let disk_base = std::fs::canonicalize(format!(
+        "{}/.local/vm.qcow2",
+        std::env::var("HOME").expect("HOME is not set")
+    ))
+    .expect("~/.local/vm.qcow2 does not exist");
+
+    let disk_overlay = tempfile::Builder::new()
+        .prefix("sprrw-sandbox-disk.")
+        .suffix(".qcow2")
+        .tempfile_in("/tmp")
+        .unwrap();
+    let overlay_path = disk_overlay.path().to_string_lossy().to_string();
+
+    Command::new("qemu-img")
+        .args(["create", "-q", "-f", "qcow2", "-F", "qcow2", "-b"])
+        .arg(&disk_base)
+        .arg(&overlay_path)
+        .arg("64G")
+        .status().expect("failed to create VM disk overlay");
+
     let mut virtfs_args: Vec<String> = Vec::new();
     for (i, m) in mounts.iter().enumerate() {
         virtfs_args.push("-virtfs".to_string());
@@ -78,13 +98,11 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
             "16384",
             "-smp",
             "4",
-            "-cdrom",
+            "-drive",
             &format!(
-                "{}/.local/vm.iso",
-                std::env::var("HOME").expect("HOME is not set")
+                "file={},if=virtio,format=qcow2,cache=unsafe,discard=unmap",
+                overlay_path
             ),
-            "-boot",
-            "d",
             "-nic",
             &format!("user,hostfwd=tcp:127.0.0.1:{open_port}-:22"),
             "-display",
@@ -126,6 +144,8 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
                 eprintln!("{err}");
                 std::process::exit(1);
             });
+
+        drop(disk_overlay);
 
         if !status.success() {
             println!("Failed to start QEMU");

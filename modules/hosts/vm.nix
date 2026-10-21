@@ -18,7 +18,7 @@ in
         inputs.home-manager.nixosModules.home-manager
 
         (
-          { lib, ... }:
+          { lib, modulesPath, ... }:
           {
             imports = with nixosModules; [
               base
@@ -26,7 +26,7 @@ in
               nix-config
               users
               virt
-            ];
+            ] ++ [ "${modulesPath}/profiles/qemu-guest.nix" ];
 
             home-manager.users.sprrw = {
               imports = with homeModules; [

@@ -14,13 +14,13 @@
             cd ~/${config.sprrw.nixosRepoPath}
             git add .
 
-            isopath=$(nixos-rebuild build-image --flake .#vm --image-variant iso --no-link)
-            echo "$isopath"
+            imagepath=$(nixos-rebuild build-image --flake .#vm --image-variant qemu --no-link)
+            echo "$imagepath"
 
             mkdir -p ~/.local
 
-            rm -f ~/.local/vm.iso
-            ln -s "$isopath" ~/.local/vm.iso
+            rm -f ~/.local/vm.qcow2
+            ln -s "$imagepath" ~/.local/vm.qcow2
           '';
         })
         (pkgs.writeShellApplication {
