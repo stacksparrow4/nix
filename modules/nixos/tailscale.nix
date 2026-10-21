@@ -1,5 +1,8 @@
 {
   flake.nixosModules.tailscale = {
-    services.tailscale.enable = true;
+    services.tailscale = {
+      enable = true;
+      extraSetFlags = [ "--shields-up" ];
+    };
   };
 }
