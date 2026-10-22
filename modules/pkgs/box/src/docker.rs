@@ -88,7 +88,11 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         docker_args.extend(["-e".to_string(), e.to_string()]);
     }
 
-    docker_args.push("alpine:latest".to_string());
+    docker_args.push(
+        args.docker_image
+            .clone()
+            .unwrap_or_else(|| "alpine:latest".to_string()),
+    );
     docker_args.extend(args.exec.clone());
 
     let mut command = Command::new("docker");

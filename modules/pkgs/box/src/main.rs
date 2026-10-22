@@ -40,6 +40,11 @@ fn main() {
         std::process::exit(1);
     }
 
+    if args.docker_image.is_some() && cfg!(target_os = "linux") && !args.docker {
+        println!("Cannot specify --docker-image without the Docker backend (--docker)");
+        std::process::exit(1);
+    }
+
     if args.exec.is_empty() {
         args.exec = vec!["bash".to_string()];
     }

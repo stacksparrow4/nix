@@ -20,6 +20,10 @@ pub struct Cli {
     #[arg(long, group = "backend")]
     pub docker: bool,
 
+    /// Docker image to use instead of alpine:latest (Docker backend only)
+    #[arg(long = "docker-image", value_name = "IMAGE")]
+    pub docker_image: Option<String>,
+
     /// Forward GPUs to the container (Docker backend only)
     #[arg(long)]
     pub gpu: bool,
