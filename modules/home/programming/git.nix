@@ -28,8 +28,8 @@
       alias gf='git fetch'
       alias grv='git remote -v'
       alias gbv='git branch -v'
-      alias gr='git restore .'
-      alias grs='git restore --staged .'
+      alias gr='git restore'
+      alias grs='git restore --staged'
     '';
   };
 }
