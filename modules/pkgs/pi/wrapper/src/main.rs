@@ -245,8 +245,6 @@ fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Ch
 
     let mut cmd = Command::new("box");
     cmd.arg("--docker") // Use docker to be able to install tools
-        .arg("--docker-image")
-        .arg("ubuntu:latest")
         .arg("-v")
         .arg(format!("{}:{}:rw:dir", dir.path().display(), BRIDGE_DIR))
         .args(if no_network {
@@ -449,8 +447,8 @@ fn main() {
             );
             guidelines.push("`uv` is available for Python packages");
             guidelines.push(
-                "You are in an Ubuntu container with a read-only /nix volume \
-                mounted in. Use apt to install packages.",
+                "You are in an Alpine container with a read-only /nix volume \
+                mounted in. Use apk to install packages.",
             );
         }
 
