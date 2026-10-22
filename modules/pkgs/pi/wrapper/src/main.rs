@@ -479,6 +479,9 @@ fn main() {
             guidelines.push(
                 "When writing code, never use comments unless explicitly asked.",
             );
+            guidelines.push(
+                "Never test the code you wrote unless explicitly asked.",
+            );
         }
 
         format!(
