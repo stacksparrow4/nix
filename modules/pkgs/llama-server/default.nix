@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ ... }:
 
 {
   perSystem =
@@ -7,10 +7,7 @@
       packages.llama-server =
         let
           llama-server =
-            ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
-              name = "llama-server";
-              src = ./.;
-            }).rootCrate.build;
+            (pkgs.callPackage ./_Cargo.nix { }).rootCrate.build;
         in
         pkgs.runCommand "llama-server" { nativeBuildInputs = [ pkgs.installShellFiles ]; } ''
           mkdir -p $out/bin

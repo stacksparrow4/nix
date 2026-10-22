@@ -1,4 +1,4 @@
-{ config, inputs, ... }:
+{ config, ... }:
 
 let
   globalConfig = config;
@@ -18,10 +18,7 @@ in
             { pkgs, interactsh }:
             let
               oobBin =
-                ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
-                  name = "oob";
-                  src = ./.;
-                }).rootCrate.build;
+                (pkgs.callPackage ./_Cargo.nix { }).rootCrate.build;
             in
             pkgs.runCommand "oob-unboxed"
               {

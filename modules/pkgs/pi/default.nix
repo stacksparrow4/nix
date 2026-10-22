@@ -16,10 +16,7 @@ in
           let
             buildPi =
               pkgs:
-              ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
-                name = "pi";
-                src = ./wrapper;
-              }).rootCrate.build;
+              (pkgs.callPackage ./wrapper/_Cargo.nix { }).rootCrate.build;
             pi = buildPi pkgs;
             piUpstream = inputs.pi.packages.${pkgsLinux.stdenv.hostPlatform.system}.pi.override {
               wl-clipboard = pkgsLinux.emptyDirectory;

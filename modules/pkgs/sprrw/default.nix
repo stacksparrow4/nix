@@ -1,14 +1,11 @@
-{ inputs, ... }:
+{ ... }:
 
 {
   perSystem =
     { pkgs, ... }:
     let
       sprrw-unwrapped =
-        ((inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
-          name = "sprrw";
-          src = ./.;
-        }).rootCrate.build;
+        (pkgs.callPackage ./_Cargo.nix { }).rootCrate.build;
 
       notifier = pkgs.lib.optional (!pkgs.stdenv.isDarwin) pkgs.libnotify;
     in

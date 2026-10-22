@@ -1,4 +1,4 @@
-{ config, inputs, ... }:
+{ config, ... }:
 
 let
   globalConfig = config;
@@ -143,12 +143,7 @@ in
         };
 
       nvimWrapper =
-        (
-          (inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
-            name = "nvim-wrapper";
-            src = ./wrapper;
-          }
-        ).rootCrate.build;
+        (pkgs.callPackage ./wrapper/_Cargo.nix { }).rootCrate.build;
 
       mkNvimBoxed =
         { nvim-unboxed }:

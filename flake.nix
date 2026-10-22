@@ -22,11 +22,6 @@
     };
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
 
-    crate2nix = {
-      url = "github:nix-community/crate2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     blink-cmp = {
       url = "github:saghen/blink.cmp";
       inputs.nixpkgs.follows = "nixpkgs";

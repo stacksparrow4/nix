@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ ... }:
 
 {
   perSystem =
@@ -7,12 +7,7 @@
       packages.clip-shim =
         let
           bin =
-            (
-              (inputs.crate2nix.lib.tools { inherit pkgs; }).appliedCargoNix {
-                name = "sprrw-clip";
-                src = ./.;
-              }
-            ).rootCrate.build;
+            (pkgs.callPackage ./_Cargo.nix { }).rootCrate.build;
         in
         pkgs.runCommand "clip-shim" { } ''
           mkdir -p $out/bin $out/shims
