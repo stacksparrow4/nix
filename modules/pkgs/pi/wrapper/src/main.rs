@@ -475,6 +475,12 @@ fn main() {
             );
         }
 
+        if args.cwd {
+            guidelines.push(
+                "When writing code, never use comments unless explicitly asked.",
+            );
+        }
+
         format!(
             "You are a helpful coding assistant.{}{}{}",
             if guidelines.is_empty() {
