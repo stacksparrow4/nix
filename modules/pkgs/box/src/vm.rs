@@ -45,7 +45,8 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     println!("Forwarding SSH to port {open_port}");
     println!("Enter the VM yourself with:");
     println!(
-        "sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -p {open_port} localhost"
+        "sshpass -p password ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+        -o LogLevel=ERROR -p {open_port} localhost"
     );
 
     let stage = tempfile::Builder::new()
@@ -73,7 +74,8 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .arg(&disk_base)
         .arg(&overlay_path)
         .arg("64G")
-        .status().expect("failed to create VM disk overlay");
+        .status()
+        .expect("failed to create VM disk overlay");
 
     let mut virtfs_args: Vec<String> = Vec::new();
     for (i, m) in mounts.iter().enumerate() {
