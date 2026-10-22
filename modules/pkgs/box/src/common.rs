@@ -20,6 +20,10 @@ pub struct Cli {
     #[arg(long, group = "backend")]
     pub docker: bool,
 
+    /// Forward GPUs to the container (Docker backend only)
+    #[arg(long)]
+    pub gpu: bool,
+
     /// Share the current working directory
     #[arg(short = 'c', long)]
     pub cwd: bool,

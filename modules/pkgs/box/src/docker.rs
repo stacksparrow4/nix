@@ -73,6 +73,10 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         if args.no_network { "none" } else { "host" }.to_string(),
     ]);
 
+    if args.gpu {
+        docker_args.extend(["--gpus".to_string(), "all".to_string()]);
+    }
+
     docker_args.push("-w".to_string());
     docker_args.push(container_args.workdir);
 

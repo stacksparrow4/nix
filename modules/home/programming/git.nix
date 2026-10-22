@@ -25,10 +25,11 @@
       alias gst='git status'
       alias gcm='git checkout main || git checkout master'
       alias glog='git log'
-      alias gds='git diff --staged'
       alias gf='git fetch'
       alias grv='git remote -v'
       alias gbv='git branch -v'
+      alias gr='git restore .'
+      alias grs='git restore --staged .'
     '';
   };
 }

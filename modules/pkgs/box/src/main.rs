@@ -35,6 +35,11 @@ fn main() {
         std::process::exit(1);
     }
 
+    if !args.docker {
+        println!("Cannot specify --gpu without the Docker backend (--docker)");
+        std::process::exit(1);
+    }
+
     if args.exec.is_empty() {
         args.exec = vec!["bash".to_string()];
     }
