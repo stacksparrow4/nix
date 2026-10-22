@@ -151,6 +151,8 @@ in
           makeWrapper ${nvimWrapper}/bin/nvim $out/bin/nvim \
             --set SPRRW_NVIM ${nvim-unboxed}/bin/nvim \
             --prefix PATH : ${lib.makeBinPath [ config.packages.box ]}
+          ln -s nvim $out/bin/vi
+          ln -s nvim $out/bin/vim
         '')
         // {
           configure =
