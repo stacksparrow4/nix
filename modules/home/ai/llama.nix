@@ -78,10 +78,9 @@
             name = "llama-server";
             runtimeInputs = [ pkgs.socat ];
             text = ''
-              ${self'.packages.llama-server}/bin/llama-server \
-                --internal-models-dir ${modelsDir} \
-                --internal-preset-ini ${modelsPreset} \
-                "$@"
+              export LLAMA_SERVER_MODELS_DIR=${modelsDir}
+              export LLAMA_SERVER_PRESET_INI=${modelsPreset}
+              exec ${self'.packages.llama-server}/bin/llama-server "$@"
             '';
           })
         ];
