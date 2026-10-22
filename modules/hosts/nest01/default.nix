@@ -118,10 +118,6 @@ in
                 appId = "com.heroicgameslauncher.hgl";
                 origin = "flathub";
               }
-              {
-                appId = "moe.sable.client";
-                origin = "flathub";
-              }
             ];
 
             overrides = {

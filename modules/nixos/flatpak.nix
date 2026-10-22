@@ -42,6 +42,10 @@
           appId = "io.github.seadve.Kooha";
           origin = "flathub";
         }
+        {
+          appId = "moe.sable.client";
+          origin = "flathub";
+        }
       ];
 
       overrides = {
