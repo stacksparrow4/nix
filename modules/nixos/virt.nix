@@ -13,6 +13,7 @@
           containersConf.settings = {
             network.default_rootless_network_cmd = "slirp4netns";
             engine.compose_warning_logs = false;
+            engine.detach_keys = "";
           };
           registries.search = [ "docker.io" ];
         };
