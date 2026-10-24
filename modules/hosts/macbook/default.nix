@@ -35,6 +35,7 @@ in
 
               git
               rust
+              go
             ];
 
             sprrw = {
