@@ -3,7 +3,6 @@
 
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
-    import-tree.url = "github:denful/import-tree";
 
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -45,6 +44,15 @@
   };
 
   outputs =
-    inputs@{ flake-parts, import-tree, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } (import-tree ./modules);
+    inputs@{ flake-parts, ... }:
+    let
+      inherit (inputs.nixpkgs.lib) hasPrefix lists;
+      inherit (inputs.nixpkgs.lib.fileset) toList fileFilter;
+      mkImport =
+        path:
+        toList (fileFilter (f: f.hasExt "nix" && !(hasPrefix "_" f.name)) path);
+    in
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = lists.flatten [ (mkImport ./modules) ];
+    };
 }
