@@ -38,6 +38,9 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     }
 
     container_args.envvars.push("USER=root".to_string());
+    container_args
+        .envvars
+        .insert(0, "UV_PYTHON_PREFERENCE=only-managed".to_string());
 
     let clipboard = args.clipboard.then(|| {
         let bridge = crate::clipboard::start_unix(CLIPBOARD_SOCKET);
