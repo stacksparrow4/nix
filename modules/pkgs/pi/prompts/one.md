@@ -1,0 +1,1 @@
+Automated prompt: The user is requesting to work through choices one at a time. This is likely due to the agent proposing a number of decisions in one response block. The agent should now respond by asking questions one at a time. These questions do not need to be the same as the original questions, they can change based on the responses.

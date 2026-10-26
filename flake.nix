@@ -44,10 +44,10 @@
   };
 
   outputs =
-    inputs@{ flake-parts, ... }:
+    inputs@{ nixpkgs, flake-parts, ... }:
     let
-      inherit (inputs.nixpkgs.lib) hasPrefix lists;
-      inherit (inputs.nixpkgs.lib.fileset) toList fileFilter;
+      inherit (nixpkgs.lib) hasPrefix lists;
+      inherit (nixpkgs.lib.fileset) toList fileFilter;
       mkImport =
         path:
         toList (fileFilter (f: f.hasExt "nix" && !(hasPrefix "_" f.name)) path);
