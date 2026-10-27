@@ -62,6 +62,9 @@
 
               echo box > $out/hostname
 
+              ln -s ${pkgs.tzdata}/share/zoneinfo $out/zoneinfo
+              ln -s ${pkgs.tzdata}/share/zoneinfo/Australia/Sydney $out/localtime
+
               cat <<EOF > $out/hosts
               127.0.0.1 localhost
               ::1 localhost

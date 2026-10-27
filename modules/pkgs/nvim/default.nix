@@ -71,6 +71,8 @@ in
                 typstyle
                 # Dafny
                 dafny
+                # Lean
+                lean4
               ]
               ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.wl-clipboard
             )}"
@@ -108,6 +110,7 @@ in
               trouble-nvim
               conform-nvim
               vim-loves-dafny
+              lean-nvim
               inputs'.nvim-http-client.packages.default
             ]
             ++ additionalPlugins
