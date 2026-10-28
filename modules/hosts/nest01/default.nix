@@ -67,7 +67,6 @@ in
 
                 gui
 
-                ai
                 llama
                 pi
                 llama-qwen

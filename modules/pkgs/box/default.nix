@@ -130,7 +130,6 @@
                   jq
                   file
                   diffutils
-                  brave-search-cli
                   uv
                   nodejs
                 ]

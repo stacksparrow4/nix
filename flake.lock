@@ -32,11 +32,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793107123,
-        "narHash": "sha256-ksl0a41xt8wl4PUC/jKfUv6hI5xqcEM/xo92WluqjTo=",
+        "lastModified": 1793182390,
+        "narHash": "sha256-8aOrJd4SjTPtBeSyydsLYiKbo6pFB6yFxssJ6HyFr0Q=",
         "owner": "saghen",
         "repo": "blink.cmp",
-        "rev": "c4e7117a1b3d07656e949114f832a7efd677ec3e",
+        "rev": "74ebcf9a2daffd3d2eaaf13fa384c5caf337056e",
         "type": "github"
       },
       "original": {
@@ -170,11 +170,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1792773339,
-        "narHash": "sha256-rZLrzrC6i+jnTAlvPZHogKDulY7WWDEv9hJeHieO7Zw=",
+        "lastModified": 1793110635,
+        "narHash": "sha256-dhoW6VgFWlaodSY5jrBn+CF2FLmaUvDVgM7+C7T2+NM=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "3ec636362e1816bc2f0888fa0fa2c69f1bc9e504",
+        "rev": "31ecbaca1bdefa45dffc409f0250bd8039ea0010",
         "type": "github"
       },
       "original": {
@@ -223,11 +223,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1793134762,
-        "narHash": "sha256-lTLL/W/BJ5pjN+Bn3Gu+ECQx1Ljf7vHTGAGD1DMAJlc=",
+        "lastModified": 1793216359,
+        "narHash": "sha256-RECIRP1ZdOMfszrkc1vuAjUBKv7UzuXy++j2LSvT7+A=",
         "owner": "noctalia-dev",
         "repo": "noctalia",
-        "rev": "0bf4b8d137a02e1eae77460dc371ea943a0c79fe",
+        "rev": "4daf954bbe120140d904e3890adf247a2986ec96",
         "type": "github"
       },
       "original": {
@@ -266,11 +266,11 @@
         "nixpkgs-darwin-x64": "nixpkgs-darwin-x64"
       },
       "locked": {
-        "lastModified": 1793136707,
-        "narHash": "sha256-gKapriFan3ck3Xb6bXaboSGD02cN0P3KHovbyY3Y2Rw=",
+        "lastModified": 1793218198,
+        "narHash": "sha256-FvZCtHLeZ4WDuPsPvU38sRRV1zll3JgbW0EeW8bf1S0=",
         "owner": "earendil-works",
         "repo": "pi",
-        "rev": "bb65e3e49710fbd14f10c7792d0eaa6e2b2c5923",
+        "rev": "a87b742ff4ce262c07b7830a25c73c1442dab41b",
         "type": "github"
       },
       "original": {

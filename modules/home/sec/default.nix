@@ -1,11 +1,10 @@
-{ config, ... }:
+{ config, moduleWithSystem, ... }:
 
 {
   flake.homeModules.sec = {
     imports = with config.flake.homeModules; [
       cracking
       forensics
-      jwttool
       metasploit
       mobile
       pwn
@@ -15,6 +14,14 @@
       snmp
       web
       windows
+
+      (moduleWithSystem (
+        { self', ... }:
+        { ... }:
+        {
+          home.packages = [ self'.packages.jwt-tool ];
+        }
+      ))
     ];
   };
 }

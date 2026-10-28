@@ -11,14 +11,22 @@
       java
       kubernetes
       lua
-      node
-      php
-      ruby
       rust
-      typst
-      xml
       zig
-      dafny
+
+      (
+        { pkgs, ... }:
+        {
+          home.packages = with pkgs; [
+            dafny
+            lemminx
+            nodejs_22
+            php
+            ruby
+            typst
+          ];
+        }
+      )
     ];
   };
 }

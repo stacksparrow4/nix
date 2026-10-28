@@ -4,7 +4,6 @@
   flake.homeModules.gui = {
     imports = with config.flake.homeModules; [
       browsers
-      emoji-picker
 
       (moduleWithSystem (
         { self', pkgsUnstable, ... }:
@@ -18,9 +17,9 @@
             kdePackages.filelight
             vlc
             blender
-            rofi
             pkgsUnstable.flameshot
             self'.packages.wlfreerdp
+            self'.packages.emoji-picker
             obs-studio
           ];
         }

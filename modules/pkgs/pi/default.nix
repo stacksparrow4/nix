@@ -41,6 +41,10 @@ in
                   globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.subagent
                 }/bin
 
+                export SPRRW_ADDITIONAL_PATH=${
+                  globalConfig.flake.packages.${pkgsLinux.stdenv.hostPlatform.system}.bx
+                }/bin''${SPRRW_ADDITIONAL_PATH:+:$SPRRW_ADDITIONAL_PATH}
+
                 export SPRRW_PI_NOTIFY_ICON=${piLogoPng}
                 export SPRRW_PI_NOTIFY_ICON_CACHE_WARM=${./pi-cache-warm.png}
 
