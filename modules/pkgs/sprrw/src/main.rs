@@ -49,8 +49,6 @@ enum Cmd {
     Build,
     /// Update the update flake's inputs, then build
     Update,
-    /// Deploy a flake using deploy-rs
-    Deploy,
     /// Print shell completions
     Completions { shell: Shell },
 }
@@ -65,7 +63,6 @@ fn main() {
                 update(&config);
                 build(&config);
             }
-            Cmd::Deploy => deploy(),
             Cmd::Completions { shell } => {
                 let mut cmd = Cli::command();
                 let name = cmd.get_name().to_string();
@@ -223,69 +220,6 @@ fn build(config: &Config) {
     }
 
     notify_rebuild_complete();
-}
-
-fn deploy() {
-    run_cmd(Command::new("git").args(["add", "-A"]));
-
-    // Build each system first and make sure its added to gcroots
-    let deploy_nodes: Vec<String> = serde_json::from_slice(
-        &Command::new("nix")
-            .args([
-                "eval",
-                ".#deploy.nodes",
-                "--apply",
-                "builtins.attrNames",
-                "--json",
-            ])
-            .stdout(Stdio::piped())
-            .output()
-            .expect("failed to evaluate deploy.nodes of flake")
-            .stdout,
-    )
-    .expect("failed to parse nix eval json");
-
-    for n in deploy_nodes.iter() {
-        run_cmd(Command::new("nix").args([
-            "build",
-            &format!(".#deploy.nodes.{}.profiles.system.path", n),
-            "--out-link",
-            &format!("./.{}.gcroot", n),
-            "--option",
-            "warn-dirty",
-            "false",
-            "--print-build-logs",
-            "--show-trace",
-        ]));
-    }
-
-    if !Command::new("nix")
-        .args([
-            "run",
-            ".#deploy-rs",
-            "--",
-            ".",
-            "--",
-            "--option",
-            "warn-dirty",
-            "false",
-            "--print-build-logs",
-            "--show-trace",
-        ])
-        .status()
-        .expect("failed to execute nix run")
-        .success()
-    {
-        println!("Failed to execute nix run .#deploy-rs.");
-        println!(
-            "Maybe deploy-rs is not a flake output? Here is how to add it with dendritic nix:"
-        );
-        println!();
-        println!("flake.packages = builtins.mapAttrs (system: pkgs: {{");
-        println!("  deploy-rs = pkgs.deploy-rs;");
-        println!("}}) inputs.nixpkgs.legacyPackages;");
-        std::process::exit(1);
-    };
 }
 
 fn update(config: &Config) {
