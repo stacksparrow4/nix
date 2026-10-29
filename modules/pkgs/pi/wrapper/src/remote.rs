@@ -151,7 +151,9 @@ fn handle_remote_connection(stream: UnixStream, executor: Arc<Executor>) {
         .as_str()
         .expect("Command was not supplied")
         .to_string();
-    let timeout = req["timeout"].as_u64().unwrap_or(60);
+    let timeout = req["timeout"]
+        .as_f64()
+        .map(Duration::from_secs_f64);
 
     let mut child = match spawn_command(&executor, &command) {
         Ok(c) => c,
@@ -194,10 +196,12 @@ fn handle_remote_connection(stream: UnixStream, executor: Arc<Executor>) {
 
     let mut timed_out = false;
 
-    let exit_code = match child
-        .wait_timeout(Duration::from_secs(timeout))
-        .expect("Failed to wait on process")
-    {
+    let status = match timeout {
+        Some(t) => child.wait_timeout(t),
+        None => child.wait().map(Some),
+    };
+
+    let exit_code = match status.expect("Failed to wait on process") {
         Some(status) => status.code().unwrap_or(-1),
         None => {
             timed_out = true;
@@ -218,7 +222,7 @@ fn handle_remote_connection(stream: UnixStream, executor: Arc<Executor>) {
     } else if timed_out {
         send_msg(
             &writer,
-            json!({"type": "error", "message": format!("timeout after {}s", timeout)}),
+            json!({"type": "error", "message": format!("timeout after {}s", timeout.unwrap().as_secs_f64())}),
         );
     } else {
         send_msg(&writer, json!({"type": "exit", "code": exit_code}));
