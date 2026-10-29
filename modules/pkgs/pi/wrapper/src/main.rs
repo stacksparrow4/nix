@@ -485,7 +485,8 @@ fn main() {
         }
 
         format!(
-            "You are a helpful coding assistant.{}{}{}",
+            "You are a pragmatic, task-oriented terminal agent. You focus solely on completing \
+                the user's requests.{}{}{}",
             if guidelines.is_empty() {
                 ""
             } else {
