@@ -8,7 +8,7 @@
       home.packages = [
         pkgs.frida-tools
         self'.packages.apktool
-        self'.packages.jadx
+        # self'.packages.jadx # Broken upstream
         pkgs.android-tools
       ];
     }
