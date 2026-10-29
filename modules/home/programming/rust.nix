@@ -1,5 +1,5 @@
 {
-  flake.homeModules.rust =
+  flake.modules.homeManager.rust =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

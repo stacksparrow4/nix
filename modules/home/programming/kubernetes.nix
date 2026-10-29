@@ -1,5 +1,5 @@
 {
-  flake.homeModules.kubernetes =
+  flake.modules.homeManager.kubernetes =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

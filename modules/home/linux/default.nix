@@ -1,8 +1,8 @@
 { config, ... }:
 
 {
-  flake.homeModules.linux = {
-    imports = with config.flake.homeModules; [
+  flake.modules.homeManager.linux = {
+    imports = with config.flake.modules.homeManager; [
       desktop-entries
       rofi
       sway

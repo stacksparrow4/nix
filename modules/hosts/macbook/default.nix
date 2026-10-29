@@ -7,7 +7,7 @@
 }:
 
 let
-  homeModules = config.flake.homeModules;
+  homeModules = config.flake.modules.homeManager;
 in
 {
   flake.homeConfigurations.dan = withSystem "aarch64-darwin" (

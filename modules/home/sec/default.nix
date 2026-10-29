@@ -1,8 +1,8 @@
 { config, moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec = {
-    imports = with config.flake.homeModules; [
+  flake.modules.homeManager.sec = {
+    imports = with config.flake.modules.homeManager; [
       cracking
       forensics
       metasploit

@@ -1,6 +1,6 @@
 {
   # Overwrite default desktop file to rename to "Discord"
-  flake.homeModules.desktop-entries = {
+  flake.modules.homeManager.desktop-entries = {
     xdg.dataFile."applications/dev.vencord.Vesktop.desktop".text = ''
       [Desktop Entry]
       Type=Application

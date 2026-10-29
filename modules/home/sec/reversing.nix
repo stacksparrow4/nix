@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.reversing = moduleWithSystem (
+  flake.modules.homeManager.reversing = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

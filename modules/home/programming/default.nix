@@ -1,8 +1,8 @@
 { config, ... }:
 
 {
-  flake.homeModules.programming = {
-    imports = with config.flake.homeModules; [
+  flake.modules.homeManager.programming = {
+    imports = with config.flake.modules.homeManager; [
       c
       databases
       dotnet

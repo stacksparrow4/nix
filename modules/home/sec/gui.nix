@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sec-gui = moduleWithSystem (
+  flake.modules.homeManager.sec-gui = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

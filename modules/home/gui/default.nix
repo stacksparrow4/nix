@@ -1,8 +1,8 @@
 { config, moduleWithSystem, ... }:
 
 {
-  flake.homeModules.gui = {
-    imports = with config.flake.homeModules; [
+  flake.modules.homeManager.gui = {
+    imports = with config.flake.modules.homeManager; [
       browsers
 
       (moduleWithSystem (

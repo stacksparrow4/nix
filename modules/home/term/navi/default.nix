@@ -1,5 +1,5 @@
 {
-  flake.homeModules.navi =
+  flake.modules.homeManager.navi =
     { pkgs, config, ... }:
     {
       home.packages = [ pkgs.navi ];

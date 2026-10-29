@@ -6,8 +6,8 @@
 }:
 
 let
-  nixosModules = config.flake.nixosModules;
-  homeModules = config.flake.homeModules;
+  nixosModules = config.flake.modules.nixos;
+  homeModules = config.flake.modules.homeManager;
 in
 {
   flake.nixosConfigurations.nest01 = inputs.nixpkgs.lib.nixosSystem {

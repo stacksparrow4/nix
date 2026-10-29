@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.scanning = moduleWithSystem (
+  flake.modules.homeManager.scanning = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

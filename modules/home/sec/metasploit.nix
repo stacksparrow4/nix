@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.metasploit = moduleWithSystem (
+  flake.modules.homeManager.metasploit = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

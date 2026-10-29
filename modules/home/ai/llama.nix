@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.llama = moduleWithSystem (
+  flake.modules.homeManager.llama = moduleWithSystem (
     { self', ... }:
     {
       pkgs,

@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.cracking = moduleWithSystem (
+  flake.modules.homeManager.cracking = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

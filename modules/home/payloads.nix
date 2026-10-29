@@ -1,5 +1,5 @@
 {
-  flake.homeModules.payloads =
+  flake.modules.homeManager.payloads =
     { pkgs, ... }:
     {
       home.file."payloads/seclists".source = pkgs.runCommand "seclists" { } ''

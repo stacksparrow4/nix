@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.virt =
+  flake.modules.nixos.virt =
     { pkgs, ... }:
     {
       environment.systemPackages = with pkgs; [
@@ -25,7 +25,7 @@
       };
     };
 
-  flake.nixosModules.workstation-virt = {
+  flake.modules.nixos.workstation-virt = {
     hardware.nvidia-container-toolkit.enable = true;
 
     programs.virt-manager.enable = true;

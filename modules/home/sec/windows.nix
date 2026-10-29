@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.windows = moduleWithSystem (
+  flake.modules.homeManager.windows = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

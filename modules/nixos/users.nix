@@ -1,5 +1,5 @@
 {
-  flake.nixosModules.users = {
+  flake.modules.nixos.users = {
     security.sudo.wheelNeedsPassword = false;
 
     nix.settings.trusted-users = [

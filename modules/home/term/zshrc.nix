@@ -1,5 +1,5 @@
 {
-  flake.homeModules.zshrc =
+  flake.modules.homeManager.zshrc =
     { config, ... }:
     {
       home.file.".zshrc".text = ''

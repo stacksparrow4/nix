@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.web = moduleWithSystem (
+  flake.modules.homeManager.web = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

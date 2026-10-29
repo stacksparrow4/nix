@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.pi = moduleWithSystem (
+  flake.modules.homeManager.pi = moduleWithSystem (
     { self', ... }:
     {
       pkgs,

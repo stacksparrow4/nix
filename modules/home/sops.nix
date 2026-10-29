@@ -1,5 +1,5 @@
 {
-  flake.homeModules.sops =
+  flake.modules.homeManager.sops =
     {
       pkgs,
       lib,

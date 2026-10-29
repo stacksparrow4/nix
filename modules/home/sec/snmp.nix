@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.snmp = moduleWithSystem (
+  flake.modules.homeManager.snmp = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

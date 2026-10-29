@@ -1,5 +1,5 @@
 {
-  flake.homeModules.databases =
+  flake.modules.homeManager.databases =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

@@ -1,5 +1,5 @@
 {
-  flake.homeModules.dotnet =
+  flake.modules.homeManager.dotnet =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.pwn = moduleWithSystem (
+  flake.modules.homeManager.pwn = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

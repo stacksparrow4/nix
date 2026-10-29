@@ -1,5 +1,5 @@
 {
-  flake.homeModules.java =
+  flake.modules.homeManager.java =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

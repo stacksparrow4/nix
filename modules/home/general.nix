@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.general = moduleWithSystem (
+  flake.modules.homeManager.general = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {
@@ -57,7 +57,7 @@
     }
   );
 
-  flake.homeModules.general-linux = moduleWithSystem (
+  flake.modules.homeManager.general-linux = moduleWithSystem (
     { self', ... }:
     { ... }:
     {

@@ -1,7 +1,7 @@
 { config, ... }:
 
 {
-  flake.homeModules.aliases = {
+  flake.modules.homeManager.aliases = {
     sprrw.term.shellExtra = ''
       alias ls='ls --color=auto'
 
@@ -58,8 +58,8 @@
     '';
   };
 
-  flake.homeModules.term = {
-    imports = with config.flake.homeModules; [
+  flake.modules.homeManager.term = {
+    imports = with config.flake.modules.homeManager; [
       aliases
       bash
       foot

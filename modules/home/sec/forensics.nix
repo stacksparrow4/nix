@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.forensics = moduleWithSystem (
+  flake.modules.homeManager.forensics = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

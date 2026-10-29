@@ -1,7 +1,7 @@
 { inputs, ... }:
 
 {
-  flake.nixosModules.vms =
+  flake.modules.nixos.vms =
     {
       pkgs,
       lib,

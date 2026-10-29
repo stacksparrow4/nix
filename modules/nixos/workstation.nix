@@ -1,8 +1,8 @@
 { config, ... }:
 
 {
-  flake.nixosModules.workstation = {
-    imports = with config.flake.nixosModules; [
+  flake.modules.nixos.workstation = {
+    imports = with config.flake.modules.nixos; [
       audio
       display
       fonts

@@ -1,5 +1,5 @@
 {
-  flake.homeModules.zig =
+  flake.modules.homeManager.zig =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [

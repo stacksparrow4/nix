@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.foot = moduleWithSystem (
+  flake.modules.homeManager.foot = moduleWithSystem (
     { self', ... }:
     {
       pkgs,

@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.nvim = moduleWithSystem (
+  flake.modules.homeManager.nvim = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {

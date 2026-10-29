@@ -1,5 +1,5 @@
 {
-  flake.homeModules.base =
+  flake.modules.homeManager.base =
     { lib, ... }:
     {
       options.sprrw = {

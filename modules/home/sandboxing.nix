@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.homeModules.sandbox = moduleWithSystem (
+  flake.modules.homeManager.sandbox = moduleWithSystem (
     { self', ... }:
     { pkgs, config, ... }:
     {

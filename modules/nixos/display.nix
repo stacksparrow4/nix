@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 
 {
-  flake.nixosModules.display = moduleWithSystem (
+  flake.modules.nixos.display = moduleWithSystem (
     { self', ... }:
     { pkgs, ... }:
     {
