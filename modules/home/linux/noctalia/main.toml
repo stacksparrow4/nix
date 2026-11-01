@@ -11,7 +11,7 @@ start = [ "workspaces" ]
 
     [[bar.default.capsule_group]]
     enabled = true
-    fill = "surface_variant"
+    fill = "surface_container"
     id = "g1"
     members = [ "disk", "cpu", "ram" ]
     opacity = 1.0
@@ -19,7 +19,7 @@ start = [ "workspaces" ]
 
     [[bar.default.capsule_group]]
     enabled = true
-    fill = "surface_variant"
+    fill = "surface_container"
     id = "g2"
     members = [ "network", "bluetooth", "volume", "brightness", "battery" ]
     opacity = 1.0
