@@ -57,6 +57,10 @@ struct Args {
     #[arg(long)]
     ro_cwd: bool,
 
+    /// Make AGENTS.md from the host CWD available to the agent, even without --cwd
+    #[arg(short, long)]
+    agents: bool,
+
     /// Share a volume with the sandbox. Format: <host>:<box>:<ro|rw>:<dir|file>. Can be repeated.
     #[arg(short, long)]
     volume: Vec<String>,
@@ -354,6 +358,29 @@ fn main() {
     }
 
     let real_pi_location = std::env::var("SPRRW_PI").unwrap();
+
+    let agents_md_args: Vec<String> = if args.agents {
+        let path = env::current_dir()
+            .expect("Failed to get the current working directory")
+            .join("AGENTS.md");
+
+        if !path.is_file() {
+            eprintln!("--agents was supplied but {} does not exist", path.display());
+            std::process::exit(2);
+        }
+
+        vec![
+            "-v".to_string(),
+            generate_absolute_volume(
+                &path.to_string_lossy(),
+                "/AGENTS.md",
+                VolAccess::RO,
+                VolType::File,
+            ),
+        ]
+    } else {
+        vec![]
+    };
 
     let target = match (
         args.remote.as_deref(),
@@ -719,6 +746,7 @@ fn main() {
         .args(bridge_args)
         .args(notify_args)
         .args(subagent_args)
+        .args(agents_md_args)
         .args(match target {
             Target::Remote { universal: true } => vec![],
             _ => vec!["--env", "PI_REMOTE_FILE_TOOLS=1"],
