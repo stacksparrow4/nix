@@ -1,5 +1,5 @@
 import { connect } from "node:net";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 const SOCKET_PATH = process.env.PI_NOTIFY_SOCKET;
 const TCP_ADDR = process.env.PI_NOTIFY_ADDR;
@@ -76,7 +76,8 @@ export default function (pi: ExtensionAPI) {
     notify("Pi turn complete", preview || "");
   });
 
-  pi.on("cache_warming_decision", (_event, ctx) => {
+  pi.events.on("cache-warming:warm", (data) => {
+    const ctx = data as ExtensionContext;
     if (!ctx.hasUI || ctx.mode !== "tui") return;
     const preview = firstMessagePreview(ctx);
     notify("Warming pi cache", preview || "");

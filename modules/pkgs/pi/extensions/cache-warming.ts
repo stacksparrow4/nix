@@ -7,8 +7,10 @@ export default function (pi: ExtensionAPI) {
     enabled = true;
   });
 
-  pi.on("cache_warming_decision", (_event, _ctx) => {
-    return { action: enabled ? "warm" : "stop" };
+  pi.on("cache_warming_decision", (_event, ctx) => {
+    if (!enabled) return { action: "stop" };
+    pi.events.emit("cache-warming:warm", ctx);
+    return { action: "warm" };
   });
 
   pi.registerCommand("warming", {
