@@ -225,7 +225,6 @@ fn build(config: &Config) {
 fn update(config: &Config) {
     if cfg!(target_os = "linux") {
         flatpak::update();
-        run_cmd(Command::new("docker").args(["pull", "ghcr.io/ggml-org/llama.cpp:server-cuda13"]));
     }
     for update_flake in &config.update_flakes {
         run_cmd(Command::new("git").current_dir(update_flake).arg("pull"));
