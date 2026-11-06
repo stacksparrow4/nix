@@ -173,28 +173,16 @@ in
             }
           ];
 
-          services.fstrim = {
-            enable = true;
-            interval = "weekly";
-          };
-
           networking.hostName = "nest01";
 
-          hardware.graphics = {
-            enable = true;
-          };
           hardware.nvidia = {
             modesetting.enable = true;
-            powerManagement.enable = false;
-            powerManagement.finegrained = false;
             open = false;
-            nvidiaSettings = true;
             package = config.boot.kernelPackages.nvidiaPackages.stable;
           };
           services.xserver.videoDrivers = [ "nvidia" ];
 
           hardware.opentabletdriver.enable = true;
-          hardware.opentabletdriver.daemon.enable = true;
 
           # This value determines the NixOS release from which the default
           # settings for stateful data, like file locations and database

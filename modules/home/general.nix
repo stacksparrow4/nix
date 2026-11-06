@@ -65,10 +65,6 @@
         nodemon
         tailcat
       ];
-
-      nix.extraOptions = ''
-        !include /home/sprrw/.local/nix-access-tokens.conf
-      '';
     }
   );
 }

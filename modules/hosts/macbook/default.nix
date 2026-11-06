@@ -66,7 +66,6 @@ in
             home.packages =
               with pkgs;
               [
-                sshpass
                 shtris
               ]
               ++ (with self'.packages; [

@@ -20,12 +20,6 @@
             libnotify
           ];
 
-          # 1password stuff
-          services.gnome-keyring = {
-            enable = true;
-            components = [ "secrets" ];
-          };
-
           gtk = {
             enable = true;
             theme = {

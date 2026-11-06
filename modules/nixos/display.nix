@@ -5,8 +5,6 @@
     { self', ... }:
     { pkgs, ... }:
     {
-      security.polkit.enable = true;
-
       environment.systemPackages = with pkgs; [
         wl-clipboard
         acpilight
@@ -24,30 +22,13 @@
       };
 
       xdg.portal = {
-        enable = true;
-        wlr = {
-          enable = true;
-
-          settings.screencast = {
-            chooser_type = "dmenu";
-            chooser_cmd = "${self'.packages.portal-chooser}/bin/portal-chooser";
-          };
+        wlr.settings.screencast = {
+          chooser_type = "dmenu";
+          chooser_cmd = "${self'.packages.portal-chooser}/bin/portal-chooser";
         };
-        extraPortals = with pkgs; [
-          xdg-desktop-portal-gtk
-          xdg-desktop-portal-wlr
-          xdg-desktop-portal-termfilechooser
-        ];
+        extraPortals = [ pkgs.xdg-desktop-portal-termfilechooser ];
 
-        config = {
-          common = {
-            default = [ "gtk" ];
-            "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
-            "org.freedesktop.impl.portal.ScreenCast" = [ "wlr" ];
-            "org.freedesktop.impl.portal.Screenshot" = [ "wlr" ];
-          };
-          sway."org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
-        };
+        config.sway."org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
       };
 
       systemd.user.services.xdg-desktop-portal-termfilechooser.serviceConfig.ExecStart =
@@ -64,8 +45,6 @@
           ""
           "${pkgs.xdg-desktop-portal-termfilechooser}/libexec/xdg-desktop-portal-termfilechooser -c ${termfilechooserConfig}"
         ];
-
-      programs.dconf.enable = true;
 
       services.greetd = {
         enable = true;
