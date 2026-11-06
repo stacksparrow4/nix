@@ -477,6 +477,9 @@ fn main() {
                 "You are in an Alpine container with a read-only /nix volume \
                 mounted in. Use apk to install packages.",
             );
+            guidelines.push(
+                "Never use `find` on the root directory for performance reasons.",
+            );
         }
 
         if all_tools.contains(&"command".to_string()) {
