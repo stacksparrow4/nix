@@ -43,6 +43,10 @@
           origin = "flathub";
         }
         {
+          appId = "io.github.everestapi.Olympus";
+          origin = "flathub";
+        }
+        {
           appId = "moe.sable.client";
           origin = "flathub";
         }
@@ -84,6 +88,12 @@
           sockets = [
             "!x11"
             "!fallback-x11"
+          ];
+        };
+        "io.github.everestapi.Olympus".Context = {
+          filesystems = [
+            "!home"
+            "!/run/media"
           ];
         };
       };
