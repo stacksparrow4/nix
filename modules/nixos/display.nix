@@ -23,8 +23,8 @@
 
       xdg.portal = {
         wlr.settings.screencast = {
-          chooser_type = "dmenu";
-          chooser_cmd = "${self'.packages.portal-chooser}/bin/portal-chooser";
+          chooser_type = "simple";
+          chooser_cmd = "${self'.packages.wlr-chooser}/bin/wlr-chooser";
         };
         extraPortals = [ pkgs.xdg-desktop-portal-termfilechooser ];
 
