@@ -44,40 +44,8 @@
 
         home.packages = [
           self'.packages.pi
-        ]
-        ++ (if pkgs.stdenv.hostPlatform.isLinux then (
-          let
-            execSystemPrompt = { shell, example }: ''
-              Provide a ${shell} command in plain text. Do not provide a description. Do not provide code block formatting. Only output the command. If there is a lack of details, provide most logical solution. For example:
-
-              ${example}
-            '';
-          in
-          [
-            (import ./_pi-exec.nix {
-              inherit pkgs;
-              name = "pi-exec";
-              system = execSystemPrompt {
-                shell = "bash";
-                example = ''
-                  User: add new user with default password
-                  Response: sudo useradd -m newuser && echo "newuser:password | sudo chpasswd
-                '';
-              };
-            })
-            (import ./_pi-exec.nix {
-              inherit pkgs;
-              name = "pi-exec-pwsh";
-              system = execSystemPrompt {
-                shell = "PowerShell";
-                example = ''
-                  User: add new user with default password
-                  Response: New-LocalUser -Name "NewUser" -Password (ConvertTo-SecureString "P@ssw0rd" -AsPlainText -Force) -FullName "New User" -Description "New local user account"
-                '';
-              };
-            })
-          ]
-        ) else []);
+          self'.packages.pi-exec
+        ];
       };
     }
   );
