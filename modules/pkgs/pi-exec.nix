@@ -2,6 +2,7 @@
   perSystem =
     {
       pkgs,
+      self',
       ...
     }:
     {
@@ -17,7 +18,7 @@
             '';
           in
           ''
-            output=$(pi --system "$(cat ${systemFile})" -p --no-tools --no-extensions -- --thinking off "$@" | sed -rz 's/^\n+//; s/\n+$/\n/g')
+            output=$(${self'.packages.pi}/bin/pi --system "$(cat ${systemFile})" -p --no-tools --no-extensions -- --thinking off "$@" | sed -rz 's/^\n+//; s/\n+$/\n/g')
             echo "$output"
             printf "\n\e[33m[e]\e[0m exec  \e[33m[c]\e[0m copy: "
             read -r choice
