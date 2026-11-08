@@ -240,6 +240,8 @@ const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
 const BRIDGE_DIR: &str = "/tmp/pi-remote";
 
+const LOCAL_ONLY_MARKER: &str = ".pi-local-only";
+
 const CONTROL_DIR: &str = "/tmp/pi-subagent";
 const CONTROL_SOCKET: &str = "/tmp/pi-subagent/control.sock";
 
@@ -355,6 +357,21 @@ fn main() {
 
     if let Some(socket_path) = args.internal_serve.as_deref() {
         serve_local(socket_path);
+    }
+
+    if args.local.is_none() {
+        let cwd = env::current_dir().expect("Failed to get the current working directory");
+        if let Some(marker) = cwd
+            .ancestors()
+            .map(|dir| dir.join(LOCAL_ONLY_MARKER))
+            .find(|path| path.exists())
+        {
+            eprintln!(
+                "Found {}, this directory may only be accessed with --local",
+                marker.display()
+            );
+            std::process::exit(2);
+        }
     }
 
     let real_pi_location = std::env::var("SPRRW_PI").unwrap();
