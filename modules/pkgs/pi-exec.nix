@@ -18,22 +18,7 @@
             '';
           in
           ''
-            output=$(${self'.packages.pi}/bin/pi --system "$(cat ${systemFile})" -p --no-tools --no-extensions -- --thinking off "$@" | sed -rz 's/^\n+//; s/\n+$/\n/g')
-            echo "$output"
-            printf "\n\e[33m[e]\e[0m exec  \e[33m[c]\e[0m copy: "
-            read -r choice
-            case "$choice" in
-              e)
-                eval "$output"
-                ;;
-              c)
-                echo -n "$output" | ${pkgs.wl-clipboard}/bin/wl-copy
-                printf "\e[32mCopied to clipboard\e[0m\n"
-                ;;
-              *)
-                printf "\e[31mAborted\e[0m\n"
-                ;;
-            esac
+            ${self'.packages.pi}/bin/pi --system "$(cat ${systemFile})" -p --no-tools --no-extensions -- --thinking off "$@" | sed -rz 's/^\n+//; s/\n+$/\n/g'
           '';
       };
     };

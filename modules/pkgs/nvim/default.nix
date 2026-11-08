@@ -1,14 +1,10 @@
-{ config, ... }:
-
-let
-  globalConfig = config;
-in
 {
   perSystem =
     {
       pkgs,
       pkgsLinux,
       config,
+      self',
       lib,
       inputs',
       ...
@@ -48,7 +44,7 @@ in
               with pkgs;
               [
                 # General
-                globalConfig.flake.packages.${pkgs.stdenv.hostPlatform.system}.yazi
+                self'.packages.yazi
                 # Python
                 basedpyright
                 ruff
