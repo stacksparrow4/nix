@@ -28,7 +28,7 @@
             Unit.Description = "Clear pi session logs older than 1 week";
             Service = {
               Type = "oneshot";
-              ExecStart = "${pkgs.findutils}/bin/find ${config.home.homeDirectory}/.pi/agent/sessions -mindepth 2 -maxdepth 2 -type f -name '*.jsonl' -mtime +7 -delete";
+              ExecStart = "${pkgs.findutils}/bin/find ${config.home.homeDirectory}/.pi/agent/sessions -mindepth 1 ( ! -type d -mtime +7 -o -type d -empty ) -delete";
             };
           };
 
