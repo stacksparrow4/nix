@@ -227,6 +227,11 @@ fn update(config: &Config) {
         flatpak::update();
     }
     for update_flake in &config.update_flakes {
+        run_cmd(
+            Command::new("git")
+                .current_dir(update_flake)
+                .args(["restore", "--source=HEAD", "--staged", "--worktree", "flake.lock"]),
+        );
         run_cmd(Command::new("git").current_dir(update_flake).arg("pull"));
         run_cmd(
             Command::new("nix")
