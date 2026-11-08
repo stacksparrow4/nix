@@ -18,6 +18,7 @@
           bindkey -M viins '^P' up-line-or-history
           bindkey -M viins '^N' down-line-or-history
           bindkey -M viins '^L' clear-screen
+          bindkey -M viins '^R' history-incremental-search-backward
           bindkey -M viins '\e.' insert-last-word
           bindkey -M viins '\e[1;3C' forward-word
           bindkey -M viins '\e[1;3D' backward-word
