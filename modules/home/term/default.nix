@@ -63,6 +63,7 @@
       aliases
       bash
       foot
+      inputrc
       navi
       tmux
       yazi
