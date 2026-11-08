@@ -235,6 +235,7 @@ const DEFAULT_EXTENSIONS: &[&str] = &[
     "subagent.ts",
     "cache-warming.ts",
     "openrouter.ts",
+    "vi-mode.ts",
 ];
 const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
