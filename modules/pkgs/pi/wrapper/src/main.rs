@@ -359,7 +359,7 @@ fn main() {
         serve_local(socket_path);
     }
 
-    if args.local.is_none() {
+    if args.local.is_none() && (args.cwd || args.ro_cwd) {
         let cwd = env::current_dir().expect("Failed to get the current working directory");
         if let Some(marker) = cwd
             .ancestors()
