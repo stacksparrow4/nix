@@ -28,8 +28,7 @@ in
               pi
 
               aliases
-              bash
-              zshrc
+              zsh
               yazi
               tmux
 

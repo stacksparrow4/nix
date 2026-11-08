@@ -12,7 +12,7 @@
         term.shellExtra = lib.mkOption {
           type = lib.types.lines;
           default = "";
-          description = "Shell snippet appended to both the bash and zsh rc files.";
+          description = "Shell snippet appended to the zsh rc file.";
         };
       };
 

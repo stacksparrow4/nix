@@ -10,6 +10,7 @@
       function take() {
         if [[ $# -ne 1 ]]; then
           echo "Usage: take <dir>"
+          return 1
         fi
         mkdir "$1"
         cd "$1"
@@ -20,11 +21,10 @@
         if echo "$1" | grep -qE "^/"; then
           mypath="$1"
         else
-          if ! which "$1" >/dev/null; then
+          if ! mypath=$(whence -p "$1"); then
             echo "Failed to find binary"
             return 1
           fi
-          mypath=$(which "$1")
         fi
 
         while [ -L "$mypath" ]; do
@@ -36,16 +36,10 @@
       }
 
       function ns() {
-        if [[ -n "$BASH_VERSINFO" ]]; then
-          history -a
-        fi
         nix-shell -p "$@"
       }
 
       function ns-unstable() {
-        if [[ -n "$BASH_VERSINFO" ]]; then
-          history -a
-        fi
         NIXPKGS_ALLOW_UNFREE=1 nix shell --impure $(for i in "$@"; do echo -n ' github:NixOS/nixpkgs/nixos-unstable#'"$i"; done)
       }
 
@@ -61,13 +55,12 @@
   flake.modules.homeManager.term = {
     imports = with config.flake.modules.homeManager; [
       aliases
-      bash
       foot
       inputrc
       navi
       tmux
       yazi
-      zshrc
+      zsh
     ];
   };
 }

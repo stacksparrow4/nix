@@ -1,19 +1,25 @@
 {
-  flake.modules.nixos.users = {
-    security.sudo.wheelNeedsPassword = false;
+  flake.modules.nixos.users =
+    { pkgs, ... }:
+    {
+      programs.zsh.enable = true;
+      environment.pathsToLink = [ "/share/zsh" ];
 
-    nix.settings.trusted-users = [
-      "@wheel"
-    ];
+      security.sudo.wheelNeedsPassword = false;
 
-    users.users.sprrw = {
-      isNormalUser = true;
-      description = "sprrw";
-      extraGroups = [
-        "networkmanager"
-        "wheel"
-        "podman"
+      nix.settings.trusted-users = [
+        "@wheel"
       ];
+
+      users.users.sprrw = {
+        isNormalUser = true;
+        description = "sprrw";
+        shell = pkgs.zsh;
+        extraGroups = [
+          "networkmanager"
+          "wheel"
+          "podman"
+        ];
+      };
     };
-  };
 }
