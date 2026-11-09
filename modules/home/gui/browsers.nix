@@ -1,27 +1,35 @@
 { moduleWithSystem, ... }:
 
-# Extensions:
-# - Firefox
-#   - Pwnfox
-#   - Wappalyzer
-# - Brave
-#   - 1Password
-#   - Vimium
-#
-# Vimium custom key mappings:
-#
-# unmapAll
-# map j scrollDown
-# map k scrollUp
-# map f LinkHints.activateMode
 {
   flake.modules.homeManager.browsers = moduleWithSystem (
     { inputs', ... }:
-    { pkgs, lib, ... }:
+    { pkgs, lib, config, ... }:
     {
+      programs.brave = {
+        enable = true;
+        package = inputs'.nixpkgs-master.legacyPackages.brave;
+        extensions = [
+          { id = "aeblfdkhhhdcdjpifhhbdiojplfjncoa"; } # 1Password
+          { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; } # Vimium
+        ];
+      };
+
+      programs.firefox = {
+        enable = true;
+        configPath = "${config.xdg.configHome}/mozilla/firefox";
+        policies.ExtensionSettings =
+          lib.mapAttrs
+            (_: slug: {
+              installation_mode = "force_installed";
+              install_url = "https://addons.mozilla.org/firefox/downloads/latest/${slug}/latest.xpi";
+            })
+            {
+              "PwnFox@bi.tk" = "pwnfox";
+              "wappalyzer@crunchlabz.com" = "wappalyzer";
+            };
+      };
+
       home.packages = [
-        inputs'.nixpkgs-master.legacyPackages.brave
-        pkgs.firefox
         pkgs.chromium
       ];
 
