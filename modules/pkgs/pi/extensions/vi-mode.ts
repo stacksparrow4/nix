@@ -255,6 +255,7 @@ class ViEditor extends CustomEditor {
   private pendingCtrlX = false;
   private lastWord: { idx: number; line: number; start: number; end: number; text: string } | null = null;
   private lastShape: string | null = null;
+  isIdle: () => boolean = () => true;
 
   constructor(...args: ConstructorParameters<typeof CustomEditor>) {
     super(...args);
@@ -355,6 +356,15 @@ class ViEditor extends CustomEditor {
       if (this.keys) {
         this.keys = "";
         return;
+      }
+      if (matchesKey(data, "escape") && this.isIdle()) {
+        const openTree = this.actionHandlers.get("app.session.tree");
+        if (openTree) {
+          this.wantCol = null;
+          this.lastShape = null;
+          openTree();
+          return;
+        }
       }
       if (matchesKey(data, "ctrl+r")) {
         this.redo();
@@ -940,11 +950,44 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", (_event, ctx) => {
     if (!ctx.hasUI) return;
+    let ui: any;
+    let kb: any;
     ctx.ui.setEditorComponent((tui, theme, keybindings) => {
+      ui = tui;
+      kb = keybindings;
       const next = new ViEditor(tui, theme, keybindings);
+      next.isIdle = () => ctx.isIdle();
       if (editor) next.inherit(editor);
       editor = next;
       return next;
+    });
+
+    let pendingG = false;
+    ctx.ui.onTerminalInput((data) => {
+      const focused = ui?.getFocusedComponent?.();
+      if (typeof focused?.getTreeList !== "function" || focused.labelInput) {
+        pendingG = false;
+        return;
+      }
+      const ch = printable(data);
+      const hadG = pendingG;
+      pendingG = false;
+      if (ch === "j") return { data: "\x1b[B" };
+      if (ch === "k") return { data: "\x1b[A" };
+      if (ch === "G" || (ch === "g" && hadG)) {
+        const list = focused.getTreeList();
+        const count = Array.isArray(list.filteredNodes) ? list.filteredNodes.length : 0;
+        list.selectedIndex = ch === "G" ? Math.max(0, count - 1) : 0;
+        ui.requestRender();
+        return { consume: true };
+      }
+      if (ch === "g") {
+        pendingG = true;
+        return { consume: true };
+      }
+      if (kb?.matches(data, "app.tree.editLabel") || kb?.matches(data, "app.tree.toggleLabelTimestamp")) return;
+      if (ch !== undefined) return { consume: true };
+      return;
     });
   });
 
