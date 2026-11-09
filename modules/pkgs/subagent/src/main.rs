@@ -9,9 +9,14 @@ use std::sync::atomic::{AtomicI32, Ordering};
 
 use clap::{Parser, Subcommand};
 
-/// Thin control client for the Pi subagent system.
+const AFTER_HELP: &str = "\
+EXAMPLES:
+  subagent run 'Perform task A' && subagent run 'Perform task B' && subagent waitall
+";
+
+/// Thin control client for the Pi subagent system: delegate tasks to parallel agents.
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version, about, long_about = None, after_help = AFTER_HELP)]
 struct Args {
     #[command(subcommand)]
     command: Command,
@@ -31,6 +36,9 @@ enum Command {
         /// The subagent id (or a subagent-<N>.log path)
         id: String,
     },
+    /// Block until all currently running subagents finish (remember to use a non-default
+    /// timeout on the bash tool itself)
+    Waitall,
 }
 
 fn log_path(id: &str) -> String {
@@ -46,6 +54,7 @@ fn main() {
     match args.command {
         Command::Run { task } => run(task),
         Command::Wait { id } => wait(id),
+        Command::Waitall => waitall(),
     }
 }
 
@@ -166,33 +175,7 @@ fn wait(id: String) {
         }
     };
 
-    let socket = match env::var("PI_SUBAGENT_SOCKET") {
-        Ok(s) if !s.is_empty() => s,
-        _ => {
-            eprintln!("subagents unavailable in this context");
-            exit(1);
-        }
-    };
-
-    let stream = UnixStream::connect(&socket).unwrap_or_else(|e| {
-        eprintln!("subagent: failed to connect to control socket ({socket}): {e}");
-        exit(1);
-    });
-
-    let mut writer = stream.try_clone().expect("failed to clone control socket");
-    let mut reader = BufReader::new(stream);
-
-    let req = format!("{{\"type\":\"wait\",\"id\":{id_num}}}\n");
-    if writer.write_all(req.as_bytes()).is_err() || writer.flush().is_err() {
-        eprintln!("subagent: failed to send request to control server");
-        exit(1);
-    }
-
-    let mut line = String::new();
-    if reader.read_line(&mut line).unwrap_or(0) == 0 {
-        eprintln!("subagent: no response from control server");
-        exit(1);
-    }
+    let line = control_request(&format!("{{\"type\":\"wait\",\"id\":{id_num}}}\n"));
     let line = line.trim();
 
     if line.contains("\"type\":\"error\"") {
@@ -213,6 +196,88 @@ fn wait(id: String) {
 
     eprintln!("subagent: unexpected response from control server: {line}");
     exit(1);
+}
+
+fn waitall() {
+    let line = control_request("{\"type\":\"waitall\"}\n");
+    let line = line.trim();
+
+    if line.contains("\"type\":\"error\"") {
+        let msg = json_field(line, "message").unwrap_or_else(|| "unknown error".to_string());
+        eprintln!("subagent: {msg}");
+        exit(4);
+    }
+
+    if !line.contains("\"type\":\"waitall_end\"") {
+        eprintln!("subagent: unexpected response from control server: {line}");
+        exit(1);
+    }
+
+    let results = line
+        .find("\"results\"")
+        .map(|i| &line[i..])
+        .and_then(|r| r.find('[').map(|j| &r[j + 1..]))
+        .unwrap_or("");
+
+    let mut status = 0;
+    let mut count = 0;
+    for obj in results.split('}') {
+        let Some(start) = obj.find('{') else { continue };
+        let obj = &obj[start..];
+        let Some(id) = json_field(obj, "id") else { continue };
+        count += 1;
+        let path = json_field(obj, "logPath").unwrap_or_else(|| log_path(&id));
+        let code = json_field(obj, "exitCode")
+            .and_then(|v| v.parse::<i32>().ok())
+            .unwrap_or(0);
+        let state = if obj.contains("\"aborted\":true") {
+            "aborted".to_string()
+        } else if code == 0 {
+            "done".to_string()
+        } else {
+            format!("failed (exit {code})")
+        };
+        println!("subagent {id}: {state}. Log at {path}");
+        if status == 0 && code != 0 {
+            status = code;
+        }
+    }
+
+    if count == 0 {
+        println!("No running subagents.");
+    }
+    let _ = std::io::stdout().flush();
+    exit(status);
+}
+
+fn control_request(req: &str) -> String {
+    let socket = match env::var("PI_SUBAGENT_SOCKET") {
+        Ok(s) if !s.is_empty() => s,
+        _ => {
+            eprintln!("subagents unavailable in this context");
+            exit(1);
+        }
+    };
+
+    let stream = UnixStream::connect(&socket).unwrap_or_else(|e| {
+        eprintln!("subagent: failed to connect to control socket ({socket}): {e}");
+        exit(1);
+    });
+
+    let mut writer = stream.try_clone().expect("failed to clone control socket");
+    let mut reader = BufReader::new(stream);
+
+    if writer.write_all(req.as_bytes()).is_err() || writer.flush().is_err() {
+        eprintln!("subagent: failed to send request to control server");
+        exit(1);
+    }
+
+    let mut line = String::new();
+    if reader.read_line(&mut line).unwrap_or(0) == 0 {
+        eprintln!("subagent: no response from control server");
+        exit(1);
+    }
+    line
 }
 
 fn daemonize() {

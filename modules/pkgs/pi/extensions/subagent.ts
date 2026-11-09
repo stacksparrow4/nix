@@ -343,6 +343,12 @@ export default function (pi: ExtensionAPI) {
 	}
 	const finished = new Map<number, SubagentResult>();
 	const waiters = new Map<number, net.Socket[]>();
+	interface AllWaiter {
+		conn: net.Socket;
+		pending: Set<number>;
+		results: Map<number, SubagentResult>;
+	}
+	const allWaiters = new Set<AllWaiter>();
 	const MAX_FINISHED = 256;
 	let nextId = 0;
 	let server: net.Server | undefined;
@@ -430,6 +436,11 @@ export default function (pi: ExtensionAPI) {
 			if (oldest === undefined) break;
 			finished.delete(oldest);
 		}
+		for (const w of [...allWaiters]) {
+			if (!w.pending.delete(id)) continue;
+			w.results.set(id, result);
+			if (w.pending.size === 0) completeWaitAll(w);
+		}
 		const pending = waiters.get(id);
 		if (!pending) return;
 		waiters.delete(id);
@@ -440,6 +451,27 @@ export default function (pi: ExtensionAPI) {
 				w.end();
 			}
 		}
+	}
+
+	function completeWaitAll(w: AllWaiter) {
+		allWaiters.delete(w);
+		if (w.conn.destroyed) return;
+		const results = [...w.results.entries()]
+			.sort(([a], [b]) => a - b)
+			.map(([id, r]) => ({ id, logPath: `/tmp/subagent-${id}.log`, ...r }));
+		w.conn.write(`${JSON.stringify({ type: "waitall_end", results })}\n`);
+		w.conn.end();
+	}
+
+	function handleWaitAll(conn: net.Socket) {
+		const ids = [...live.values()].filter((s) => !s.done).map((s) => s.id);
+		const w: AllWaiter = { conn, pending: new Set(ids), results: new Map() };
+		if (ids.length === 0) {
+			completeWaitAll(w);
+			return;
+		}
+		allWaiters.add(w);
+		conn.on("close", () => allWaiters.delete(w));
 	}
 
 	function handleWait(conn: net.Socket, req: any) {
@@ -726,6 +758,10 @@ export default function (pi: ExtensionAPI) {
 			}
 			if (req.type === "wait") {
 				handleWait(conn, req);
+				return;
+			}
+			if (req.type === "waitall") {
+				handleWaitAll(conn);
 				return;
 			}
 			if (req.type !== "run" || typeof req.task !== "string" || !req.task.trim()) {
