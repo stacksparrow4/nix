@@ -10,6 +10,8 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use clap::{Parser, Subcommand};
 
 const AFTER_HELP: &str = "\
+When waiting, use a non-default timeout on the bash tool call itself.
+
 EXAMPLES:
   subagent run 'Perform task A' && subagent run 'Perform task B' && subagent waitall
 ";
