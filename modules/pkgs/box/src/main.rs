@@ -46,7 +46,7 @@ fn main() {
     }
 
     if args.exec.is_empty() {
-        args.exec = vec!["bash".to_string()];
+        args.exec = vec![std::env::var("SPRRW_SHELL").unwrap()];
     }
 
     if std::env::var("IN_SPRRW_SANDBOX").is_ok() {

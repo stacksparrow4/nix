@@ -12,8 +12,7 @@
       packages = {
         box =
           let
-            rustBin =
-              (pkgs.callPackage ./_Cargo.nix { }).rootCrate.build;
+            rustBin = (pkgs.callPackage ./_Cargo.nix { }).rootCrate.build;
             terminfo =
               if pkgs.stdenv.hostPlatform.isLinux then
                 "${pkgs.foot.terminfo}/share/terminfo"
@@ -175,7 +174,12 @@
                 } \
                 --set SPRRW_CLIP_SHIMS ${clipShimLinux}/shims \
                 --set SPRRW_PATH ${packages}/bin \
-                --set SPRRW_TERMINFO ${terminfo}
+                --set SPRRW_TERMINFO ${terminfo} \
+                --set SPRRW_SHELL ${
+                  self.packages.${pkgsLinux.stdenv.hostPlatform.system}.zsh.override {
+                    prompt = "\n%B%F{magenta} %1~ %(!.#.$)%f%b ";
+                  }
+                }/bin/zsh
             '';
       };
     };
