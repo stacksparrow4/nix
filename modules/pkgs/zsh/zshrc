@@ -1,0 +1,70 @@
+typeset -U path cdpath fpath manpath
+
+for profile in ${(z)NIX_PROFILES}; do
+  fpath+=($profile/share/zsh/site-functions $profile/share/zsh/$ZSH_VERSION/functions $profile/share/zsh/vendor-completions)
+done
+fpath=(@nix_zsh_completions@/share/zsh/site-functions $fpath)
+
+HELPDIR="@zsh@/share/zsh/$ZSH_VERSION/help"
+
+bindkey -v
+KEYTIMEOUT=1
+PROMPT=@prompt@
+
+bindkey -M viins '^P' up-line-or-history
+bindkey -M viins '^N' down-line-or-history
+bindkey -M viins '^L' clear-screen
+bindkey -M viins '^R' history-incremental-search-backward
+bindkey -M viins '\e.' insert-last-word
+bindkey -M viins '\e[1;3C' forward-word
+bindkey -M viins '\e[1;3D' backward-word
+bindkey -M viins '^?' backward-delete-char
+bindkey -M viins '^H' backward-delete-char
+bindkey -M viins '^W' backward-kill-word
+bindkey -M viins '^U' backward-kill-line
+
+function zle-keymap-select {
+  if [[ $KEYMAP == vicmd ]]; then
+    printf '\e[2 q'
+  else
+    printf '\e[6 q'
+  fi
+}
+zle -N zle-keymap-select
+
+function zle-line-init {
+  printf '\e[6 q'
+}
+zle -N zle-line-init
+
+autoload -Uz select-quoted select-bracketed
+zle -N select-quoted
+zle -N select-bracketed
+for m in visual viopp; do
+  for c in {a,i}{\',\",\`}; do
+    bindkey -M $m $c select-quoted
+  done
+  for c in {a,i}${(s..)^:-'()[]{}<>bB'}; do
+    bindkey -M $m $c select-bracketed
+  done
+done
+
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey -M viins '^X^E' edit-command-line
+bindkey -M vicmd '^X^E' edit-command-line
+
+HISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/zsh/history"
+mkdir -p "${HISTFILE:h}"
+HISTSIZE=2000
+SAVEHIST=2000
+setopt HIST_IGNORE_DUPS SHARE_HISTORY HIST_FCNTL_LOCK
+
+autoload -Uz compinit
+zcompdump="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump-$ZSH_VERSION"
+mkdir -p "${zcompdump:h}"
+compinit -d "$zcompdump"
+
+eval "$(@coreutils@/bin/dircolors -b)"
+
+@shell_extra@

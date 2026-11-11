@@ -14,7 +14,7 @@
 
       config.programs.tmux = {
         enable = true;
-        shell = "${pkgs.zsh}/bin/zsh";
+        shell = "${config.home.profileDirectory}/bin/zsh";
 
         extraConfig =
           builtins.replaceStrings

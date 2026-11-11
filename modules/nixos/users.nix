@@ -1,9 +1,14 @@
 {
   flake.modules.nixos.users =
-    { pkgs, ... }:
+    { config, ... }:
+    let
+      zsh = "${config.home-manager.users.sprrw.home.profileDirectory}/bin/zsh";
+    in
     {
       programs.zsh.enable = true;
+      programs.zsh.enableGlobalCompInit = false;
       environment.pathsToLink = [ "/share/zsh" ];
+      environment.shells = [ zsh ];
 
       security.sudo.wheelNeedsPassword = false;
 
@@ -14,7 +19,7 @@
       users.users.sprrw = {
         isNormalUser = true;
         description = "sprrw";
-        shell = pkgs.zsh;
+        shell = zsh;
         extraGroups = [
           "networkmanager"
           "wheel"
