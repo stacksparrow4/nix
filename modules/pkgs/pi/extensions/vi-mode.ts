@@ -367,7 +367,7 @@ class ViEditor extends CustomEditor {
         }
       }
       if (matchesKey(data, "ctrl+r")) {
-        this.redo();
+        this.viRedo();
         this.clampNormal();
         return;
       }
@@ -465,7 +465,7 @@ class ViEditor extends CustomEditor {
     return structuredClone({ state: this.ed.state, pastes: this.ed.pastes, pasteCounter: this.ed.pasteCounter });
   }
 
-  private undo(): void {
+  private viUndo(): void {
     if (this.redoText !== this.getText()) this.redoStack = [];
     if (!this.ed.undoStack?.length) return;
     this.redoStack.push(this.snapshot());
@@ -473,7 +473,7 @@ class ViEditor extends CustomEditor {
     this.redoText = this.getText();
   }
 
-  private redo(): void {
+  private viRedo(): void {
     if (this.redoText !== this.getText()) this.redoStack = [];
     const s = this.redoStack.pop();
     if (!s) return;
@@ -836,7 +836,7 @@ class ViEditor extends CustomEditor {
         this.paste(p.c === "P", n);
         break;
       case "u":
-        for (let i = 0; i < n; i++) this.undo();
+        for (let i = 0; i < n; i++) this.viUndo();
         break;
       case "i":
         this.beginChange();
