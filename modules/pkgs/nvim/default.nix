@@ -56,6 +56,7 @@
                 clang-tools
                 # Rust
                 cargo
+                rustc
                 clippy
                 rust-analyzer
                 rustfmt
