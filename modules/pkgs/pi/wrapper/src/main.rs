@@ -532,6 +532,9 @@ fn main() {
             );
         }
 
+        guidelines.push("When asking the user a question, only ask one question at a time. \
+            This means that your next questions can use the context from the previous answer.");
+
         format!(
             "You are a pragmatic, task-oriented terminal agent. You focus solely on completing \
                 the user's requests.{}{}{}",

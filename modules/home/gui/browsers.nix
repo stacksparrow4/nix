@@ -3,7 +3,12 @@
 {
   flake.modules.homeManager.browsers = moduleWithSystem (
     { inputs', ... }:
-    { pkgs, lib, config, ... }:
+    {
+      pkgs,
+      lib,
+      config,
+      ...
+    }:
     {
       programs.brave = {
         enable = true;
