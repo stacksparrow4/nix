@@ -625,7 +625,7 @@ export default function (pi: ExtensionAPI) {
 		const model = lastCtx?.model ? `${lastCtx.model.provider}/${lastCtx.model.id}` : undefined;
 		const thinking = lastCtx?.thinkingLevel;
 
-		const tools = FULL_REMOTE ? ["bash", "read", "write", "edit"] : ["Command"];
+		const tools = FULL_REMOTE ? ["bash", "read", "write", "edit"] : ["command"];
 		const extensions = [path.join(EXT_DIR, "pi-remote.ts")];
 
 		const args: string[] = ["--mode", "json", "-p", "--no-session", "--approve"];

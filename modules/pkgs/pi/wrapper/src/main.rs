@@ -435,7 +435,7 @@ fn main() {
             .chain(if args.no_tools || args.search {
                 vec![]
             } else if matches!(target, Target::Remote { universal: true }) {
-                vec!["Command".to_string()]
+                vec!["command".to_string()]
             } else {
                 DEFAULT_TOOLS.iter().map(|t| t.to_string()).collect()
             })

@@ -25,7 +25,7 @@ const SOCKET_PATH = "/tmp/pi-remote/pi.sock";
 const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
 const READ_AGENTS_MD = process.env.PI_READ_AGENTS_MD === "1";
 const LOCAL_AGENTS_MD = "/AGENTS.md";
-const TOOL_NAME = FULL_REMOTE ? "bash" : "Command";
+const TOOL_NAME = FULL_REMOTE ? "bash" : "command";
 const DEFAULT_TIMEOUT_SECONDS = 10;
 const REMOTE_FILE_OP_TIMEOUT_SECONDS = 30;
 
