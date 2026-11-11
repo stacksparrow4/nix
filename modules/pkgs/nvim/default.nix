@@ -65,8 +65,6 @@
                 # Typst
                 tinymist
                 typstyle
-                # Dafny
-                dafny
                 # Lean
                 lean4
               ]
@@ -105,7 +103,6 @@
               yazi-nvim
               trouble-nvim
               conform-nvim
-              vim-loves-dafny
               lean-nvim
               inputs'.nvim-http-client.packages.default
             ]

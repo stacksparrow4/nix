@@ -18,7 +18,6 @@
         { pkgs, ... }:
         {
           home.packages = with pkgs; [
-            dafny
             lemminx
             nodejs_22
             php
