@@ -68,7 +68,7 @@
                 # Lean
                 lean4
                 # Rocq
-                coqPackages.coq
+                (coqPackages.coq.withPackages (p: [ p.stdlib ]))
               ]
               ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.wl-clipboard
             )}"
