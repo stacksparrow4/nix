@@ -1,5 +1,8 @@
+{ moduleWithSystem, ... }:
+
 {
-  flake.modules.homeManager.tmux =
+  flake.modules.homeManager.tmux = moduleWithSystem (
+    { pkgsUnstable, ... }:
     {
       config,
       lib,
@@ -14,6 +17,7 @@
 
       config.programs.tmux = {
         enable = true;
+        package = pkgsUnstable.tmux;
         shell = "${config.home.profileDirectory}/bin/zsh";
 
         extraConfig =
@@ -39,5 +43,6 @@
             ]
             (builtins.readFile ./tmux.conf);
       };
-    };
+    }
+  );
 }
