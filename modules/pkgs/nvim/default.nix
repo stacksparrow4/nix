@@ -67,6 +67,9 @@
                 typstyle
                 # Lean
                 lean4
+                # Rocq
+                coqPackages.coq
+                coqPackages.coq-lsp
               ]
               ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.wl-clipboard
             )}"
@@ -104,6 +107,8 @@
               trouble-nvim
               conform-nvim
               lean-nvim
+              Coqtail
+              coq-lsp-nvim
               inputs'.nvim-http-client.packages.default
             ]
             ++ additionalPlugins
