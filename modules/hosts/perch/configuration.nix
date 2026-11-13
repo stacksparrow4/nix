@@ -18,10 +18,10 @@
 
           hardware.asahi = {
             enable = true;
-            pkgs = lib.mkForce import inputs.nixos-apple-silicon.inputs.nixpkgs {
+            pkgs = lib.mkForce (import inputs.nixos-apple-silicon.inputs.nixpkgs {
               system = "aarch64-linux";
               overlays = [ inputs.nixos-apple-silicon.overlays.default ];
-            };
+            });
             peripheralFirmwareDirectory = null;
           };
 
