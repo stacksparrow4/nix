@@ -4,7 +4,6 @@
   flake.modules.homeManager.linux = {
     imports = with config.flake.modules.homeManager; [
       desktop-entries
-      rofi
       sway
       linux-tools
 

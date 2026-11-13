@@ -33,7 +33,7 @@ bindsym $mod+Shift+e exec sh -c 'flameshot gui --raw | wl-copy --type image/png'
 bindsym $mod+Shift+f exec foot yazi
 
 bindsym $mod+d exec "noctalia msg panel-toggle launcher"
-bindsym $mod+e exec "emoji-picker"
+bindsym $mod+e exec "noctalia msg panel-toggle launcher '/emo '"
 
 bindsym $mod+Shift+q kill
 

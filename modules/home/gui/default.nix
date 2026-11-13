@@ -19,7 +19,6 @@
             blender
             pkgsUnstable.flameshot
             self'.packages.wlfreerdp
-            self'.packages.emoji-picker
             obs-studio
           ];
         }
