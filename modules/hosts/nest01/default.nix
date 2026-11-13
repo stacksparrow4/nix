@@ -19,6 +19,7 @@
             base
             workstation
             workstation-virt
+            steam
             locale
             nix-config
             users
