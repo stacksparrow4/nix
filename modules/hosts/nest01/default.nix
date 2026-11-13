@@ -1,14 +1,10 @@
 {
   inputs,
-  config,
+  self,
   moduleWithSystem,
   ...
 }:
 
-let
-  nixosModules = config.flake.modules.nixos;
-  homeModules = config.flake.modules.homeManager;
-in
 {
   flake.nixosConfigurations.nest01 = inputs.nixpkgs.lib.nixosSystem {
     modules = [
@@ -18,7 +14,7 @@ in
         { self', ... }:
         { lib, config, ... }:
         {
-          imports = with nixosModules; [
+          imports = with self.modules.nixos; [
             ./_hardware-configuration.nix
             base
             workstation
@@ -46,7 +42,7 @@ in
               repo = "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/nest01";
             in
             {
-              imports = with homeModules; [
+              imports = with self.modules.home; [
                 base
                 general
                 general-linux
