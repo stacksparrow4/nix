@@ -1,5 +1,0 @@
-% socat
-
-# Forward localhost TCP connection on different (privileged port)
-sudo socat TCP4-LISTEN:<listen_port>,fork,reuseaddr TCP:localhost:<target_port>
-

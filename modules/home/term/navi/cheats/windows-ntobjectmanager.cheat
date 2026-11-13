@@ -1,3 +1,0 @@
-% create system powershell
-# Create system powershell
-Import-Module NtObjectManager; Start-Win32ChildProcess ((Get-NtProcess -Current).Win32ImagePath) -RequiredPrivilege SeTcbPrivilege

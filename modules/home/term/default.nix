@@ -57,7 +57,6 @@
       aliases
       foot
       inputrc
-      navi
       tmux
       yazi
       zsh

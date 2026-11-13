@@ -1,4 +1,0 @@
-% kerberos
-
-# Kerberoast / GetUserSPNs.py
-GetUserSPNs.py -outputfile kerberoast.txt '<domain>/<user_with_password>:<password_for_user>'

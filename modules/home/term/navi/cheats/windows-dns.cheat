@@ -1,4 +1,0 @@
-% dns
-
-# Zone transfer
-dig axfr @<ip_for_domain> '<domain>'
