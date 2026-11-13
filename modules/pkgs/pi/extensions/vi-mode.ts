@@ -1,7 +1,8 @@
 import { CustomEditor, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
-type Mode = "insert" | "normal";
+type Mode = "insert" | "normal" | "visual" | "vline";
+type LayoutLine = { text: string; hasCursor: boolean; cursorPos?: number };
 type Register = { text: string; linewise: boolean };
 type Target = { off: number; inclusive: boolean; linewise: boolean };
 type Span = { start: number; end: number; linewise: boolean };
@@ -23,11 +24,15 @@ const INVALID = Symbol("invalid");
 const BAR = "\x1b[6 q";
 const BLOCK = "\x1b[2 q";
 const RESET = "\x1b[0 q";
+const SEL_END = "\x1b[49m";
+const INDENT = "  ";
 
 const OPS = new Set(["d", "c", "y", "g~", "gu", "gU"]);
 const MOTIONS = new Set(["h", "l", "j", "k", "w", "W", "b", "B", "e", "E", "0", "^", "$", "G", "gg", ";", ",", "%", " ", "_"]);
-const SIMPLE = new Set(["x", "X", "D", "C", "Y", "s", "S", "p", "P", "u", "i", "a", "I", "A", "o", "O", "J", "~", "."]);
+const SIMPLE = new Set(["x", "X", "D", "C", "Y", "s", "S", "p", "P", "u", "i", "a", "I", "A", "o", "O", "J", "~", ".", "v", "V"]);
 const CHANGES = new Set(["x", "X", "D", "C", "s", "S", "p", "P", "i", "a", "I", "A", "o", "O", "J", "~", "r"]);
+const VISUAL_OPS = new Set(["d", "x", "X", "D", "c", "s", "C", "S", "R", "y", "Y", "~", "g~", "u", "gu", "U", "gU", "J", "p", "P", "r", ">", "<"]);
+const VISUAL_ARG = new Set(["f", "F", "t", "T", "i", "a", "r"]);
 const REVERSE: Record<string, string> = { f: "F", F: "f", t: "T", T: "t" };
 const QUOTES = new Set(["\"", "'", "`"]);
 const BRACKETS: Record<string, [string, string]> = {
@@ -255,10 +260,14 @@ class ViEditor extends CustomEditor {
   private pendingCtrlX = false;
   private lastWord: { idx: number; line: number; start: number; end: number; text: string } | null = null;
   private lastShape: string | null = null;
+  private anchor = 0;
   isIdle: () => boolean = () => true;
+  selectBg: () => string = () => "\x1b[48;5;238m";
 
   constructor(...args: ConstructorParameters<typeof CustomEditor>) {
     super(...args);
+    const layout = this.ed.layoutText.bind(this);
+    this.ed.layoutText = (w: number) => this.highlight(layout(w));
     if (restoreHardwareCursor === null) restoreHardwareCursor = this.tui.getShowHardwareCursor();
     this.tui.setShowHardwareCursor(true);
   }
@@ -298,7 +307,8 @@ class ViEditor extends CustomEditor {
       return;
     }
     if (this.mode === "insert") this.insertInput(data);
-    else this.normalInput(data);
+    else if (this.mode === "normal") this.normalInput(data);
+    else this.visualInput(data);
   }
 
   override render(width: number): string[] {
@@ -310,8 +320,9 @@ class ViEditor extends CustomEditor {
       this.tui.terminal.write(shape);
       this.lastShape = shape;
     }
-    if (this.mode === "normal" && lines.length > 1) {
-      const label = ` NORMAL${this.keys ? ` ${this.keys}` : ""} `;
+    if (this.mode !== "insert" && lines.length > 1) {
+      const name = this.mode === "normal" ? "NORMAL" : this.mode === "visual" ? "VISUAL" : "VISUAL LINE";
+      const label = ` ${name}${this.keys ? ` ${this.keys}` : ""} `;
       const last = lines.length - 1;
       if (visibleWidth(lines[last]!) > visibleWidth(label) + 2) {
         lines[last] = truncateToWidth(lines[last]!, width - visibleWidth(label), "") + this.borderColor(label);
@@ -435,7 +446,7 @@ class ViEditor extends CustomEditor {
   }
 
   private clampNormal(): void {
-    if (this.mode !== "normal") return;
+    if (this.mode === "insert") return;
     const s = this.ed.state;
     const len = (s.lines[s.cursorLine] ?? "").length;
     if (s.cursorCol > 0 && s.cursorCol >= len) this.ed.setCursorCol(Math.max(0, len - 1));
@@ -885,7 +896,228 @@ class ViEditor extends CustomEditor {
       case ".":
         this.repeat(n, p.hasCount);
         break;
+      case "v":
+      case "V":
+        this.anchor = off;
+        this.mode = p.c === "v" ? "visual" : "vline";
+        break;
     }
+  }
+
+  private visualInput(data: string): void {
+    let ch = printable(data);
+    if (ch === undefined && this.keys === "" && matchesKey(data, "backspace")) ch = "h";
+    if (ch === undefined) {
+      if (!this.keys && (matchesKey(data, "escape") || matchesKey(data, "ctrl+c"))) {
+        this.mode = "normal";
+        this.clampNormal();
+      }
+      this.keys = "";
+      return;
+    }
+    this.keys += ch;
+    if (this.execVisual(this.keys) === PENDING) return;
+    this.keys = "";
+  }
+
+  private execVisual(cmd: string): typeof PENDING | undefined {
+    const k = [...cmd];
+    let i = 0;
+    while (i < k.length && /[0-9]/.test(k[i]!) && !(i === 0 && k[i] === "0")) i++;
+    const hasCount = i > 0;
+    const count = hasCount ? Number(k.slice(0, i).join("")) : 1;
+    if (i >= k.length) return PENDING;
+    let w = k[i++]!;
+    if (w === "g") {
+      if (i >= k.length) return PENDING;
+      w += k[i++];
+    }
+    let arg: string | undefined;
+    if (VISUAL_ARG.has(w)) {
+      if (i >= k.length) return PENDING;
+      arg = k[i];
+    }
+    const t = this.getText();
+    const off = this.cursorOff();
+    if (w !== "j" && w !== "k") this.wantCol = null;
+    if (w === "i" || w === "a") {
+      const span = this.textObject(t, off, w + arg, "");
+      if (!span || span.end <= span.start) return;
+      this.mode = "visual";
+      this.anchor = Math.min(this.anchor, off, span.start);
+      this.setOff(Math.max(this.anchor, off, span.end - 1));
+      this.clampNormal();
+      return;
+    }
+    if (w === "j" || w === "k") {
+      const s = this.ed.state;
+      for (let n = 0; n < count; n++) {
+        if (w === "k" ? s.cursorLine > 0 : s.cursorLine < s.lines.length - 1) this.vertical(w === "k" ? -1 : 1);
+      }
+      this.clampNormal();
+      return;
+    }
+    if (MOTIONS.has(w) || /^[fFtT]$/.test(w)) {
+      const tg = this.target(t, off, w, arg, count, hasCount, null);
+      if (tg) this.setOff(tg.off);
+      if (tg && w === "$") this.wantCol = Infinity;
+      this.clampNormal();
+      return;
+    }
+    if (w === "o" || w === "O") {
+      const a = this.anchor;
+      this.anchor = off;
+      this.setOff(a);
+      this.clampNormal();
+      return;
+    }
+    if (w === "v" || w === "V") {
+      const m = w === "v" ? "visual" : "vline";
+      this.mode = this.mode === m ? "normal" : m;
+      this.clampNormal();
+      return;
+    }
+    if (!VISUAL_OPS.has(w)) return;
+    const sel = this.selection(t, off, this.mode === "vline");
+    const lines = this.selection(t, off, true);
+    this.mode = "normal";
+    if (w !== "y" && w !== "Y") this.lastChange = null;
+    switch (w) {
+      case "d":
+      case "x":
+        this.operate("d", sel);
+        break;
+      case "X":
+      case "D":
+        this.operate("d", lines);
+        break;
+      case "c":
+      case "s":
+        this.operate("c", sel);
+        break;
+      case "C":
+      case "S":
+      case "R":
+        this.operate("c", lines);
+        break;
+      case "y":
+        this.operate("y", sel);
+        break;
+      case "Y":
+        this.operate("y", lines);
+        break;
+      case "~":
+      case "g~":
+        this.operate("g~", sel);
+        break;
+      case "u":
+      case "gu":
+        this.operate("gu", sel);
+        break;
+      case "U":
+      case "gU":
+        this.operate("gU", sel);
+        break;
+      case "J":
+        this.join(t, lines.start, lineIndex(t, lines.end) - lineIndex(t, lines.start) + 1);
+        break;
+      case "p":
+      case "P":
+        this.replaceSelection(t, sel, count, w === "p");
+        break;
+      case "r": {
+        const e = Math.min(sel.end, t.length);
+        this.beginChange();
+        this.apply(t.slice(0, sel.start) + t.slice(sel.start, e).replace(/[^\n]/gu, arg!) + t.slice(e), sel.start);
+        break;
+      }
+      case ">":
+      case "<":
+        this.shift(t, lines, w === ">" ? count : -count);
+        break;
+    }
+    if (this.mode === "normal") {
+      this.finishChange();
+      this.clampNormal();
+    }
+    return;
+  }
+
+  private selection(t: string, off: number, linewise: boolean): Span {
+    const a = Math.min(this.anchor, off);
+    const b = Math.max(this.anchor, off);
+    if (linewise) return { start: lineStart(t, a), end: lineEnd(t, b), linewise: true };
+    return { start: a, end: b + ((t.codePointAt(b) ?? 0) > 0xffff ? 2 : 1), linewise: false };
+  }
+
+  private replaceSelection(t: string, sel: Span, n: number, swap: boolean): void {
+    const r = this.reg;
+    if (!r.text && !r.linewise) return;
+    this.beginChange();
+    const e = Math.min(sel.end, t.length);
+    const wrap = r.linewise && !sel.linewise;
+    let block = r.linewise ? Array(n).fill(r.text).join("\n") : r.text.repeat(n);
+    if (wrap) block = "\n" + block + "\n";
+    const nt = t.slice(0, sel.start) + block + t.slice(e);
+    if (swap) this.reg = { text: t.slice(sel.start, e), linewise: sel.linewise };
+    this.apply(nt, r.linewise ? firstNonBlank(nt, sel.start + (wrap ? 1 : 0)) : sel.start + Math.max(0, block.length - 1));
+  }
+
+  private shift(t: string, sp: Span, n: number): void {
+    const out = t
+      .slice(sp.start, sp.end)
+      .split("\n")
+      .map((l) => {
+        if (n > 0) return l ? INDENT.repeat(n) + l : l;
+        let r = l;
+        for (let i = 0; i < -n; i++) r = r.startsWith("\t") ? r.slice(1) : r.replace(/^ {1,2}/, "");
+        return r;
+      })
+      .join("\n");
+    this.beginChange();
+    const nt = t.slice(0, sp.start) + out + t.slice(sp.end);
+    this.apply(nt, firstNonBlank(nt, sp.start));
+  }
+
+  private highlight(layout: LayoutLine[]): LayoutLine[] {
+    if (this.mode !== "visual" && this.mode !== "vline") return layout;
+    const t = this.getText();
+    const { start, end, linewise } = this.selection(t, this.cursorOff(), this.mode === "vline");
+    const on = this.selectBg();
+    const out = [...layout];
+    let li = 0;
+    let off = 0;
+    for (const line of this.ed.state.lines as string[]) {
+      if (off > end) break;
+      let col = 0;
+      for (;;) {
+        const l = out[li];
+        if (!l) return out;
+        const base = off + col;
+        if (!line) {
+          if (start <= base && (base < end || (linewise && base === end))) out[li] = this.paint(l, 0, 1, on);
+        } else {
+          const a = Math.max(0, Math.min(start - base, l.text.length));
+          const b = Math.max(0, Math.min(end - base, l.text.length));
+          if (a < b) out[li] = this.paint(l, a, b, on);
+        }
+        li++;
+        col += l.text.length;
+        if (col >= line.length || !l.text) break;
+      }
+      off += line.length + 1;
+    }
+    return out;
+  }
+
+  private paint(l: LayoutLine, a: number, b: number, on: string): LayoutLine {
+    const text = l.text || " ";
+    const p = l.cursorPos;
+    return {
+      ...l,
+      text: text.slice(0, a) + on + text.slice(a, b) + SEL_END + text.slice(b),
+      cursorPos: p === undefined ? p : p + (p >= a ? on.length : 0) + (p >= b ? SEL_END.length : 0),
+    };
   }
 
   private paste(before: boolean, n: number): void {
@@ -957,6 +1189,7 @@ export default function (pi: ExtensionAPI) {
       kb = keybindings;
       const next = new ViEditor(tui, theme, keybindings);
       next.isIdle = () => ctx.isIdle();
+      next.selectBg = () => ctx.ui.theme.getBgAnsi("selectedBg");
       if (editor) next.inherit(editor);
       editor = next;
       return next;
