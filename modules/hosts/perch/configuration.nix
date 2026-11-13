@@ -25,7 +25,7 @@
           ]);
 
           home-manager.users.sprrw = {
-            imports = with self.modules.home; [
+            imports = with self.modules.homeManager; [
               base
               general
               general-linux

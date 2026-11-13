@@ -42,7 +42,7 @@
               repo = "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/nest01";
             in
             {
-              imports = with self.modules.home; [
+              imports = with self.modules.homeManager; [
                 base
                 general
                 general-linux
