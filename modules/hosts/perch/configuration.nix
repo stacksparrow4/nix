@@ -5,7 +5,6 @@
     modules = [
       (
         {
-          config,
           lib,
           pkgs,
           ...
@@ -19,9 +18,11 @@
 
           hardware.asahi = {
             enable = true;
+            pkgs = lib.mkForce import inputs.nixos-apple-silicon.inputs.nixpkgs {
+              system = "aarch64-linux";
+              overlays = [ inputs.nixos-apple-silicon.overlays.default ];
+            };
             peripheralFirmwareDirectory = null;
-            # TODO: Temporary, remove later
-            avd.enable = false;
           };
 
           boot.loader.systemd-boot.enable = true;
@@ -34,11 +35,16 @@
             wifi.backend = "iwd";
           };
 
-  nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-    extra-substituters = [ "https://nix-community.cachix.org" ];
-    extra-trusted-public-keys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
-  };
+          nix.settings = {
+            experimental-features = [
+              "nix-command"
+              "flakes"
+            ];
+            extra-substituters = [ "https://nix-community.cachix.org" ];
+            extra-trusted-public-keys = [
+              "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+            ];
+          };
 
           # Set your time zone.
           # time.timeZone = "Europe/Amsterdam";
