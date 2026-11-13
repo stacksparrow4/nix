@@ -13,7 +13,7 @@
           imports = [
             ./_hardware-configuration.nix
             inputs.nixos-apple-silicon.nixosModules.apple-silicon-support
-            inputs.home-manager.nixosModule.home-manager
+            inputs.home-manager.nixosModules.home-manager
           ]
           ++ (with self.modules.nixos; [
             base
