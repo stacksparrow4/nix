@@ -11,6 +11,7 @@
       url = "github:nix-community/home-manager?ref=release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixos-apple-silicon.url = "github:nix-community/nixos-apple-silicon?ref=main";
     nixvirt = {
       url = "github:stacksparrow4/NixVirt?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
