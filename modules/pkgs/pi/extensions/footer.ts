@@ -254,6 +254,14 @@ function formatOpenRouterCredit(credits: UsageSnapshot["credits"], sessionCost: 
   return `A$${(sessionCost * USD_TO_AUD).toFixed(3)} used (A$${(remaining * USD_TO_AUD).toFixed(2)} left)`;
 }
 
+// Mirrors the picker's estimated-cost formatting in openrouter.ts.
+function formatCost(costUsd: number): string {
+  const cost = costUsd * USD_TO_AUD;
+  if (cost === 0) return "A$0";
+  if (cost < 0.01) return `A$${cost.toFixed(4)}`;
+  return `A$${cost.toFixed(cost < 1 ? 3 : 2)}`;
+}
+
 // Mirrors the built-in footer's compact token formatting.
 function formatTokens(count: number): string {
   if (count < 1000) return `${count}`;
@@ -291,6 +299,27 @@ function latestCacheHitRate(ctx: any): number | undefined {
     }
   }
   return undefined;
+}
+
+const PINS_CACHE_MS = 5000;
+let pinsCache: { at: number; store: Record<string, any> } | undefined;
+
+// The pinned endpoint for a model, as written by the openrouter extension. Its
+// cost is the picker table's estimate, so the footer can show what the shown
+// provider costs alongside its name.
+function pinnedCost(modelId: string | undefined, provider: string): number | undefined {
+  if (!modelId) return undefined;
+  const now = Date.now();
+  if (!pinsCache || now - pinsCache.at > PINS_CACHE_MS) {
+    try {
+      const path = join(getAgentDir(), "sessions", "openrouter-pins.json");
+      pinsCache = { at: now, store: JSON.parse(readFileSync(path, "utf8")) ?? {} };
+    } catch {
+      pinsCache = { at: now, store: {} };
+    }
+  }
+  const pin = pinsCache.store[modelId];
+  return pin?.provider === provider && typeof pin.cost === "number" ? pin.cost : undefined;
 }
 
 // OpenRouter reports the endpoint that served a request in `openrouter_metadata`
@@ -497,7 +526,10 @@ export default function (pi: ExtensionAPI) {
             // Prefix the resolved OpenRouter upstream provider, when one was
             // resolved and it fits.
             if (model?.provider === "openrouter" && routedProvider) {
-              const withProvider = `(${routedProvider}) ${right}`;
+              const cost = pinnedCost(model.id, routedProvider);
+              const label =
+                cost === undefined ? `(${routedProvider})` : `(${routedProvider} ${formatCost(cost)})`;
+              const withProvider = `${label} ${right}`;
               if (visibleWidth(left) + 2 + visibleWidth(withProvider) <= width) {
                 right = withProvider;
               }

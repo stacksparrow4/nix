@@ -39,6 +39,9 @@ const AUTH_PATH = join(getAgentDir(), "auth.json");
 const PINS_FILE = "openrouter-pins.json";
 const MAX_VISIBLE_ROWS = 14;
 
+// The picker's cost is a snapshot, so recompute a pin's cost at most daily.
+const COST_REFRESH_MS = 24 * 60 * 60 * 1000;
+
 // OpenRouter prices are USD; the picker shows estimated costs in AUD.
 // Static approximation (1 USD ≈ 1.44 AUD, mid-Oct 2026) — it will drift, so
 // treat the converted figures as a rough guide, not a live quote.
@@ -71,6 +74,10 @@ interface Pin {
   tag: string;
   provider: string;
   quant: string;
+  /** Estimated session cost (USD) from the picker table; absent on older pins. */
+  cost?: number;
+  /** When `cost` was last recomputed; absent on older pins, forcing a refresh. */
+  costAt?: number;
   pinnedAt: number;
 }
 
@@ -472,6 +479,34 @@ function warnIfUnpinned(ctx: ExtensionContext): void {
   if (ctx.hasUI) ctx.ui.notify(`No OpenRouter provider pinned for ${model.id}. Run /or-model to pin one.`, "error");
 }
 
+/**
+ * Recompute the active pin's estimated cost when it is a day old. Best-effort:
+ * failures leave the last known cost in place. Re-pinning already stores a
+ * fresh cost, so this only matters for pins carried across sessions.
+ */
+async function refreshPinCost(ctx: ExtensionContext, model: ExtensionContext["model"]): Promise<void> {
+  if (!isRoutingModel(model)) return;
+  const pin = pins[model.id];
+  if (!pin) return;
+  const now = Date.now();
+  if (pin.costAt && now - pin.costAt < COST_REFRESH_MS) return;
+
+  try {
+    // Only pricing is needed, so skip the separate ZDR list fetch.
+    const rows = buildRows(await modelEndpoints(model.id), null);
+    const row = rows.find((candidate) => candidate.tag === pin.tag);
+    if (!row) return;
+    // The user may have re-pinned while the request was in flight.
+    const current = pins[model.id];
+    if (!current || current.tag !== pin.tag) return;
+    pins[model.id] = { ...current, provider: row.provider, quant: row.quant, cost: row.cost, costAt: now };
+    savePins(pins);
+    refreshStatus(ctx);
+  } catch {
+    // Cosmetic only; keep showing the last known cost.
+  }
+}
+
 // --- Extension ------------------------------------------------------------
 
 export default function (pi: ExtensionAPI) {
@@ -479,11 +514,13 @@ export default function (pi: ExtensionAPI) {
     pins = loadPins();
     refreshStatus(ctx);
     warnIfUnpinned(ctx);
+    void refreshPinCost(ctx, ctx.model);
   });
 
-  pi.on("model_select", (_event, ctx) => {
+  pi.on("model_select", (event, ctx) => {
     refreshStatus(ctx);
     warnIfUnpinned(ctx);
+    void refreshPinCost(ctx, event.model);
   });
 
   pi.on("session_shutdown", (_event, ctx) => {
@@ -533,7 +570,15 @@ export default function (pi: ExtensionAPI) {
       const row = rows.find((candidate) => candidate.tag === tag);
       if (!row) return;
 
-      pins[model.id] = { tag: row.tag, provider: row.provider, quant: row.quant, pinnedAt: Date.now() };
+      const now = Date.now();
+      pins[model.id] = {
+        tag: row.tag,
+        provider: row.provider,
+        quant: row.quant,
+        cost: row.cost,
+        costAt: now,
+        pinnedAt: now,
+      };
       savePins(pins);
       ctx.ui.notify(`${model.id} → ${row.provider} (${row.quant})`, "info");
       refreshStatus(ctx);
