@@ -8,7 +8,6 @@
       fonts
       flatpak
       apps
-      workstation-virt
     ];
 
     programs._1password.enable = true;

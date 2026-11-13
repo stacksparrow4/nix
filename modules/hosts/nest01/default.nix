@@ -18,6 +18,7 @@
             ./_hardware-configuration.nix
             base
             workstation
+            workstation-virt
             locale
             nix-config
             users
