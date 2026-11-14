@@ -7,6 +7,11 @@
     {
       home.packages = [ self'.packages.yazi ];
 
+      xdg.mimeApps = {
+        enable = true;
+        defaultApplications."inode/directory" = "yazi.desktop";
+      };
+
       sprrw.term.shellExtra = ''
         function y() {
           local tmp="$(mktemp -t "yazi-cwd.XXXXX")"

@@ -30,11 +30,8 @@
               imports = with self.modules.homeManager; [
                 base
                 general
-                general-linux
                 misc
                 term
-                yazi-linux
-                linux-tools
                 nvim
                 programming
                 sec

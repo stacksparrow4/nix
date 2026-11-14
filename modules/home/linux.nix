@@ -5,17 +5,14 @@
     imports = with config.flake.modules.homeManager; [
       desktop-entries
       sway
-      linux-tools
 
       (
         { pkgs, config, ... }:
         {
           home.packages = with pkgs; [
             dragon-drop
-            htop
             usbutils
             pciutils
-            openvpn
             libnotify
           ];
 

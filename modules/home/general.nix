@@ -8,7 +8,6 @@
       home.packages =
         with pkgs;
         [
-          bat
           ydiff
           file
           xxd
@@ -18,7 +17,6 @@
           unzip
           zip
           p7zip
-          uv
           openssl
           jq
           jless
@@ -35,36 +33,27 @@
           curl # technically already exists in system package, but putting it here allows it to show inside docker which only uses home manager
           gnupg
           awscli
-          (writeShellApplication {
-            name = "ssh";
-            text = ''
-              export TERM=xterm-256color
-
-              ${openssh}/bin/ssh -o WarnWeakCrypto=no "$@"
-            '';
-          })
           age
           ssh-to-age
           fastfetch
           nix-tree
+          ltrace
+          man-pages
+          man-pages-posix
+          netcat-openbsd
+          lsof
+          traceroute
+          bubblewrap
         ]
-        ++ (with self'.packages; [ python ]);
+        ++ (with self'.packages; [
+          ssh
+          proxychains
+        ]);
 
       sprrw.term.shellExtra = ''
         alias yd='ydiff'
         alias yds='ydiff --staged'
       '';
-    }
-  );
-
-  flake.modules.homeManager.general-linux = moduleWithSystem (
-    { self', ... }:
-    { ... }:
-    {
-      home.packages = with self'.packages; [
-        nodemon
-        tailcat
-      ];
     }
   );
 }

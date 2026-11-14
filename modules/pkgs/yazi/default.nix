@@ -15,6 +15,7 @@
           mkdir -p $out
           install -m644 ${./keymap.toml} $out/keymap.toml
         ''
+        # TODO: isLinux no longer needed to be supported
         + lib.optionalString isLinux ''
           cat ${./keymap-linux.toml} >> $out/keymap.toml
           cp ${./yazi-linux.toml} $out/yazi.toml

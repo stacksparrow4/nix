@@ -10,7 +10,7 @@
       programs.noctalia.enable = true;
 
       home.file.".config/noctalia/main.toml".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/home/linux/noctalia/main.toml";
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/home/noctalia/main.toml";
 
       home.packages = [ self'.packages.noctalia-reset ];
     }

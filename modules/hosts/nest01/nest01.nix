@@ -24,7 +24,7 @@
     ])
     ++ [
       (
-        { lib, config, ... }:
+        { config, ... }:
         {
           home-manager.users.sprrw =
             { pkgs, config, ... }:
@@ -32,16 +32,13 @@
               imports = with self.modules.homeManager; [
                 base
                 general
-                general-linux
                 misc
                 payloads
                 sandbox
                 term
-                yazi-linux
                 linux
                 nvim
                 programming
-                sage
                 sec
                 sec-gui
                 gui

@@ -11,7 +11,7 @@
         { pkgs, config, ... }:
         {
           home.file.".config/sway/config".source =
-            config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/home/linux/sway/config";
+            config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/home/sway/config";
           home.file.".config/sway/alternating_layouts.py".source =
             "${self'.packages.alternating-layouts}/bin/alternating-layouts";
 

@@ -34,21 +34,14 @@
               imports = with self.modules.homeManager; [
                 base
                 general
-                general-linux
                 misc
                 sandbox
-
                 term
-                yazi-linux
                 linux
                 nvim
-
                 programming
-
                 gui
-
                 pi
-
                 ssh
               ];
 

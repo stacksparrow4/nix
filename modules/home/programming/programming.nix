@@ -13,6 +13,7 @@
       lua
       rust
       zig
+      python
 
       (
         { pkgs, ... }:
