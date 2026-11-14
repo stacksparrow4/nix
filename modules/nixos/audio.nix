@@ -7,7 +7,10 @@
       ];
 
       services.pipewire = {
-        alsa.support32Bit = true;
+        enable = true;
+
+        alsa.enable = true;
+        pulse.enable = true;
 
         extraConfig.pipewire."99-rnnoise" = {
           "context.modules" = [

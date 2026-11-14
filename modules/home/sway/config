@@ -140,7 +140,6 @@ mode "resize" {
 
 default_border pixel 1
 
-exec --no-startup-id ~/.config/sway/alternating_layouts.py
 exec --no-startup-id 1password --silent
 
 exec noctalia

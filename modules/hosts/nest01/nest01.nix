@@ -13,7 +13,7 @@
     ++ (with self.modules.nixos; [
       base
       workstation
-      workstation-virt
+      libvirt
       steam
       spotify
       locale
@@ -145,6 +145,7 @@
             package = config.boot.kernelPackages.nvidiaPackages.stable;
           };
           services.xserver.videoDrivers = [ "nvidia" ];
+          hardware.nvidia-container-toolkit.enable = true;
 
           hardware.opentabletdriver.enable = true;
 
