@@ -47,6 +47,8 @@
             home = {
               username = "sprrw"; # TODO: shouldnt this be in a module
               homeDirectory = "/home/sprrw";
+
+              file.".background-image".source = ./bg.jpg;
             };
           };
 
