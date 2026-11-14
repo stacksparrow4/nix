@@ -63,10 +63,10 @@
                 })
               );
 
-              sprrw.term.zsh.prompt = "\n%B%F{green} %1~ %(!.#.$)%f%b ";
+              sprrw.term.zsh.prompt = "\n%B%F{#279645} %1~ %(!.#.$)%f%b ";
               programs.tmux.extraConfig = ''
                 set -g status-style "bg=#18471b"
-                set -g pane-active-border-style "fg=#1e9626"
+                set -g pane-active-border-style "fg=#547531"
               '';
 
               home = {
