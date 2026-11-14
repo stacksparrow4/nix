@@ -1,15 +1,13 @@
 {
   self,
   inputs,
-  moduleWithSystem,
   ...
 }:
 
 {
   flake.nixosConfigurations.perch = inputs.nixpkgs.lib.nixosSystem {
     modules = [
-      (moduleWithSystem (
-        { self', ... }:
+      (
         {
           lib,
           ...
@@ -55,22 +53,11 @@
               ];
 
               home = {
-                username = "sprrw"; # TODO: shouldnt this be in a module
-                homeDirectory = "/home/sprrw";
-
                 file.".background-image".source = ./bg.jpg;
                 file.".config/noctalia/perch.toml".source =
                   config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/perch/noctalia.toml";
-
-                packages = with self'.packages; [
-                  sprrw
-                ];
               };
             };
-
-          nixpkgs.config = import ../../../nixpkgs-config.nix; # TODO: Should this be in the nix-config nixosModule?
-
-          boot.loader.timeout = lib.mkForce 1;
 
           swapDevices = [
             {
@@ -90,17 +77,13 @@
             peripheralFirmwareDirectory = null;
           };
 
-          boot.loader.systemd-boot.enable = true;
-          boot.loader.efi.canTouchEfiVariables = false;
+          boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
 
           boot.kernelParams = [ "hid_apple.swap_opt_cmd=1" ];
 
           networking.hostName = "perch";
 
-          networking.networkmanager = {
-            enable = true;
-            wifi.backend = "iwd";
-          };
+          networking.networkmanager.wifi.backend = "iwd";
 
           services.upower.enable = true;
 
@@ -113,7 +96,7 @@
 
           system.stateVersion = "26.11";
         }
-      ))
+      )
     ];
   };
 }

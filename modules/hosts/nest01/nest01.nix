@@ -1,7 +1,6 @@
 {
   inputs,
   self,
-  moduleWithSystem,
   ...
 }:
 
@@ -9,40 +8,26 @@
   flake.nixosConfigurations.nest01 = inputs.nixpkgs.lib.nixosSystem {
     modules = [
       inputs.home-manager.nixosModules.home-manager
-
-      (moduleWithSystem (
-        { self', ... }:
+      ./_hardware-configuration.nix
+    ]
+    ++ (with self.modules.nixos; [
+      base
+      workstation
+      workstation-virt
+      steam
+      spotify
+      locale
+      nix-config
+      users
+      podman
+      tailscale
+    ])
+    ++ [
+      (
         { lib, config, ... }:
         {
-          imports = with self.modules.nixos; [
-            ./_hardware-configuration.nix
-            base
-            workstation
-            workstation-virt
-            steam
-            spotify
-            locale
-            nix-config
-            users
-            podman
-            tailscale
-          ];
-
           home-manager.users.sprrw =
             { pkgs, config, ... }:
-            let
-              asepritePkgs =
-                import
-                  (fetchTarball {
-                    url = "https://github.com/NixOS/nixpkgs/archive/4e92bbcdb030f3b4782be4751dc08e6b6cb6ccf2.tar.gz";
-                    sha256 = "sha256:1mrf745k78ivw11rj1qibgwi966a83lcljc62p4qix25m1ignirq";
-                  })
-                  {
-                    system = pkgs.stdenv.hostPlatform.system;
-                    config = import ../../../nixpkgs-config.nix;
-                  };
-              repo = "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/nest01";
-            in
             {
               imports = with self.modules.homeManager; [
                 base
@@ -51,50 +36,40 @@
                 misc
                 payloads
                 sandbox
-
                 term
                 yazi-linux
                 linux
                 nvim
-
                 programming
                 sage
-
                 sec
                 sec-gui
-
                 gui
-
                 llama
                 pi
                 llama-qwen
-
                 sops
                 ssh
               ];
 
-              home = {
-                username = "sprrw";
-                homeDirectory = "/home/sprrw";
+              home =
+                let
+                  nest01Dir = "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/nest01";
+                in
+                {
+                  packages = with pkgs; [
+                    audacity
+                  ];
 
-                packages = [
-                  asepritePkgs.aseprite
-                ]
-                ++ (with pkgs; [
-                  audacity
-                ])
-                ++ (with self'.packages; [
-                  sprrw
-                ]);
+                  file.".background-image".source = ./bg.png;
 
-                file.".background-image".source = ./bg.png;
-
-                file.".config/sway/conf.d/nest01".source =
-                  config.lib.file.mkOutOfStoreSymlink "${repo}/sway.config";
-                file.".config/kanshi/config".source = config.lib.file.mkOutOfStoreSymlink "${repo}/kanshi.config";
-                file.".config/noctalia/nest01.toml".source =
-                  config.lib.file.mkOutOfStoreSymlink "${repo}/noctalia.toml";
-              };
+                  file.".config/sway/conf.d/nest01".source =
+                    config.lib.file.mkOutOfStoreSymlink "${nest01Dir}/sway.config";
+                  file.".config/kanshi/config".source =
+                    config.lib.file.mkOutOfStoreSymlink "${nest01Dir}/kanshi.config";
+                  file.".config/noctalia/nest01.toml".source =
+                    config.lib.file.mkOutOfStoreSymlink "${nest01Dir}/noctalia.toml";
+                };
 
               sprrw = {
                 sops.opRef = "op://Private/nbui3ljmiwkx4aw2tvym6kkg4y";
@@ -155,12 +130,6 @@
             builders = ssh-ng://root@stacksparrow4 aarch64-linux /home/sprrw/.ssh/stacksparrow4
           '';
 
-          nixpkgs.config = import ../../../nixpkgs-config.nix;
-
-          boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
-
-          boot.loader.timeout = lib.mkForce 1;
-
           boot.loader.efi.efiSysMountPoint = "/efi";
           boot.loader.systemd-boot.xbootldrMountPoint = "/boot";
 
@@ -182,14 +151,9 @@
 
           hardware.opentabletdriver.enable = true;
 
-          # This value determines the NixOS release from which the default
-          # settings for stateful data, like file locations and database
-          # versions on your system were taken. It's perfectly fine and
-          # recommended to leave this value at the release version of the
-          # first install of this system.
           system.stateVersion = "24.11";
         }
-      ))
+      )
     ];
   };
 }

@@ -18,7 +18,8 @@
       ];
     };
 
-    # Pin registry to flake versions
+    nixpkgs.config = import ../../nixpkgs-config.nix;
+
     nix.registry.nixpkgs.flake = inputs.nixpkgs;
     nix.registry.home-manager.flake = inputs.home-manager;
     nix.channel.enable = false;
@@ -26,6 +27,7 @@
     nix.nixPath = [
       "nixpkgs=${inputs.nixpkgs}"
       "nixpkgs-unstable=${inputs.nixpkgs-unstable}"
+      "nixpkgs-master=${inputs.nixpkgs-master}"
     ];
 
     nix.extraOptions = ''

@@ -22,13 +22,9 @@
       };
 
       # Place home-files in a place that can easily be mounted by containers
-      environment.etc =
-        let
-          hmConfig = config.home-manager.users.sprrw;
-        in
-        {
-          "hm-package".source = hmConfig.home.activationPackage;
-        };
+      environment.etc."hm-package".source = config.home-manager.users.sprrw.home.activationPackage;
+
+      boot.loader.timeout = 1;
 
       boot.tmp.cleanOnBoot = true;
 

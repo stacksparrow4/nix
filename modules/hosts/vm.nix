@@ -1,14 +1,10 @@
 {
   inputs,
-  config,
+  self,
   withSystem,
   ...
 }:
 
-let
-  nixosModules = config.flake.modules.nixos;
-  homeModules = config.flake.modules.homeManager;
-in
 {
   flake.nixosConfigurations.vm = withSystem "x86_64-linux" (
     { pkgs, ... }:
@@ -16,60 +12,40 @@ in
       inherit pkgs;
       modules = [
         inputs.home-manager.nixosModules.home-manager
-
+      ]
+      ++ (with self.modules.nixos; [
+        base
+        locale
+        nix-config
+        users
+        podman
+      ])
+      ++ [
         (
-          { lib, modulesPath, ... }:
+          { modulesPath, ... }:
           {
-            imports = with nixosModules; [
-              base
-              locale
-              nix-config
-              users
-              podman
-            ] ++ [ "${modulesPath}/profiles/qemu-guest.nix" ];
+            imports = [ "${modulesPath}/profiles/qemu-guest.nix" ];
 
             home-manager.users.sprrw = {
-              imports = with homeModules; [
+              imports = with self.modules.homeManager; [
                 base
                 general
                 general-linux
                 misc
-
                 term
                 yazi-linux
                 linux-tools
                 nvim
-
                 programming
                 sec
-
                 sandbox
               ];
 
-              home = {
-                username = "sprrw";
-                homeDirectory = "/home/sprrw";
-
-                file."nixos".source = ../../.;
-              };
+              home.file."nixos".source = ../../.;
             };
-
-            image.modules.iso.isoImage.squashfsCompression = null;
-
-            boot.loader.timeout = lib.mkForce 1;
 
             networking.firewall.allowedTCPPorts = [ 22 ];
-            services.openssh = {
-              enable = true;
-              ports = [ 22 ];
-              settings = {
-                PasswordAuthentication = true;
-                AllowUsers = null; # Allows all users by default. Can be [ "user1" "user2" ]
-                UseDns = true;
-                X11Forwarding = false;
-                PermitRootLogin = "prohibit-password"; # "yes", "without-password", "prohibit-password", "forced-commands-only", "no"
-              };
-            };
+            services.openssh.enable = true;
 
             users.users.sprrw.initialPassword = "password";
 
