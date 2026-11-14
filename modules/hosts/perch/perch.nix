@@ -63,6 +63,12 @@
                 })
               );
 
+              sprrw.term.zsh.prompt = "\n%B%F{green} %1~ %(!.#.$)%f%b ";
+              programs.tmux.extraConfig = ''
+                set -g status-style "bg=#18471b"
+                set -g pane-active-border-style "fg=#1e9626"
+              '';
+
               home = {
                 file.".background-image".source = ./bg.jpg;
                 file.".config/noctalia/perch.toml".source =
