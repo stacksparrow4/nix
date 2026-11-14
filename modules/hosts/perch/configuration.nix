@@ -1,14 +1,19 @@
-{ self, inputs, ... }:
+{
+  self,
+  inputs,
+  moduleWithSystem,
+  ...
+}:
 
 {
   flake.nixosConfigurations.perch = inputs.nixpkgs.lib.nixosSystem {
     modules = [
-      (
+      (moduleWithSystem (
+        { self', ... }:
         {
           lib,
           ...
         }:
-
         {
           imports = [
             ./_hardware-configuration.nix
@@ -49,6 +54,10 @@
               homeDirectory = "/home/sprrw";
 
               file.".background-image".source = ./bg.jpg;
+
+              packages = with self'.packages; [
+                sprrw
+              ];
             };
           };
 
@@ -93,7 +102,7 @@
 
           system.stateVersion = "26.11";
         }
-      )
+      ))
     ];
   };
 }
