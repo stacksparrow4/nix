@@ -27,6 +27,7 @@
             nix-config
             users
             tailscale
+            podman
           ]);
 
           home-manager.users.sprrw =
@@ -38,7 +39,6 @@
                 general-linux
                 misc
                 sandbox
-                podman
 
                 term
                 yazi-linux
@@ -50,6 +50,8 @@
                 gui
 
                 pi
+
+                ssh
               ];
 
               home = {
