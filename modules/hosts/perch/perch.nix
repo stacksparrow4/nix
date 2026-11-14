@@ -49,6 +49,9 @@
                 file.".background-image".source = ./bg.jpg;
                 file.".config/noctalia/perch.toml".source =
                   config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/perch/noctalia.toml";
+
+                file.".config/sway/conf.d/perch".source = 
+                  config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/perch/sway.config";
               };
             };
 
