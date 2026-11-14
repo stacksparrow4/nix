@@ -23,10 +23,6 @@
           origin = "flathub";
         }
         {
-          appId = "com.spotify.Client";
-          origin = "flathub";
-        }
-        {
           appId = "io.github.seadve.Kooha";
           origin = "flathub";
         }
@@ -47,13 +43,6 @@
           sockets = [
             "!fallback-x11"
             "!cups"
-          ];
-        };
-        "com.spotify.Client".Context = {
-          shared = [ "!ipc" ];
-          filesystems = [
-            "!xdg-pictures"
-            "!xdg-music"
           ];
         };
         "io.github.seadve.Kooha".Context = {

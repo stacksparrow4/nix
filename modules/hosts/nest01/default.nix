@@ -20,6 +20,7 @@
             workstation
             workstation-virt
             steam
+            spotify
             locale
             nix-config
             users
