@@ -3,7 +3,7 @@ enable_sounds = false
 
 [bar.default]
 center = [ "control-center", "clock" ]
-end = [ "media", "spacer_1", "tray", "group:g1", "group:g2", "session" ]
+end = [ "media", "spacer_1", "tray", "group:g1", "group:g2" ]
 font_family = "IosevkaTerm NF"
 margin_ends = 0
 radius = 0

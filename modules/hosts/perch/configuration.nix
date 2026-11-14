@@ -29,37 +29,41 @@
             tailscale
           ]);
 
-          home-manager.users.sprrw = {
-            imports = with self.modules.homeManager; [
-              base
-              general
-              general-linux
-              misc
-              sandbox
+          home-manager.users.sprrw =
+            { config, ... }:
+            {
+              imports = with self.modules.homeManager; [
+                base
+                general
+                general-linux
+                misc
+                sandbox
 
-              term
-              yazi-linux
-              linux
-              nvim
+                term
+                yazi-linux
+                linux
+                nvim
 
-              programming
+                programming
 
-              gui
+                gui
 
-              pi
-            ];
-
-            home = {
-              username = "sprrw"; # TODO: shouldnt this be in a module
-              homeDirectory = "/home/sprrw";
-
-              file.".background-image".source = ./bg.jpg;
-
-              packages = with self'.packages; [
-                sprrw
+                pi
               ];
+
+              home = {
+                username = "sprrw"; # TODO: shouldnt this be in a module
+                homeDirectory = "/home/sprrw";
+
+                file.".background-image".source = ./bg.jpg;
+                file.".config/noctalia/perch.toml".source =
+                  config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/perch/noctalia.toml";
+
+                packages = with self'.packages; [
+                  sprrw
+                ];
+              };
             };
-          };
 
           nixpkgs.config = import ../../../nixpkgs-config.nix; # TODO: Should this be in the nix-config nixosModule?
 
