@@ -41,7 +41,6 @@
                     system = pkgs.stdenv.hostPlatform.system;
                     config = import ../../../nixpkgs-config.nix;
                   };
-
               repo = "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/nest01";
             in
             {
@@ -71,6 +70,7 @@
                 llama-qwen
 
                 sops
+                ssh
               ];
 
               home = {
@@ -92,7 +92,6 @@
                 file.".config/sway/conf.d/nest01".source =
                   config.lib.file.mkOutOfStoreSymlink "${repo}/sway.config";
                 file.".config/kanshi/config".source = config.lib.file.mkOutOfStoreSymlink "${repo}/kanshi.config";
-                file.".ssh/config".source = config.lib.file.mkOutOfStoreSymlink "${repo}/ssh.config";
                 file.".config/noctalia/nest01.toml".source =
                   config.lib.file.mkOutOfStoreSymlink "${repo}/noctalia.toml";
               };
