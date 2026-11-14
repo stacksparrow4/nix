@@ -25,7 +25,7 @@ in
               locale
               nix-config
               users
-              virt
+              podman
             ] ++ [ "${modulesPath}/profiles/qemu-guest.nix" ];
 
             home-manager.users.sprrw = {

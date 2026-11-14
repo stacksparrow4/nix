@@ -24,7 +24,7 @@
             locale
             nix-config
             users
-            virt
+            podman
             tailscale
           ];
 

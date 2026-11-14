@@ -1,5 +1,5 @@
 {
-  flake.modules.nixos.virt =
+  flake.modules.nixos.podman =
     { pkgs, ... }:
     {
       environment.systemPackages = with pkgs; [

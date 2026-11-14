@@ -38,6 +38,7 @@
                 general-linux
                 misc
                 sandbox
+                podman
 
                 term
                 yazi-linux
