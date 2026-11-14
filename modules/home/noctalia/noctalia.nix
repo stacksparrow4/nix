@@ -1,8 +1,7 @@
-{ inputs, moduleWithSystem, ... }:
+{ inputs, ... }:
 
 {
-  flake.modules.homeManager.noctalia = moduleWithSystem (
-    { self', ... }:
+  flake.modules.homeManager.noctalia =
     { config, ... }:
     {
       imports = [ inputs.noctalia.homeModules.default ];
@@ -11,8 +10,5 @@
 
       home.file.".config/noctalia/main.toml".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/home/noctalia/main.toml";
-
-      home.packages = [ self'.packages.noctalia-reset ];
-    }
-  );
+    };
 }
