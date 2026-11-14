@@ -22,7 +22,6 @@
           clairvoyance
           sourcemapper
           subfinder
-          vulnx
           smuggler
         ]);
     }
