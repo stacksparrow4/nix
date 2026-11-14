@@ -18,10 +18,6 @@ bindkey -M viins '^R' history-incremental-search-backward
 bindkey -M viins '\e.' insert-last-word
 bindkey -M viins '\e[1;3C' forward-word
 bindkey -M viins '\e[1;3D' backward-word
-bindkey -M viins '^?' backward-delete-char
-bindkey -M viins '^H' backward-delete-char
-bindkey -M viins '^W' backward-kill-word
-bindkey -M viins '^U' backward-kill-line
 
 function zle-keymap-select {
   if [[ $KEYMAP == vicmd ]]; then
