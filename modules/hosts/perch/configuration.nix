@@ -86,12 +86,16 @@
           boot.loader.systemd-boot.enable = true;
           boot.loader.efi.canTouchEfiVariables = false;
 
+          boot.kernelParams = [ "hid_apple.swap_opt_cmd=1" ];
+
           networking.hostName = "perch";
 
           networking.networkmanager = {
             enable = true;
             wifi.backend = "iwd";
           };
+
+          services.upower.enable = true;
 
           nix.settings = {
             extra-substituters = [ "https://nix-community.cachix.org" ];
