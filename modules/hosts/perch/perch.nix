@@ -1,13 +1,15 @@
 {
   self,
   inputs,
+  moduleWithSystem,
   ...
 }:
 
 {
   flake.nixosConfigurations.perch = inputs.nixpkgs.lib.nixosSystem {
     modules = [
-      (
+      (moduleWithSystem (
+        { inputs', ... }:
         {
           lib,
           ...
@@ -45,12 +47,28 @@
                 ssh
               ];
 
+              # Dirty hack to disable wayland fractional scale on brave
+              programs.brave.package = lib.mkForce (
+                inputs'.nixpkgs-master.legacyPackages.brave.overrideAttrs (old: {
+                  preFixup = (old.preFixup or "") + ''
+                    merged=()
+                    for arg in "''${gappsWrapperArgs[@]}"; do
+                      case "$arg" in
+                        --disable-features=*) merged+=("$arg,WaylandFractionalScaleV1") ;;
+                        *) merged+=("$arg") ;;
+                      esac
+                    done
+                    gappsWrapperArgs=("''${merged[@]}")
+                  '';
+                })
+              );
+
               home = {
                 file.".background-image".source = ./bg.jpg;
                 file.".config/noctalia/perch.toml".source =
                   config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/perch/noctalia.toml";
 
-                file.".config/sway/conf.d/perch".source = 
+                file.".config/sway/conf.d/perch".source =
                   config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/perch/sway.config";
               };
             };
@@ -92,7 +110,7 @@
 
           system.stateVersion = "26.11";
         }
-      )
+      ))
     ];
   };
 }
