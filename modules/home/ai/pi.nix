@@ -22,6 +22,7 @@
 
       config = {
         home.file.".pi/agent/models.json".text = builtins.toJSON cfg.models;
+        home.file.".pi/agent/settings.json".source = ./pi-settings.json;
 
         systemd.user = lib.mkIf pkgs.stdenv.isLinux {
           services.pi-clean-sessions = {

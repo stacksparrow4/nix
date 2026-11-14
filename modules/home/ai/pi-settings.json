@@ -1,0 +1,8 @@
+{
+  "hideThinkingBlock": false,
+  "defaultThinkingLevel": "low",
+  "theme": "dark",
+  "enabledModels": [
+    "deepseek/deepseek-v4.1-flash-1017"
+  ]
+}
