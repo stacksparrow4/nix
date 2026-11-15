@@ -4,7 +4,7 @@ local mappings = {
   { lhs = "<leader>j", rhs = "<Plug>RocqNext" },
   { lhs = "<leader>k", rhs = "<Plug>RocqUndo" },
   { lhs = "<leader>l", rhs = "<Plug>RocqToLine" },
-  { lhs = "<leader>cc", rhs = "<Plug>RocqStart" },
+  { lhs = "gd", rhs = "<Plug>RocqGotoDef" },
 }
 
 vim.api.nvim_create_autocmd("FileType", {
