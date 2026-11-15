@@ -44,6 +44,7 @@
                 programming
                 gui
                 pi
+                sprrw-pi
                 ssh
               ];
 

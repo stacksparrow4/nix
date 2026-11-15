@@ -44,6 +44,7 @@
                 gui
                 llama
                 pi
+                sprrw-pi
                 llama-qwen
                 sops
                 ssh

@@ -213,6 +213,10 @@ fn prepare_settings_overlay() -> (TempDir, String) {
     );
     obj.insert("theme".to_string(), serde_json::json!("moonfly"));
     obj.insert("tuiMode".to_string(), serde_json::json!("regular"));
+    obj.insert(
+        "warnings".to_string(),
+        serde_json::json!({"anthropicExtraUsage": false}),
+    );
 
     let dir = tempdir().expect("Failed to create temporary settings dir");
     let path = dir.path().join("settings.json");
@@ -383,7 +387,10 @@ fn main() {
             .join("AGENTS.md");
 
         if !path.is_file() {
-            eprintln!("--agents was supplied but {} does not exist", path.display());
+            eprintln!(
+                "--agents was supplied but {} does not exist",
+                path.display()
+            );
             std::process::exit(2);
         }
 
@@ -495,9 +502,7 @@ fn main() {
                 "You are in an Alpine container with a read-only /nix volume \
                 mounted in. Use apk to install packages.",
             );
-            guidelines.push(
-                "Never use `find` on the root directory for performance reasons.",
-            );
+            guidelines.push("Never use `find` on the root directory for performance reasons.");
         }
 
         if all_tools.contains(&"command".to_string()) {
@@ -524,16 +529,14 @@ fn main() {
         }
 
         if args.cwd {
-            guidelines.push(
-                "When writing code, never use comments unless explicitly asked.",
-            );
-            guidelines.push(
-                "Never test the code you wrote unless explicitly asked.",
-            );
+            guidelines.push("When writing code, never use comments unless explicitly asked.");
+            guidelines.push("Never test the code you wrote unless explicitly asked.");
         }
 
-        guidelines.push("When asking the user a question, only ask one question at a time. \
-            This means that your next questions can use the context from the previous answer.");
+        guidelines.push(
+            "When asking the user a question, only ask one question at a time. \
+            This means that your next questions can use the context from the previous answer.",
+        );
 
         format!(
             "You are a pragmatic, task-oriented terminal agent. You focus solely on completing \

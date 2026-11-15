@@ -16,13 +16,24 @@
       options.sprrw.ai.pi = {
         models = lib.mkOption {
           type = lib.types.attrsOf lib.types.anything;
-          default = { providers = {}; };
+          default = {
+            providers = { };
+          };
+        };
+
+        settings = lib.mkOption {
+          type = lib.types.attrsOf lib.types.anything;
+          default = {
+            hideThinkingBlock = false;
+            defaultThinkingLevel = "low";
+            theme = "dark";
+          };
         };
       };
 
       config = {
         home.file.".pi/agent/models.json".text = builtins.toJSON cfg.models;
-        home.file.".pi/agent/settings.json".source = ./pi-settings.json;
+        home.file.".pi/agent/settings.json".text = builtins.toJSON cfg.settings;
 
         systemd.user = lib.mkIf pkgs.stdenv.isLinux {
           services.pi-clean-sessions = {
