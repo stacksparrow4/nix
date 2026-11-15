@@ -8,6 +8,7 @@
           name = "Daniel Cooper";
         };
         safe.bareRepository = "explicit";
+        init.defaultBranch = "main";
       };
     };
 
