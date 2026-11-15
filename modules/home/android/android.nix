@@ -68,19 +68,29 @@
             let
               createAvd = pkgs.writeShellApplication {
                 name = "android-create-avd";
-                runtimeInputs = [ sdk ];
+                runtimeInputs = [
+                  sdk
+                  pkgs.gnugrep
+                  pkgs.gnused
+                ];
                 text = ''
                   avdDir="$HOME/.android/avd/${avdName}.avd"
                   if [ -d "$avdDir" ]; then
-                    echo "AVD '${avdName}' already exists, nothing to do."
-                    exit 0
+                    echo "AVD '${avdName}' already exists, skipping creation."
+                  else
+                    echo "Creating AVD '${avdName}' from ${systemImage}..."
+                    echo "no" | avdmanager create avd \
+                      --name "${avdName}" \
+                      --package "${systemImage}" \
+                      --device "${device}"
                   fi
 
-                  echo "Creating AVD '${avdName}' from ${systemImage}..."
-                  echo "no" | avdmanager create avd \
-                    --name "${avdName}" \
-                    --package "${systemImage}" \
-                    --device "${device}"
+                  config="$avdDir/config.ini"
+                  if grep -q '^hw\.keyboard' "$config"; then
+                    sed -i 's/^hw\.keyboard *=.*/hw.keyboard=yes/' "$config"
+                  else
+                    echo 'hw.keyboard=yes' >> "$config"
+                  fi
                 '';
               };
             in
