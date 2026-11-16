@@ -633,9 +633,9 @@ class ViEditor extends CustomEditor {
 
   private motion(p: Extract<Parsed, { kind: "motion" }>, t: string, off: number): void {
     if (!p.op && (p.m === "j" || p.m === "k")) {
+      const s = this.ed.state;
       for (let n = 0; n < p.count; n++) {
-        if (p.m === "k") this.historyUp();
-        else this.historyDown();
+        if (p.m === "k" ? s.cursorLine > 0 : s.cursorLine < s.lines.length - 1) this.vertical(p.m === "k" ? -1 : 1);
       }
       return;
     }
