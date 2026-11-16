@@ -1,6 +1,6 @@
 {
   perSystem =
-    { pkgs, config, ... }:
+    { pkgs, self',  ... }:
     {
       wrappers.mkSandbox =
         {
@@ -28,7 +28,7 @@
           text = ''
             ${outsideBeforeScript}
 
-            ${config.packages.box}/bin/box \
+            ${self'.packages.box}/bin/box \
               ${backslashify (
                 (if shareCwd then [ "--cwd" ] else [ ])
                 ++ (builtins.concatMap (

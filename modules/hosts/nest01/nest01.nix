@@ -7,7 +7,6 @@
 {
   flake.nixosConfigurations.nest01 = inputs.nixpkgs.lib.nixosSystem {
     modules = [
-      inputs.home-manager.nixosModules.home-manager
       ./_hardware-configuration.nix
     ]
     ++ (with self.modules.nixos; [

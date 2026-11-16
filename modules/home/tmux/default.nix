@@ -1,12 +1,10 @@
-{ moduleWithSystem, ... }:
-
 {
-  flake.modules.homeManager.tmux = moduleWithSystem (
-    { pkgsUnstable, ... }:
+  flake.modules.homeManager.tmux =
     {
       config,
       lib,
       pkgs,
+      pkgsUnstable,
       ...
     }:
     {
@@ -43,6 +41,5 @@
             ]
             (builtins.readFile ./tmux.conf);
       };
-    }
-  );
+    };
 }

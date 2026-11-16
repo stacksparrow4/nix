@@ -1,14 +1,22 @@
+{ inputs, ... }:
+
 {
   flake.modules.nixos.base =
     {
       config,
       lib,
+      pkgsUnstable,
       ...
     }:
     {
+      imports = [
+        inputs.home-manager.nixosModules.home-manager
+      ];
+
       home-manager = {
         useGlobalPkgs = true;
         useUserPackages = true;
+        extraSpecialArgs = { inherit pkgsUnstable; };
       };
 
       # https://github.com/kachick/dotfiles/blob/16832e2dbf0c5debe3c14bd0e1fd4e46c667a2b0/nixos/hardware.nix#L19

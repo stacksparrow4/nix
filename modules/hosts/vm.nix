@@ -10,48 +10,46 @@
     { pkgs, ... }:
     inputs.nixpkgs.lib.nixosSystem {
       inherit pkgs;
-      modules = [
-        inputs.home-manager.nixosModules.home-manager
-      ]
-      ++ (with self.modules.nixos; [
-        base
-        locale
-        nix-config
-        users
-        podman
-      ])
-      ++ [
-        (
-          { modulesPath, ... }:
-          {
-            imports = [ "${modulesPath}/profiles/qemu-guest.nix" ];
+      modules =
+        (with self.modules.nixos; [
+          base
+          locale
+          nix-config
+          users
+          podman
+        ])
+        ++ [
+          (
+            { modulesPath, ... }:
+            {
+              imports = [ "${modulesPath}/profiles/qemu-guest.nix" ];
 
-            home-manager.users.sprrw = {
-              imports = with self.modules.homeManager; [
-                base
-                general
-                misc
-                term
-                nvim
-                programming
-                sec
-                sandbox
-              ];
+              home-manager.users.sprrw = {
+                imports = with self.modules.homeManager; [
+                  base
+                  general
+                  misc
+                  term
+                  nvim
+                  programming
+                  sec
+                  sandbox
+                ];
 
-              home.file."nixos".source = ../../.;
-            };
+                home.file."nixos".source = ../../.;
+              };
 
-            networking.firewall.allowedTCPPorts = [ 22 ];
-            services.openssh.enable = true;
+              networking.firewall.allowedTCPPorts = [ 22 ];
+              services.openssh.enable = true;
 
-            users.users.sprrw.initialPassword = "password";
+              users.users.sprrw.initialPassword = "password";
 
-            networking.hostName = "vm";
+              networking.hostName = "vm";
 
-            system.stateVersion = "24.11";
-          }
-        )
-      ];
+              system.stateVersion = "24.11";
+            }
+          )
+        ];
     }
   );
 }

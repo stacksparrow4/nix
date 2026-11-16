@@ -1,11 +1,9 @@
-{ self, ... }:
-
 {
   perSystem =
     {
+      self',
       pkgs,
       lib,
-      pkgsLinux,
       ...
     }:
     {
@@ -13,12 +11,7 @@
         box =
           let
             rustBin = (pkgs.callPackage ./_Cargo.nix { }).rootCrate.build;
-            terminfo =
-              if pkgs.stdenv.hostPlatform.isLinux then
-                "${pkgs.foot.terminfo}/share/terminfo"
-              else
-                "${pkgsLinux.ghostty.terminfo}/share/terminfo";
-            clipShimLinux = self.packages.${pkgsLinux.stdenv.hostPlatform.system}.clip-shim;
+            terminfo = "${pkgs.foot.terminfo}/share/terminfo";
             bin = pkgs.runCommand "box-bin" { } ''
               mkdir $out
               ln -s ${pkgs.bash}/bin/sh $out/sh
@@ -109,11 +102,11 @@
               extraPrefix = "/share/nix-ld";
               ignoreCollisions = true;
             };
-            packages = pkgsLinux.buildEnv {
+            packages = pkgs.buildEnv {
               name = "box-packages";
               pathsToLink = [ "/bin" ];
               paths =
-                with pkgsLinux;
+                with pkgs;
                 [
                   coreutils
                   bash
@@ -132,7 +125,7 @@
                   uv
                   nodejs
                 ]
-                ++ (with self.packages.${pkgsLinux.stdenv.hostPlatform.system}; [ python ]);
+                ++ (with self'.packages; [ python ]);
             };
           in
           pkgs.runCommand "box"
@@ -172,11 +165,11 @@
                   else
                     ""
                 } \
-                --set SPRRW_CLIP_SHIMS ${clipShimLinux}/shims \
+                --set SPRRW_CLIP_SHIMS ${self'.packages.clip-shim}/shims \
                 --set SPRRW_PATH ${packages}/bin \
                 --set SPRRW_TERMINFO ${terminfo} \
                 --set SPRRW_SHELL ${
-                  self.packages.${pkgsLinux.stdenv.hostPlatform.system}.zsh.override {
+                  self'.packages.zsh.override {
                     prompt = "\n%B%F{magenta} %1~ %(!.#.$)%f%b ";
                   }
                 }/bin/zsh

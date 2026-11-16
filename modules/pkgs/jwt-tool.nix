@@ -42,7 +42,7 @@
               lib.splitString "\r\n" (builtins.readFile (src + "/requirements.txt"))
             );
           in
-          builtins.map (name: updatedPackages.${name}) reqs;
+          map (name: updatedPackages.${name}) reqs;
 
         installPhase = ''
           runHook preInstall

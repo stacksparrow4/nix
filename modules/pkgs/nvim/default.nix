@@ -2,8 +2,6 @@
   perSystem =
     {
       pkgs,
-      pkgsLinux,
-      config,
       self',
       lib,
       inputs',
@@ -12,7 +10,6 @@
     let
       mkNvim =
         {
-          pkgs,
           additionalPlugins ? [ ],
           additionalLua ? "",
         }:
@@ -149,7 +146,7 @@
         (pkgs.runCommand "nvim" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           makeWrapper ${nvimWrapper}/bin/nvim $out/bin/nvim \
             --set SPRRW_NVIM ${nvim-unboxed}/bin/nvim \
-            --prefix PATH : ${lib.makeBinPath [ config.packages.box ]}
+            --prefix PATH : ${lib.makeBinPath [ self'.packages.box ]}
           ln -s nvim $out/bin/vi
           ln -s nvim $out/bin/vim
         '')
@@ -157,15 +154,15 @@
           configure =
             args:
             mkNvimBoxed {
-              nvim-unboxed = mkNvim ({ pkgs = pkgsLinux; } // args);
+              nvim-unboxed = mkNvim args;
             };
         };
     in
     {
-      packages = {
-        nvim-unboxed = mkNvim { inherit pkgs; };
+      packages = rec {
+        nvim-unboxed = mkNvim {};
         nvim = mkNvimBoxed {
-          nvim-unboxed = mkNvim { pkgs = pkgsLinux; };
+          inherit nvim-unboxed;
         };
       };
     };

@@ -6,8 +6,8 @@
       browsers
 
       (moduleWithSystem (
-        { self', pkgsUnstable, ... }:
-        { pkgs, ... }:
+        { self', ... }:
+        { pkgs, pkgsUnstable, ... }:
         {
           home.packages = with pkgs; [
             gimp

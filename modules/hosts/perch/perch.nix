@@ -1,16 +1,15 @@
 {
   self,
   inputs,
-  moduleWithSystem,
   ...
 }:
 
 {
   flake.nixosConfigurations.perch = inputs.nixpkgs.lib.nixosSystem {
     modules = [
-      (moduleWithSystem (
-        { inputs', ... }:
+      (
         {
+          pkgsUnstable,
           lib,
           ...
         }:
@@ -18,7 +17,6 @@
           imports = [
             ./_hardware-configuration.nix
             inputs.nixos-apple-silicon.nixosModules.apple-silicon-support
-            inputs.home-manager.nixosModules.home-manager
           ]
           ++ (with self.modules.nixos; [
             base
@@ -50,7 +48,7 @@
 
               # Dirty hack to disable wayland fractional scale on brave
               programs.brave.package = lib.mkForce (
-                inputs'.nixpkgs-master.legacyPackages.brave.overrideAttrs (old: {
+                pkgsUnstable.brave.overrideAttrs (old: {
                   preFixup = (old.preFixup or "") + ''
                     merged=()
                     for arg in "''${gappsWrapperArgs[@]}"; do
@@ -117,7 +115,7 @@
 
           system.stateVersion = "26.11";
         }
-      ))
+      )
     ];
   };
 }

@@ -2,7 +2,7 @@
   perSystem =
     {
       pkgs,
-      config,
+      self',
       ...
     }:
     let
@@ -35,14 +35,14 @@
     {
       packages = rec {
         bloodhound-ce-unboxed = mkBloodhoundCE pkgs.python3Packages.impacket;
-        bloodhound-ce = config.wrappers.mkSandbox {
+        bloodhound-ce = self'.wrappers.mkSandbox {
           name = "bloodhound-ce";
           shareCwd = true;
           network = true;
           prog = "${bloodhound-ce-unboxed}/bin/bloodhound-ce-python";
         };
 
-        bloodhound-ce-netexec-unboxed = mkBloodhoundCE config.packages.netexec-impacket;
+        bloodhound-ce-netexec-unboxed = mkBloodhoundCE self'.packages.netexec-impacket;
       };
     };
 }

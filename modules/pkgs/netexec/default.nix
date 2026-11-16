@@ -2,7 +2,7 @@
   perSystem =
     {
       pkgs,
-      config,
+      self',
       lib,
       ...
     }:
@@ -10,13 +10,13 @@
       python = pkgs.python313.override {
         self = python;
         packageOverrides = self: super: {
-          impacket = config.packages.netexec-impacket;
+          impacket = self'.packages.netexec-impacket;
           # certipy-ad pins impacket~=0.13.0, but the netexec impacket fork
           # reports 0.14.0; relax the constraint so the runtime deps check passes.
           certipy-ad = super.certipy-ad.overridePythonAttrs (old: {
             pythonRelaxDeps = (old.pythonRelaxDeps or [ ]) ++ [ "impacket" ];
           });
-          bloodhound-ce = config.packages.bloodhound-ce-netexec-unboxed;
+          bloodhound-ce = self'.packages.bloodhound-ce-netexec-unboxed;
         };
       };
     in
@@ -104,7 +104,7 @@
           nativeCheckInputs = with python.pkgs; [ pytestCheckHook ] ++ [ pkgs.writableTmpDirAsHomeHook ];
         };
 
-        netexec = config.wrappers.mkSandbox {
+        netexec = self'.wrappers.mkSandbox {
           name = "nxc";
           sharedPaths = [
             {

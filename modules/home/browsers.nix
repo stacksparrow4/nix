@@ -1,10 +1,8 @@
-{ moduleWithSystem, ... }:
-
 {
-  flake.modules.homeManager.browsers = moduleWithSystem (
-    { inputs', ... }:
+  flake.modules.homeManager.browsers =
     {
       pkgs,
+      pkgsUnstable,
       lib,
       config,
       ...
@@ -12,7 +10,7 @@
     {
       programs.brave = {
         enable = true;
-        package = inputs'.nixpkgs-master.legacyPackages.brave;
+        package = pkgsUnstable.brave;
         extensions = [
           { id = "aeblfdkhhhdcdjpifhhbdiojplfjncoa"; } # 1Password
           { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; } # Vimium
@@ -52,6 +50,5 @@
           "application/pdf"
         ] (_: "brave-browser.desktop");
       };
-    }
-  );
+    };
 }
