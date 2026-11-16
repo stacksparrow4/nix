@@ -1,9 +1,6 @@
-{ moduleWithSystem, ... }:
-
 {
-  flake.modules.homeManager.android = moduleWithSystem (
-    { pkgs, ... }:
-    { lib, ... }:
+  flake.modules.homeManager.android =
+    { pkgs, lib, ... }:
     let
       avdName = "Pixel_10";
       device = "pixel";
@@ -99,6 +96,5 @@
 
         Install.WantedBy = [ "default.target" ];
       };
-    }
-  );
+    };
 }

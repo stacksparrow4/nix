@@ -136,7 +136,7 @@
           ]);
         })
         // {
-          configure = args: mkNvim ({ inherit pkgs; } // args);
+          configure = mkNvim;
         };
 
       nvimWrapper =

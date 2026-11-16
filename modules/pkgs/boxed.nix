@@ -2,7 +2,6 @@
   perSystem =
     {
       pkgs,
-      pkgsUnstable,
       self',
       ...
     }:
@@ -27,12 +26,6 @@
           shareCwd = true;
           network = true;
           prog = "${pkgs.nodemon}/bin/nodemon";
-        };
-
-        tailcat = self'.wrappers.mkSandbox {
-          name = "tailcat";
-          network = true;
-          prog = "${pkgsUnstable.tailcat}/bin/tailcat";
         };
 
         wlfreerdp = self'.wrappers.mkSandbox {
