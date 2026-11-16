@@ -3,12 +3,12 @@
     {
       pkgs,
       pkgsUnstable,
-      config,
+      self',
       ...
     }:
     {
       packages = {
-        bx = config.wrappers.mkSandbox {
+        bx = self'.wrappers.mkSandbox {
           name = "bx";
           sharedPaths = [
             {
@@ -22,144 +22,144 @@
           prog = "${pkgs.brave-search-cli}/bin/bx";
         };
 
-        nodemon = config.wrappers.mkSandbox {
+        nodemon = self'.wrappers.mkSandbox {
           name = "nodemon";
           shareCwd = true;
           network = true;
           prog = "${pkgs.nodemon}/bin/nodemon";
         };
 
-        tailcat = config.wrappers.mkSandbox {
+        tailcat = self'.wrappers.mkSandbox {
           name = "tailcat";
           network = true;
           prog = "${pkgsUnstable.tailcat}/bin/tailcat";
         };
 
-        wlfreerdp = config.wrappers.mkSandbox {
+        wlfreerdp = self'.wrappers.mkSandbox {
           name = "wlfreerdp";
           wayland = true;
           network = true;
           prog = "${pkgs.freerdp}/bin/wlfreerdp";
         };
 
-        sage = config.wrappers.mkSandbox {
+        sage = self'.wrappers.mkSandbox {
           name = "sage";
           shareCwd = true;
           prog = "${pkgs.sage}/bin/sage";
         };
 
-        shtris = config.wrappers.mkSandbox {
+        shtris = self'.wrappers.mkSandbox {
           name = "shtris";
           prog = "${pkgs.shtris}/bin/shtris";
         };
 
-        zbarimg = config.wrappers.mkSandbox {
+        zbarimg = self'.wrappers.mkSandbox {
           name = "zbarimg";
           prog = "${pkgs.zbar}/bin/zbarimg";
         };
 
-        twitch-dl = config.wrappers.mkSandbox {
+        twitch-dl = self'.wrappers.mkSandbox {
           name = "twitch-dl";
           shareCwd = true;
           network = true;
           prog = "${pkgs.twitch-dl}/bin/twitch-dl";
         };
 
-        yt-dlp = config.wrappers.mkSandbox {
+        yt-dlp = self'.wrappers.mkSandbox {
           name = "yt-dlp";
           shareCwd = true;
           network = true;
           prog = "${pkgs.yt-dlp}/bin/yt-dlp";
         };
 
-        exiftool = config.wrappers.mkSandbox {
+        exiftool = self'.wrappers.mkSandbox {
           name = "exiftool";
           prog = "${pkgs.exiftool}/bin/exiftool";
           shareCwd = true;
         };
 
-        binwalk = config.wrappers.mkSandbox {
+        binwalk = self'.wrappers.mkSandbox {
           name = "binwalk";
           prog = "${pkgs.binwalk}/bin/binwalk";
           shareCwd = true;
         };
 
-        ent = config.wrappers.mkSandbox {
+        ent = self'.wrappers.mkSandbox {
           name = "ent";
           prog = "${pkgs.ent}/bin/ent";
           shareCwd = true;
         };
 
-        apktool = config.wrappers.mkSandbox {
+        apktool = self'.wrappers.mkSandbox {
           name = "apktool";
           shareCwd = true;
           prog = "${pkgs.apktool}/bin/apktool";
         };
 
-        jadx = config.wrappers.mkSandbox {
+        jadx = self'.wrappers.mkSandbox {
           name = "jadx";
           shareCwd = true;
           prog = "${pkgs.jadx}/bin/jadx";
         };
 
-        hydra = config.wrappers.mkSandbox {
+        hydra = self'.wrappers.mkSandbox {
           name = "hydra";
           shareCwd = true;
           network = true;
           prog = "${pkgs.thc-hydra}/bin/hydra";
         };
 
-        pwninit = config.wrappers.mkSandbox {
+        pwninit = self'.wrappers.mkSandbox {
           name = "pwninit";
           shareCwd = true;
           prog = "${pkgs.pwninit}/bin/pwninit";
         };
 
-        ropr = config.wrappers.mkSandbox {
+        ropr = self'.wrappers.mkSandbox {
           name = "ropr";
           shareCwd = true;
           prog = "${pkgs.ropr}/bin/ropr";
         };
 
-        ROPgadget = config.wrappers.mkSandbox {
+        ROPgadget = self'.wrappers.mkSandbox {
           name = "ROPgadget";
           shareCwd = true;
           prog = "${pkgs.ropgadget}/bin/ROPgadget";
         };
 
-        snmpwalk = config.wrappers.mkSandbox {
+        snmpwalk = self'.wrappers.mkSandbox {
           name = "snmpwalk";
           network = true;
           prog = "${pkgs.net-snmp}/bin/snmpwalk";
         };
 
-        snmpcheck = config.wrappers.mkSandbox {
+        snmpcheck = self'.wrappers.mkSandbox {
           name = "snmpcheck";
           network = true;
           prog = "${pkgs.snmpcheck}/bin/snmpcheck";
         };
 
-        evil-winrm = config.wrappers.mkSandbox {
+        evil-winrm = self'.wrappers.mkSandbox {
           name = "evil-winrm";
           prog = "${pkgs.evil-winrm}/bin/evil-winrm";
           network = true;
         };
 
-        certipy = config.wrappers.mkSandbox {
+        certipy = self'.wrappers.mkSandbox {
           name = "certipy";
           prog = "${pkgs.certipy}/bin/certipy";
           shareCwd = true;
           network = true;
         };
 
-        bloodyAD = config.wrappers.mkSandbox {
+        bloodyAD = self'.wrappers.mkSandbox {
           name = "bloodyAD";
           prog = "${pkgs.python312Packages.bloodyad}/bloodyAD";
           shareCwd = true;
           network = true;
         };
 
-        pwsh = config.wrappers.mkSandbox {
+        pwsh = self'.wrappers.mkSandbox {
           name = "pwsh";
           prog = "${pkgs.powershell}/bin/pwsh";
           network = true;
@@ -174,7 +174,7 @@
               hash = "sha256-MNx/RcGyvspH6qECuNqQ3mBYtsBMvH/w36IDbUAkyiA=";
             };
           in
-          config.wrappers.mkSandbox {
+          self'.wrappers.mkSandbox {
             name = "nuclei";
             sharedPaths = [
               {
@@ -195,70 +195,70 @@
             prog = "${pkgs.nuclei}/bin/nuclei -ud /home/sprrw/.local/nuclei-templates -duc";
           };
 
-        sqlmap = config.wrappers.mkSandbox {
+        sqlmap = self'.wrappers.mkSandbox {
           name = "sqlmap";
           shareCwd = true;
           network = true;
           prog = "${pkgs.sqlmap}/bin/sqlmap";
         };
 
-        feroxbuster = config.wrappers.mkSandbox {
+        feroxbuster = self'.wrappers.mkSandbox {
           name = "feroxbuster";
           shareCwd = true;
           network = true;
           prog = "${pkgs.feroxbuster}/bin/feroxbuster";
         };
 
-        ffuf = config.wrappers.mkSandbox {
+        ffuf = self'.wrappers.mkSandbox {
           name = "ffuf";
           shareCwd = true;
           network = true;
           prog = "${pkgs.ffuf}/bin/ffuf";
         };
 
-        shortscan = config.wrappers.mkSandbox {
+        shortscan = self'.wrappers.mkSandbox {
           name = "shortscan";
           shareCwd = true;
           network = true;
           prog = "${pkgs.shortscan}/bin/shortscan";
         };
 
-        gau = config.wrappers.mkSandbox {
+        gau = self'.wrappers.mkSandbox {
           name = "gau";
           shareCwd = true;
           network = true;
           prog = "${pkgs.gau}/bin/gau";
         };
 
-        naabu = config.wrappers.mkSandbox {
+        naabu = self'.wrappers.mkSandbox {
           name = "naabu";
           shareCwd = true;
           network = true;
           prog = "${pkgs.naabu}/bin/naabu";
         };
 
-        clairvoyance = config.wrappers.mkSandbox {
+        clairvoyance = self'.wrappers.mkSandbox {
           name = "clairvoyance";
           shareCwd = true;
           network = true;
           prog = "${pkgs.clairvoyance}/bin/clairvoyance";
         };
 
-        sourcemapper = config.wrappers.mkSandbox {
+        sourcemapper = self'.wrappers.mkSandbox {
           name = "sourcemapper";
           shareCwd = true;
           network = true;
           prog = "${pkgs.sourcemapper}/bin/sourcemapper";
         };
 
-        subfinder = config.wrappers.mkSandbox {
+        subfinder = self'.wrappers.mkSandbox {
           name = "subfinder";
           shareCwd = true;
           network = true;
           prog = "${pkgs.subfinder}/bin/subfinder";
         };
 
-        mitmproxy = config.wrappers.mkSandbox {
+        mitmproxy = self'.wrappers.mkSandbox {
           name = "mitmproxy";
           prog = "${pkgs.mitmproxy}/bin/mitmproxy";
           shareCwd = true;
@@ -273,13 +273,13 @@
           network = true;
         };
 
-        ilspycmd = config.wrappers.mkSandbox {
+        ilspycmd = self'.wrappers.mkSandbox {
           name = "ilspycmd";
           shareCwd = true;
           prog = "${pkgs.ilspycmd}/bin/ilspycmd";
         };
 
-        qpdf = config.wrappers.mkSandbox {
+        qpdf = self'.wrappers.mkSandbox {
           name = "qpdf";
           shareCwd = true;
           prog = "${pkgs.qpdf}/bin/qpdf";

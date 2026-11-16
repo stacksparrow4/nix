@@ -3,7 +3,7 @@
     {
       pkgs,
       lib,
-      config,
+      self',
       ...
     }:
     let
@@ -59,7 +59,7 @@
         jwt-tool-unwrapped = jwttool;
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        jwt-tool = config.wrappers.mkSandbox {
+        jwt-tool = self'.wrappers.mkSandbox {
           name = "jwt_tool";
           sharedPaths = [
             {

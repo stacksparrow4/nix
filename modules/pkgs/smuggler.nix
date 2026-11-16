@@ -2,7 +2,7 @@
   perSystem =
     {
       pkgs,
-      config,
+      self',
       ...
     }:
     let
@@ -31,7 +31,7 @@
           '';
         };
 
-        smuggler = config.wrappers.mkSandbox {
+        smuggler = self'.wrappers.mkSandbox {
           name = "smuggler";
           sharedPaths = [
             {
