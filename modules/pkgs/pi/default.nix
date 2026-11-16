@@ -36,9 +36,10 @@
               export SPRRW_PI_NOTIFY_ICON_CACHE_WARM=${./pi-cache-warm.png}
 
               export PATH="${
-                pkgs.lib.makeBinPath (
-                  [ self'.packages.box ] ++ pkgs.lib.optional pkgs.stdenv.isLinux pkgs.libnotify
-                )
+                pkgs.lib.makeBinPath [
+                  self'.packages.box
+                  pkgs.libnotify
+                ]
               }:$PATH"
 
               ${pi}/bin/pi "$@"

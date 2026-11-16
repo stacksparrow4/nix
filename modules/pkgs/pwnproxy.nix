@@ -3,8 +3,6 @@
 {
   perSystem =
     {
-      pkgs,
-      lib,
       system,
       self',
       ...
@@ -14,7 +12,7 @@
       autorize = inputs.autorize.packages.${system}.default;
     in
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         urlenc = inputs.nvim-http-client.packages.${system}.urlenc;
 
         pwnproxy = self'.wrappers.mkSandbox {

@@ -1,8 +1,8 @@
 {
   perSystem =
-    { pkgs, lib, ... }:
+    { pkgs, ... }:
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         alternating-layouts = pkgs.stdenv.mkDerivation {
           name = "alternating-layouts";
           propagatedBuildInputs = [

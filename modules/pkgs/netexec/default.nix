@@ -3,7 +3,6 @@
     {
       pkgs,
       self',
-      lib,
       ...
     }:
     let
@@ -21,7 +20,7 @@
       };
     in
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux rec {
+      packages = rec {
         netexec-unboxed = python.pkgs.buildPythonApplication {
           pname = "netexec";
           version = "1.5.1-dev";

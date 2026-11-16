@@ -66,8 +66,9 @@
                 lean4
                 # Rocq
                 (coqPackages.coq.withPackages (p: [ p.stdlib ]))
+                # Wayland
+                wl-clipboard
               ]
-              ++ lib.optional pkgs.stdenv.hostPlatform.isLinux pkgs.wl-clipboard
             )}"
           ];
 

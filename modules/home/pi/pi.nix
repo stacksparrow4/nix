@@ -30,7 +30,7 @@
         home.file.".pi/agent/models.json".text = builtins.toJSON cfg.models;
         home.file.".pi/agent/settings.json".text = builtins.toJSON cfg.settings;
 
-        systemd.user = lib.mkIf pkgs.stdenv.isLinux {
+        systemd.user = {
           services.pi-clean-sessions = {
             Unit.Description = "Clear pi session logs older than 1 week";
             Service = {

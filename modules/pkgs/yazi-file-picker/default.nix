@@ -1,8 +1,8 @@
 {
   perSystem =
-    { pkgs, lib, self', ... }:
+    { pkgs, self', ... }:
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         yazi-file-picker = pkgs.writeShellApplication {
           name = "yazi-file-picker";
 

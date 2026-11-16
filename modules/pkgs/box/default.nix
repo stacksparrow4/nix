@@ -142,29 +142,22 @@
                 --zsh <(${rustBin}/bin/box --completions zsh) \
                 --fish <(${rustBin}/bin/box --completions fish)
               makeWrapper ${rustBin}/bin/box $out/bin/box \
-                ${
-                  if pkgs.stdenv.hostPlatform.isLinux then
-                    ''
-                      --prefix PATH : ${
-                        lib.makeBinPath (
-                          with pkgs;
-                          [
-                            bubblewrap
-                            wl-clipboard
-                            qemu-utils
-                          ]
-                        )
-                      } \
-                      --set SPRRW_BIN ${bin} \
-                      --set SPRRW_ETC ${etc} \
-                      --set SPRRW_USR ${usr} \
-                      --set SPRRW_LIB64 ${lib64} \
-                      --set NIX_LD ${nixLdLibraries}/share/nix-ld/lib/ld.so \
-                      --set NIX_LD_LIBRARY_PATH ${nixLdLibraries}/share/nix-ld/lib \
-                    ''
-                  else
-                    ""
+                --prefix PATH : ${
+                  lib.makeBinPath (
+                    with pkgs;
+                    [
+                      bubblewrap
+                      wl-clipboard
+                      qemu-utils
+                    ]
+                  )
                 } \
+                --set SPRRW_BIN ${bin} \
+                --set SPRRW_ETC ${etc} \
+                --set SPRRW_USR ${usr} \
+                --set SPRRW_LIB64 ${lib64} \
+                --set NIX_LD ${nixLdLibraries}/share/nix-ld/lib/ld.so \
+                --set NIX_LD_LIBRARY_PATH ${nixLdLibraries}/share/nix-ld/lib \
                 --set SPRRW_CLIP_SHIMS ${self'.packages.clip-shim}/shims \
                 --set SPRRW_PATH ${packages}/bin \
                 --set SPRRW_TERMINFO ${terminfo} \

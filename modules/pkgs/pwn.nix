@@ -2,7 +2,6 @@
   perSystem =
     {
       pkgs,
-      lib,
       ...
     }:
     let
@@ -10,7 +9,7 @@
       pwndbg = pwndbgFlake.packages.x86_64-linux.pwndbg;
     in
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         inherit pwndbg;
 
         pwntools-env = pkgs.buildEnv {

@@ -2,7 +2,6 @@
   perSystem =
     {
       pkgs,
-      lib,
       self',
       ...
     }:
@@ -100,7 +99,7 @@
       '';
     in
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         impacket-sandboxed = pkgs.symlinkJoin {
           name = "impacket-sandboxed";
           paths = map (

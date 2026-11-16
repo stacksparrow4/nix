@@ -2,11 +2,10 @@
   perSystem =
     {
       pkgs,
-      lib,
       ...
     }:
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         sway = pkgs.sway.override {
           sway-unwrapped = pkgs.sway-unwrapped.overrideAttrs (old: {
             patches = (old.patches or [ ]) ++ [

@@ -1,8 +1,8 @@
 {
   perSystem =
-    { pkgs, lib, ... }:
+    { pkgs, ... }:
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         foot = pkgs.symlinkJoin {
           name = "foot";
           paths = [ pkgs.foot ];

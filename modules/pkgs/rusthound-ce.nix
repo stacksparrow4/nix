@@ -1,8 +1,8 @@
 {
   perSystem =
-    { pkgs, lib, ... }:
+    { pkgs, ... }:
     {
-      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      packages = {
         rusthound-ce = pkgs.rustPlatform.buildRustPackage (finalAttrs: {
           name = "rusthound-ce";
 

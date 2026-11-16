@@ -8,34 +8,21 @@
       ...
     }:
     let
-      inherit (pkgs.stdenv.hostPlatform) isLinux;
+      yaziConfig = pkgs.runCommand "sprrw-yazi-config" { } ''
+        mkdir -p $out
+        install -m644 ${./keymap.toml} $out/keymap.toml
+        cat ${./keymap-linux.toml} >> $out/keymap.toml
+        cp ${./yazi-linux.toml} $out/yazi.toml
+      '';
 
-      yaziConfig = pkgs.runCommand "sprrw-yazi-config" { } (
-        ''
-          mkdir -p $out
-          install -m644 ${./keymap.toml} $out/keymap.toml
-        ''
-        # TODO: isLinux no longer needed to be supported
-        + lib.optionalString isLinux ''
-          cat ${./keymap-linux.toml} >> $out/keymap.toml
-          cp ${./yazi-linux.toml} $out/yazi.toml
-        ''
-      );
-
-      runtimeDeps =
-        (with pkgs; [
-          file
-          jq
-          ffmpegthumbnailer
-          poppler-utils
-        ])
-        ++ lib.optionals isLinux (
-          with pkgs;
-          [
-            xdg-utils
-            dragon-drop
-          ]
-        );
+      runtimeDeps = with pkgs; [
+        file
+        jq
+        ffmpegthumbnailer
+        poppler-utils
+        xdg-utils
+        dragon-drop
+      ];
 
       yazi = pkgs.symlinkJoin {
         name = "yazi";

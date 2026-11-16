@@ -7,7 +7,7 @@
       sprrw-unwrapped =
         (pkgs.callPackage ./_Cargo.nix { }).rootCrate.build;
 
-      notifier = pkgs.lib.optional (!pkgs.stdenv.isDarwin) pkgs.libnotify;
+      notifier = [ pkgs.libnotify ];
     in
     {
       packages.sprrw = pkgs.stdenv.mkDerivation {
