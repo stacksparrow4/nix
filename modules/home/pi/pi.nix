@@ -23,11 +23,6 @@
 
         settings = lib.mkOption {
           type = lib.types.attrsOf lib.types.anything;
-          default = {
-            hideThinkingBlock = false;
-            defaultThinkingLevel = "low";
-            theme = "dark";
-          };
         };
       };
 
