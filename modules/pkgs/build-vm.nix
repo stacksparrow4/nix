@@ -18,6 +18,8 @@
 
           rm -f ~/.local/vm.qcow2
           ln -s "$imagepath" ~/.local/vm.qcow2
+
+          sudo ln -sfn "$HOME/.local/vm.qcow2" /nix/var/nix/gcroots/auto/build-vm-qcow2
         '';
       };
     };
