@@ -5,6 +5,7 @@ local mappings = {
   { lhs = "<leader>k", rhs = "<Plug>RocqUndo" },
   { lhs = "<leader>l", rhs = "<Plug>RocqToLine" },
   { lhs = "gd", rhs = "<Plug>RocqGotoDef" },
+  { lhs = "gl", rhs = "<Plug>RocqJumpToEnd" },
   { lhs = "<leader>i", rhs = "<Plug>RocqAbout" },
 }
 
