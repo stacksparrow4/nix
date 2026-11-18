@@ -21,12 +21,25 @@ bindkey -M viins '\e[1;3D' backward-word
 
 function zle-keymap-select {
   if [[ $KEYMAP == vicmd ]]; then
+    _vi_ins_cursor=$CURSOR
     printf '\e[2 q'
   else
     printf '\e[6 q'
   fi
 }
 zle -N zle-keymap-select
+
+function vi-insert-last-word-or-repeat {
+  if [[ $LASTWIDGET == vi-cmd-mode ]]; then
+    CURSOR=$_vi_ins_cursor
+    zle insert-last-word
+    zle vi-insert
+  else
+    zle vi-repeat-change
+  fi
+}
+zle -N vi-insert-last-word-or-repeat
+bindkey -M vicmd '.' vi-insert-last-word-or-repeat
 
 function zle-line-init {
   printf '\e[6 q'
