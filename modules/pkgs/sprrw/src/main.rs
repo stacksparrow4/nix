@@ -168,14 +168,6 @@ fn diff_last_system_closures() {
     )
 }
 
-fn trim_profiles() {
-    run_cmd(
-        Command::new("sudo")
-            .args(["nix-env", "--delete-generations", "+3", "--profile"])
-            .arg("/nix/var/nix/profiles/system"),
-    );
-}
-
 fn build(config: &Config) {
     for flake in &config.add_flakes {
         run_cmd(Command::new("git").arg("-C").arg(flake).args(["add", "-A"]));
@@ -216,7 +208,6 @@ fn build(config: &Config) {
         run_cmd(&mut cmd);
 
         diff_last_system_closures();
-        trim_profiles();
     }
 
     notify_rebuild_complete();
