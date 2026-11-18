@@ -106,11 +106,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794251182,
-        "narHash": "sha256-R2sZBXiOJo3HAnvTiVkbbHDJy//JMlAwUKEiPbfqPXk=",
+        "lastModified": 1794943722,
+        "narHash": "sha256-Qkh6uNyMsic61gfyOO8VXnC+HEBdti6Xe2kKiMf66O0=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "6eb2d33d1d0c95a37ef6443c88e6c1686012ee8b",
+        "rev": "5643e73425b85ac359ba2aaf83deae8ce1cd7968",
         "type": "github"
       },
       "original": {
@@ -142,11 +142,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1794743515,
-        "narHash": "sha256-zgPAJVEdqbwpeUxmQQlTTLAbjMaCaxaMRfH6KnJ3Tow=",
+        "lastModified": 1794910092,
+        "narHash": "sha256-acu4eioYHfOOUAhWL9765/h/2f2/PGmVmZmiZ7YPKZQ=",
         "owner": "nix-community",
         "repo": "nixos-apple-silicon",
-        "rev": "400bbf7abb0cd2cf467a61fcc553e6b557566ba0",
+        "rev": "ce7d0925860cf29d686b24ea5798f3a02676b4f7",
         "type": "github"
       },
       "original": {
@@ -221,11 +221,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1794756927,
-        "narHash": "sha256-IfuPcOpwC+bYvBdtUhA9hHhY7xV7k9T5LeOTZFiJB4o=",
+        "lastModified": 1794872590,
+        "narHash": "sha256-E+XLAfnC7+bdr4qlEgRv6cdGmiqTU5oeFNKCha7epqQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "b349185bb79c7cf7ad8ea8c097931730bf473c71",
+        "rev": "f68407657ad294471eb4b2e65d193df26edf729f",
         "type": "github"
       },
       "original": {
@@ -274,11 +274,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1794861638,
-        "narHash": "sha256-75gHcDITY8NIALQgVnKwhWGLUcDgKaL+zmgKlxV2luU=",
+        "lastModified": 1794945366,
+        "narHash": "sha256-T6Y3f+SsFFap89BqMK4kk/NhtIdCx0VAH/GFwCk8QD0=",
         "owner": "noctalia-dev",
         "repo": "noctalia",
-        "rev": "9c96720ebc249ce731953936b07023c21c8b29b4",
+        "rev": "b34f1fcb33f6b95e1652e1fec865b3b8ee79029f",
         "type": "github"
       },
       "original": {
@@ -317,11 +317,11 @@
         "nixpkgs-darwin-x64": "nixpkgs-darwin-x64"
       },
       "locked": {
-        "lastModified": 1794863459,
-        "narHash": "sha256-ijEyBWw1ag7zJrvyw43HmauPCZ1f9V5KOJ0ocxif+cw=",
+        "lastModified": 1794942618,
+        "narHash": "sha256-MMKP5whpATVlodKwKaVpxx7LWw0uq8nKLOfq7dnI9B4=",
         "owner": "earendil-works",
         "repo": "pi",
-        "rev": "b347a94f5476410a2095bf2245580cf6cdc7f5aa",
+        "rev": "cead615b48b80d1c61eecab2f0b576d16eeaf4c5",
         "type": "github"
       },
       "original": {

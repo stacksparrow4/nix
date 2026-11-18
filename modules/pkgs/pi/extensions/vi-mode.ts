@@ -1198,7 +1198,12 @@ export default function (pi: ExtensionAPI) {
     let pendingG = false;
     ctx.ui.onTerminalInput((data) => {
       const focused = ui?.getFocusedComponent?.();
-      if (typeof focused?.getTreeList !== "function" || focused.labelInput) {
+      const isTree = typeof focused?.getTreeList === "function" && !focused.labelInput;
+      const isResume =
+        typeof focused?.getSessionList === "function" &&
+        focused.mode !== "rename" &&
+        focused.getSessionList().confirmingDeletePath == null;
+      if (!isTree && !isResume) {
         pendingG = false;
         return;
       }
@@ -1208,9 +1213,14 @@ export default function (pi: ExtensionAPI) {
       if (ch === "j") return { data: "\x1b[B" };
       if (ch === "k") return { data: "\x1b[A" };
       if (ch === "G" || (ch === "g" && hadG)) {
-        const list = focused.getTreeList();
-        const count = Array.isArray(list.filteredNodes) ? list.filteredNodes.length : 0;
+        const list = isTree ? focused.getTreeList() : focused.getSessionList();
+        const nodes = isTree ? list.filteredNodes : list.filteredSessions;
+        const count = Array.isArray(nodes) ? nodes.length : 0;
         list.selectedIndex = ch === "G" ? Math.max(0, count - 1) : 0;
+        if (isResume) {
+          list.selectionTouched = true;
+          list.pendingSelectedPath = undefined;
+        }
         ui.requestRender();
         return { consume: true };
       }
@@ -1218,7 +1228,7 @@ export default function (pi: ExtensionAPI) {
         pendingG = true;
         return { consume: true };
       }
-      if (kb?.matches(data, "app.tree.editLabel") || kb?.matches(data, "app.tree.toggleLabelTimestamp")) return;
+      if (isTree && (kb?.matches(data, "app.tree.editLabel") || kb?.matches(data, "app.tree.toggleLabelTimestamp"))) return;
       if (ch !== undefined) return { consume: true };
       return;
     });
