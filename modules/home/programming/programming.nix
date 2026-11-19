@@ -14,6 +14,7 @@
       rust
       zig
       python
+      rocq
 
       (
         { pkgs, ... }:
