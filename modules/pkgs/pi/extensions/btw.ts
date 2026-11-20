@@ -267,6 +267,10 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
+  pi.on("input", (event, ctx) => {
+    if (state && event.source === "interactive") clear(ctx);
+  });
+
   pi.on("session_start", (_event, ctx) => clear(ctx));
   pi.on("session_shutdown", (_event, ctx) => clear(ctx));
 }
