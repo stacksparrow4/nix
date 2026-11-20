@@ -27,6 +27,7 @@ const READ_AGENTS_MD = process.env.PI_READ_AGENTS_MD === "1";
 const LOCAL_AGENTS_MD = "/AGENTS.md";
 const TOOL_NAME = FULL_REMOTE ? "bash" : "command";
 const DEFAULT_TIMEOUT_SECONDS = 10;
+const MAX_TIMEOUT_SECONDS = 180;
 const REMOTE_FILE_OP_TIMEOUT_SECONDS = 30;
 
 interface ExecOptions {
@@ -541,12 +542,37 @@ const createRemoteAutocompleteProvider: AutocompleteProviderFactory = (
 });
 
 export default async function(pi: ExtensionAPI) {
+  const clampedTimeouts = new Map<string, unknown>();
+
   pi.on("tool_call", async (event) => {
     const input = event.input;
-    if (event.toolName === TOOL_NAME && input && input.timeout === undefined) {
+    if (event.toolName !== TOOL_NAME || !input) return undefined;
+    const timeout = input.timeout;
+    if (timeout === undefined) {
       input.timeout = DEFAULT_TIMEOUT_SECONDS;
+    } else if (typeof timeout !== "number" || !Number.isFinite(timeout) || timeout <= 0 || timeout > MAX_TIMEOUT_SECONDS) {
+      clampedTimeouts.set(event.toolCallId, timeout);
+      input.timeout = MAX_TIMEOUT_SECONDS;
     }
     return undefined;
+  });
+
+  pi.on("tool_result", async (event) => {
+    if (!clampedTimeouts.has(event.toolCallId)) return undefined;
+    const requested = clampedTimeouts.get(event.toolCallId);
+    clampedTimeouts.delete(event.toolCallId);
+    return {
+      content: [
+        ...event.content,
+        {
+          type: "text",
+          text: `\nWarning: requested timeout of ${JSON.stringify(requested)}s is invalid or exceeds the maximum of ${MAX_TIMEOUT_SECONDS}s; it was set to ${MAX_TIMEOUT_SECONDS}s.`,
+        },
+      ],
+      details: event.details,
+      structuredContent: event.structuredContent,
+      isError: event.isError,
+    };
   });
 
   const builtIn = createBashToolDefinition("/");
@@ -557,11 +583,15 @@ export default async function(pi: ExtensionAPI) {
     ...builtIn,
     name: TOOL_NAME,
     label: TOOL_NAME,
-    description: `Execute a ${FULL_REMOTE ? "bash " : ""}command. Returns stdout and stderr. Output may be truncated if it is too long. If no timeout is given, a default of ${DEFAULT_TIMEOUT_SECONDS} seconds is applied.`,
+    description: `Execute a ${FULL_REMOTE ? "bash " : ""}command. Returns stdout and stderr. Output may be truncated if it is too long. If no timeout is given, a default of ${DEFAULT_TIMEOUT_SECONDS} seconds is applied. The maximum timeout is ${MAX_TIMEOUT_SECONDS} seconds.`,
     promptSnippet: FULL_REMOTE ? "Execute bash commands" : "Execute commands",
     parameters: Type.Object({
       command: Type.String({ description: `${FULL_REMOTE ? "Bash command" : "Command"} to execute` }),
-      timeout: Type.Optional(Type.Number({ description: `Timeout in seconds (optional, defaults to ${DEFAULT_TIMEOUT_SECONDS}s if omitted)` })),
+      timeout: Type.Optional(
+        Type.Number({
+          description: `Timeout in seconds (optional, defaults to ${DEFAULT_TIMEOUT_SECONDS}s if omitted, maximum ${MAX_TIMEOUT_SECONDS}s)`,
+        }),
+      ),
     }),
     execute(id, params, signal, onUpdate, _ctx) {
       return bridgeTool.execute(id, params, signal, onUpdate);
