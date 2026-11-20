@@ -507,9 +507,52 @@ async function refreshPinCost(ctx: ExtensionContext, model: ExtensionContext["mo
   }
 }
 
+interface HeadersTransform {
+  model: ExtensionContext["model"];
+  headers: Record<string, string | null>;
+}
+
+interface PayloadTransform {
+  model: ExtensionContext["model"];
+  payload: unknown;
+  error?: string;
+}
+
+function applyHeaders(model: ExtensionContext["model"], headers: Record<string, string | null>): void {
+  if (model?.provider !== PROVIDER) return;
+  headers["x-openrouter-metadata"] = "enabled";
+}
+
+function applyPin(model: ExtensionContext["model"], payload: unknown): unknown {
+  if (!isRoutingModel(model)) return undefined;
+
+  const pin = pins[model.id];
+  if (!pin) {
+    throw new Error(`No OpenRouter provider pinned for ${model.id}. Run /or-model to pin an endpoint.`);
+  }
+
+  if (!payload || typeof payload !== "object") return undefined;
+  (payload as { provider?: Record<string, unknown> }).provider = { only: [pin.tag], allow_fallbacks: false };
+  return payload;
+}
+
 // --- Extension ------------------------------------------------------------
 
 export default function (pi: ExtensionAPI) {
+  pi.events.on("provider:transform-headers", (data) => {
+    const request = data as HeadersTransform;
+    applyHeaders(request.model, request.headers);
+  });
+
+  pi.events.on("provider:transform-payload", (data) => {
+    const request = data as PayloadTransform;
+    try {
+      request.payload = applyPin(request.model, request.payload) ?? request.payload;
+    } catch (error) {
+      request.error = error instanceof Error ? error.message : String(error);
+    }
+  });
+
   pi.on("session_start", (_event, ctx) => {
     pins = loadPins();
     refreshStatus(ctx);
@@ -586,22 +629,8 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("before_provider_headers", (event, ctx) => {
-    if (ctx.model?.provider !== PROVIDER) return;
-    event.headers["x-openrouter-metadata"] = "enabled";
+    applyHeaders(ctx.model, event.headers);
   });
 
-  pi.on("before_provider_request", (event, ctx) => {
-    const model = ctx.model;
-    if (!isRoutingModel(model)) return;
-
-    const pin = pins[model.id];
-    if (!pin) {
-      throw new Error(`No OpenRouter provider pinned for ${model.id}. Run /or-model to pin an endpoint.`);
-    }
-
-    const payload = event.payload as { provider?: Record<string, unknown> } | null;
-    if (!payload || typeof payload !== "object") return;
-    payload.provider = { only: [pin.tag], allow_fallbacks: false };
-    return payload;
-  });
+  pi.on("before_provider_request", (event, ctx) => applyPin(ctx.model, event.payload));
 }
