@@ -363,6 +363,10 @@ export default function (pi: ExtensionAPI) {
   let capturedTui: { requestRender(force?: boolean): void } | undefined;
   let footerInstalled = false;
   let useStatusFallback = false;
+  // Set on session_shutdown. Session replacement (/new, fork, goal handover)
+  // spins up a fresh extension instance, but in-flight fetches and timers from
+  // this one can still settle afterwards and must not touch the stale ctx.
+  let disposed = false;
 
   // Background usage snapshots, one per provider, seeded from the shared
   // on-disk cache so a last-known value shows even while a fetch is rate-limited.
@@ -382,7 +386,12 @@ export default function (pi: ExtensionAPI) {
 
   // Only the active model's provider is polled.
   function activeSource(): UsageSource | undefined {
-    return usageSourceFor(lastCtx?.model);
+    if (disposed) return undefined;
+    try {
+      return usageSourceFor(lastCtx?.model);
+    } catch {
+      return undefined;
+    }
   }
 
   // Adopt the newest on-disk snapshot (possibly from another Pi instance).
@@ -399,7 +408,7 @@ export default function (pi: ExtensionAPI) {
   }
 
   function refreshUsage(source: UsageSource | undefined, force = false): Promise<void> {
-    if (!source) return Promise.resolve();
+    if (disposed || !source) return Promise.resolve();
     const st = usageState[source];
     if (st.inFlight) return st.inFlight;
     const now = Date.now();
@@ -439,6 +448,7 @@ export default function (pi: ExtensionAPI) {
   }
 
   function scheduleRetry(source: UsageSource, afterMs: number) {
+    if (disposed) return;
     const st = usageState[source];
     if (st.retryTimer) clearTimeout(st.retryTimer);
     st.retryTimer = setTimeout(() => {
@@ -465,10 +475,15 @@ export default function (pi: ExtensionAPI) {
   }
 
   function refresh() {
-    if (useStatusFallback) {
-      lastCtx?.ui?.setStatus?.("tps", tpsText);
-    } else {
-      capturedTui?.requestRender();
+    if (disposed) return;
+    try {
+      if (useStatusFallback) {
+        lastCtx?.ui?.setStatus?.("tps", tpsText);
+      } else {
+        capturedTui?.requestRender();
+      }
+    } catch {
+      // Cosmetic only; never let a render nudge crash the process.
     }
   }
 
@@ -483,6 +498,7 @@ export default function (pi: ExtensionAPI) {
         capturedTui = tui;
         return {
           render(width: number): string[] {
+            if (disposed) return [];
             const c = lastCtx ?? ctx;
             const parts: string[] = [];
 
@@ -587,6 +603,9 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("session_shutdown", () => {
+    disposed = true;
+    lastCtx = undefined;
+    capturedTui = undefined;
     if (usageTimer) clearInterval(usageTimer);
     if (usageTicker) clearInterval(usageTicker);
     for (const st of Object.values(usageState)) {
