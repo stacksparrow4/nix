@@ -6,6 +6,11 @@ type Goal = {
   status: "active" | "complete";
 };
 
+const HANDOVER_PROMPT =
+  "The conversation is about to be handed over to the next agent. Update the current documentation with handover notes. At most 5 turns, but most of the time it can be done in less.";
+const HANDOVER_MAX_TURNS = 5;
+
+let goalLimitPercent: number | null = null;
 
 function continuationPrompt(objective: string): string {
   return `Continue working toward the active goal.
@@ -27,6 +32,7 @@ export default function goalExtension(pi: ExtensionAPI) {
   let lastObjective: string | null = null;
   let continuationQueued = false;
   let toolRegistered = false;
+  let handover: { turns: number; forcedAbort: boolean; dispatched: boolean } | null = null;
 
   // Only load complete_goal tool when /goal is used to avoid polluting context
   // This causes a cache invalidation (increasing token cost), however as i use goal early on its fine.
@@ -78,6 +84,47 @@ export default function goalExtension(pi: ExtensionAPI) {
     },
   });
 
+  pi.registerCommand("goal-limit", {
+    description: "Hand over to a fresh agent when context usage reaches a percentage (e.g. 10%, or 'off')",
+    handler: async (args, ctx) => {
+      const value = args.trim();
+      if (!value) {
+        ctx.ui.notify(goalLimitPercent === null ? "Goal limit: off" : `Goal limit: ${goalLimitPercent}%`, "info");
+        return;
+      }
+      if (value === "off") {
+        goalLimitPercent = null;
+        ctx.ui.notify("Goal limit disabled.", "info");
+        return;
+      }
+      const match = value.match(/^(\d+(?:\.\d+)?)\s*%?$/);
+      const percent = match ? Number(match[1]) : NaN;
+      if (!(percent > 0 && percent <= 100)) {
+        ctx.ui.notify("Usage: /goal-limit <percent>% | off", "info");
+        return;
+      }
+      goalLimitPercent = percent;
+      ctx.ui.notify(`Goal limit set to ${percent}%`, "info");
+    },
+  });
+
+  pi.registerCommand("internal-goal-handover", {
+    description: "Internal: restart the active goal in a fresh session",
+    handler: async (_args, ctx) => {
+      if (!goal || goal.status !== "active") return;
+      const objective = goal.objective;
+      goal = null;
+      handover = null;
+      continuationQueued = false;
+      await ctx.waitForIdle();
+      await ctx.newSession({
+        withSession: async (newCtx) => {
+          await newCtx.sendUserMessage(`/goal ${objective}`, { expandPromptTemplates: true });
+        },
+      });
+    },
+  });
+
   pi.registerCommand("crits", {
     description: "Find critical vulnerabilities in a codebase",
     handler: async (_args, ctx) => {
@@ -99,6 +146,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     goal = { objective, status: "active" };
     lastObjective = objective;
     continuationQueued = false;
+    handover = null;
     ctx.ui.notify(`Goal set: ${objective}`, "info");
     pi.sendMessage(
       {
@@ -110,6 +158,41 @@ export default function goalExtension(pi: ExtensionAPI) {
     );
   }
 
+  pi.on("turn_end", (event, ctx) => {
+    if (!goal || goal.status !== "active") return;
+
+    if (handover) {
+      if (handover.forcedAbort) return;
+      handover.turns += 1;
+      if (handover.turns >= HANDOVER_MAX_TURNS && event.toolResults.length > 0) {
+        handover.forcedAbort = true;
+        ctx.abort();
+      }
+      return;
+    }
+
+    if (goalLimitPercent === null) return;
+    const percent = ctx.getContextUsage()?.percent;
+    if (percent == null || percent < goalLimitPercent) return;
+
+    handover = { turns: 0, forcedAbort: false, dispatched: false };
+    ctx.ui.notify(`Context at ${percent.toFixed(1)}%, handing over goal.`, "info");
+    pi.sendMessage(
+      {
+        customType: "goal-handover",
+        content: HANDOVER_PROMPT,
+        display: true,
+      },
+      { deliverAs: "steer" },
+    );
+  });
+
+  pi.on("agent_settled", () => {
+    if (!goal || goal.status !== "active" || !handover || handover.dispatched) return;
+    handover.dispatched = true;
+    pi.sendUserMessage("/internal-goal-handover", { expandPromptTemplates: true });
+  });
+
   pi.on("agent_end", (event, ctx) => {
     if (!goal || goal.status !== "active") return;
 
@@ -117,12 +200,15 @@ export default function goalExtension(pi: ExtensionAPI) {
     const wasAborted = event.messages.some(
       (message) => message.role === "assistant" && message.stopReason === "aborted",
     );
-    if (wasAborted) {
+    if (wasAborted && !handover?.forcedAbort) {
       goal = null;
+      handover = null;
       continuationQueued = false;
       ctx.ui.notify("Goal cancelled.", "info");
       return;
     }
+
+    if (handover) return;
 
     if (ctx.hasPendingMessages()) return;
     if (continuationQueued) return;

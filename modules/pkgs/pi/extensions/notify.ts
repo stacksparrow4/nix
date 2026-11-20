@@ -40,6 +40,24 @@ function lastRunWasCancelled(ctx: {
   return false;
 }
 
+function lastRunWasGoalHandover(ctx: {
+  sessionManager: { getBranch(): Array<any> };
+}): boolean {
+  const branch = ctx.sessionManager.getBranch();
+  for (let i = branch.length - 1; i >= 0; i--) {
+    const entry = branch[i];
+    if (entry.type === "custom_message") {
+      if (entry.customType === "goal-handover") return true;
+      if (entry.customType === "goal") return false;
+      continue;
+    }
+    if (entry.type === "message" && "role" in entry.message && entry.message.role === "user") {
+      return false;
+    }
+  }
+  return false;
+}
+
 const PREVIEW_LIMIT = 100;
 
 function firstMessagePreview(ctx: {
@@ -72,6 +90,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("agent_settled", async (_event, ctx) => {
     if (!ctx.hasUI || ctx.mode !== "tui") return;
     if (lastRunWasCancelled(ctx)) return;
+    if (lastRunWasGoalHandover(ctx)) return;
     const preview = firstMessagePreview(ctx);
     notify("Pi turn complete", preview || "");
   });
