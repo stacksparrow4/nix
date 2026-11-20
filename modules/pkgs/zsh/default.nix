@@ -54,7 +54,10 @@
             ];
           };
         in
-        pkgs.runCommand "zsh" { nativeBuildInputs = [ pkgs.makeBinaryWrapper ]; } ''
+        pkgs.runCommand "zsh" {
+          nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+          passthru.shellPath = "/bin/zsh";
+        } ''
           makeBinaryWrapper ${pkgs.zsh}/bin/zsh $out/bin/zsh --inherit-argv0 --set ZDOTDIR ${zshConfig}
         ''
       ) { };
