@@ -482,9 +482,14 @@ function warnIfUnpinned(ctx: ExtensionContext): void {
 /**
  * Recompute the active pin's estimated cost when it is a day old. Best-effort:
  * failures leave the last known cost in place. Re-pinning already stores a
- * fresh cost, so this only matters for pins carried across sessions.
+ * fresh cost, so this only matters for pins carried across sessions. A changed
+ * estimate is announced in the chat so the user notices price drift.
  */
-async function refreshPinCost(ctx: ExtensionContext, model: ExtensionContext["model"]): Promise<void> {
+async function refreshPinCost(
+  pi: ExtensionAPI,
+  ctx: ExtensionContext,
+  model: ExtensionContext["model"],
+): Promise<void> {
   if (!isRoutingModel(model)) return;
   const pin = pins[model.id];
   if (!pin) return;
@@ -499,9 +504,20 @@ async function refreshPinCost(ctx: ExtensionContext, model: ExtensionContext["mo
     // The user may have re-pinned while the request was in flight.
     const current = pins[model.id];
     if (!current || current.tag !== pin.tag) return;
+    const previousCost = current.cost;
     pins[model.id] = { ...current, provider: row.provider, quant: row.quant, cost: row.cost, costAt: now };
     savePins(pins);
     refreshStatus(ctx);
+    if (previousCost !== row.cost) {
+      const change = previousCost === undefined
+        ? formatCost(row.cost)
+        : `${formatCost(previousCost)} → ${formatCost(row.cost)}`;
+      pi.sendMessage({
+        customType: "openrouter-cost",
+        content: `OpenRouter estimated cost for ${model.id} (${row.provider} ${row.quant}) updated: ${change}.`,
+        display: true,
+      });
+    }
   } catch {
     // Cosmetic only; keep showing the last known cost.
   }
@@ -557,13 +573,13 @@ export default function (pi: ExtensionAPI) {
     pins = loadPins();
     refreshStatus(ctx);
     warnIfUnpinned(ctx);
-    void refreshPinCost(ctx, ctx.model);
+    void refreshPinCost(pi, ctx, ctx.model);
   });
 
   pi.on("model_select", (event, ctx) => {
     refreshStatus(ctx);
     warnIfUnpinned(ctx);
-    void refreshPinCost(ctx, event.model);
+    void refreshPinCost(pi, ctx, event.model);
   });
 
   pi.on("session_shutdown", (_event, ctx) => {
