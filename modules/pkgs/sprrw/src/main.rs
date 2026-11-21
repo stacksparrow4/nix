@@ -76,7 +76,6 @@ fn main() {
     }
 }
 
-#[cfg(target_os = "linux")]
 fn notify_rebuild_complete() {
     let _ = Command::new("notify-send")
         .args([
@@ -85,16 +84,6 @@ fn notify_rebuild_complete() {
             "--app-icon",
             "nix-snowflake",
             "Nixos rebuild complete",
-        ])
-        .status();
-}
-
-#[cfg(target_os = "macos")]
-fn notify_rebuild_complete() {
-    let _ = Command::new("osascript")
-        .args([
-            "-e",
-            "display notification \"Nix build complete\" with title \"Nix\"",
         ])
         .status();
 }
@@ -173,50 +162,28 @@ fn build(config: &Config) {
         run_cmd(Command::new("git").arg("-C").arg(flake).args(["add", "-A"]));
     }
 
-    if cfg!(target_os = "macos") {
-        let mut cmd = Command::new("nix");
-        cmd.current_dir(&config.build_flake)
-            .args([
-                "run",
-                "home-manager/master",
-                "--",
-                "switch",
-                "--option",
-                "warn-dirty",
-                "false",
-                "--print-build-logs",
-                "--show-trace",
-            ])
-            .arg("--flake")
-            .arg(&config.build_flake);
-        append_override_inputs(&mut cmd, config);
-        run_cmd(&mut cmd);
-    } else {
-        let mut cmd = Command::new("nixos-rebuild");
-        cmd.current_dir(&config.build_flake)
-            .args(["switch", "--sudo"])
-            .arg("--flake")
-            .arg(&config.build_flake)
-            .args([
-                "--option",
-                "warn-dirty",
-                "false",
-                "--show-trace",
-                "--print-build-logs",
-            ]);
-        append_override_inputs(&mut cmd, config);
-        run_cmd(&mut cmd);
+    let mut cmd = Command::new("nixos-rebuild");
+    cmd.current_dir(&config.build_flake)
+        .args(["switch", "--sudo"])
+        .arg("--flake")
+        .arg(&config.build_flake)
+        .args([
+            "--option",
+            "warn-dirty",
+            "false",
+            "--show-trace",
+            "--print-build-logs",
+        ]);
+    append_override_inputs(&mut cmd, config);
+    run_cmd(&mut cmd);
 
-        diff_last_system_closures();
-    }
+    diff_last_system_closures();
 
     notify_rebuild_complete();
 }
 
 fn update(config: &Config) {
-    if cfg!(target_os = "linux") {
-        flatpak::update();
-    }
+    flatpak::update();
     for update_flake in &config.update_flakes {
         run_cmd(
             Command::new("git")

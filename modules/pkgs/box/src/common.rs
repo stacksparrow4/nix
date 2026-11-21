@@ -16,7 +16,7 @@ pub struct Cli {
     #[arg(long, group = "backend")]
     pub vm: bool,
 
-    /// Use Docker backend (automatic on Mac)
+    /// Use Docker backend
     #[arg(long, group = "backend")]
     pub docker: bool,
 

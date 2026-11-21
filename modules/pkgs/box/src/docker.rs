@@ -7,27 +7,11 @@ use rand::distr::{Alphanumeric, SampleString};
 use signal_hook::iterator::Signals;
 
 use crate::Cli;
-use crate::clipboard::Bridge;
 use crate::common::exit_code;
 use crate::container::get_container_args;
 use crate::mount::Mount;
 
 const CLIPBOARD_SOCKET: &str = "/tmp/sprrw-clipboard.sock";
-
-#[cfg(target_os = "linux")]
-fn start_clipboard(_args: &Cli) -> Option<Bridge> {
-    Some(crate::clipboard::start_unix(CLIPBOARD_SOCKET))
-}
-
-#[cfg(not(target_os = "linux"))]
-fn start_clipboard(args: &Cli) -> Option<Bridge> {
-    if args.no_network {
-        eprintln!("warning: clipboard sharing needs networking on macOS; not sharing the clipboard");
-        None
-    } else {
-        Some(crate::clipboard::start_tcp("host.docker.internal"))
-    }
-}
 
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let mut container_args = get_container_args(
@@ -46,14 +30,12 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
         .collect(),
     );
 
-    let clipboard = if args.clipboard {
-        start_clipboard(args)
-    } else {
-        None
-    };
+    let clipboard = args
+        .clipboard
+        .then(|| crate::clipboard::start_unix(CLIPBOARD_SOCKET));
     if let Some(bridge) = &clipboard {
         container_args.envvars.push(bridge.addr_env.clone());
-        container_args.mounts.extend(bridge.mount.clone());
+        container_args.mounts.push(bridge.mount.clone());
     }
 
     let mut docker_args: Vec<String> = ["--rm", "-i", "-v", "/nix/store:/nix/store:ro"]

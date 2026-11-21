@@ -681,10 +681,8 @@ fn main() {
         format!("{}:{}:ro:dir", bridge_dir.path().display(), BRIDGE_DIR),
     ];
 
-    let _notify_server = start_notify_server();
-    let notify_args: Vec<String> = _notify_server
-        .as_ref()
-        .map_or_else(Vec::new, |s| s.box_args());
+    let notify_server = start_notify_server();
+    let notify_args: Vec<String> = notify_server.box_args();
 
     let subagent_args: Vec<String> = match &subagent_pipe_dir {
         Some(dir) => {

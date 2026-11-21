@@ -40,7 +40,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    if args.docker_image.is_some() && cfg!(target_os = "linux") && !args.docker {
+    if args.docker_image.is_some() && !args.docker {
         println!("Cannot specify --docker-image without the Docker backend (--docker)");
         std::process::exit(1);
     }
@@ -117,12 +117,11 @@ fn main() {
         }
     }
 
-    let run = match (cfg!(target_os = "linux"), args.vm, args.docker) {
-        (true, false, false) => bwrap::run,
-        (true, true, false) => vm::run,
-        (_, false, _) => docker::run,
-        _ => panic!("invalid backends supplied"),
-    };
-
-    run(&args, volume_mounts);
+    if args.docker {
+        docker::run(&args, volume_mounts)
+    } else if args.vm {
+        vm::run(&args, volume_mounts)
+    } else {
+        bwrap::run(&args, volume_mounts)
+    }
 }

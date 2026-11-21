@@ -45,7 +45,7 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let clipboard = args.clipboard.then(|| {
         let bridge = crate::clipboard::start_unix(CLIPBOARD_SOCKET);
         container_args.envvars.push(bridge.addr_env.clone());
-        container_args.mounts.extend(bridge.mount.clone());
+        container_args.mounts.push(bridge.mount.clone());
         bridge
     });
 

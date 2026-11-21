@@ -10,8 +10,8 @@ pub const DUMMY_DISPLAY: &str = "sprrw-clipboard";
 
 pub struct Bridge {
     pub addr_env: String,
-    pub mount: Option<Mount>,
-    _dir: Option<tempfile::TempDir>,
+    pub mount: Mount,
+    _dir: tempfile::TempDir,
 }
 
 pub fn start_unix(box_socket_path: &str) -> Bridge {
@@ -39,37 +39,13 @@ pub fn start_unix(box_socket_path: &str) -> Bridge {
 
     Bridge {
         addr_env: format!("{ADDR_ENV}=unix:{box_socket_path}"),
-        mount: Some(Mount::new(
+        mount: Mount::new(
             &sock_path.to_string_lossy(),
             box_socket_path,
             MountType::File,
             false,
-        )),
-        _dir: Some(dir),
-    }
-}
-
-#[cfg(not(target_os = "linux"))]
-pub fn start_tcp(host: &str) -> Bridge {
-    use std::net::TcpListener;
-
-    let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind clipboard socket");
-    let port = listener
-        .local_addr()
-        .expect("failed to read clipboard socket address")
-        .port();
-
-    thread::spawn(move || {
-        for conn in listener.incoming() {
-            let Ok(stream) = conn else { continue };
-            thread::spawn(move || handle(stream));
-        }
-    });
-
-    Bridge {
-        addr_env: format!("{ADDR_ENV}=tcp:{host}:{port}"),
-        mount: None,
-        _dir: None,
+        ),
+        _dir: dir,
     }
 }
 
@@ -111,29 +87,6 @@ fn handle<S: Read + Write>(mut stream: S) {
     }
 }
 
-#[cfg(target_os = "macos")]
-fn host_copy(_primary: bool, _mime: &str, data: &[u8]) {
-    run_with_input("pbcopy", &[], data);
-}
-
-#[cfg(target_os = "macos")]
-fn host_paste(_primary: bool, mime: &str) -> Vec<u8> {
-    if mime.is_empty() || mime == "text" || mime.starts_with("text/") {
-        run_capture("pbpaste", &[]).unwrap_or_default()
-    } else {
-        Vec::new()
-    }
-}
-
-#[cfg(target_os = "macos")]
-fn host_list(_primary: bool) -> Vec<u8> {
-    match run_capture("pbpaste", &[]) {
-        Some(out) if !out.is_empty() => b"text/plain\n".to_vec(),
-        _ => Vec::new(),
-    }
-}
-
-#[cfg(not(target_os = "macos"))]
 fn wl_args(primary: bool, mime: &str) -> Vec<&str> {
     let mut args = Vec::new();
     if primary {
@@ -145,17 +98,14 @@ fn wl_args(primary: bool, mime: &str) -> Vec<&str> {
     args
 }
 
-#[cfg(not(target_os = "macos"))]
 fn host_copy(primary: bool, mime: &str, data: &[u8]) {
     run_with_input("wl-copy", &wl_args(primary, mime), data);
 }
 
-#[cfg(not(target_os = "macos"))]
 fn host_paste(primary: bool, mime: &str) -> Vec<u8> {
     run_capture("wl-paste", &wl_args(primary, mime)).unwrap_or_default()
 }
 
-#[cfg(not(target_os = "macos"))]
 fn host_list(primary: bool) -> Vec<u8> {
     let mut args = vec!["--list-types"];
     if primary {

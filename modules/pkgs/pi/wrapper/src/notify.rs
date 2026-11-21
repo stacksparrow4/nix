@@ -25,7 +25,6 @@ fn handle_connection<S: std::io::Read>(stream: S) {
         .status();
 }
 
-#[cfg(target_os = "linux")]
 fn notify_icon(title: &str) -> String {
     if title == "Warming pi cache" {
         if let Ok(icon) = std::env::var("SPRRW_PI_NOTIFY_ICON_CACHE_WARM") {
@@ -35,7 +34,6 @@ fn notify_icon(title: &str) -> String {
     std::env::var("SPRRW_PI_NOTIFY_ICON").unwrap()
 }
 
-#[cfg(target_os = "linux")]
 fn build_notify_command(title: &str, body: &str) -> Command {
     let mut cmd = Command::new("notify-send");
     cmd.arg(format!("--icon={}", notify_icon(title)));
@@ -43,54 +41,25 @@ fn build_notify_command(title: &str, body: &str) -> Command {
     cmd
 }
 
-#[cfg(target_os = "macos")]
-fn build_notify_command(title: &str, body: &str) -> Command {
-    let escape = |s: &str| s.replace('\\', "\\\\").replace('"', "\\\"");
-    let script = format!(
-        "display notification \"{}\" with title \"{}\"",
-        escape(body),
-        escape(title)
-    );
-    let mut cmd = Command::new("osascript");
-    cmd.arg("-e").arg(script);
-    cmd
-}
-
-pub enum NotifyServer {
-    #[cfg(target_os = "linux")]
-    Unix(tempfile::TempDir),
-    #[cfg(not(target_os = "linux"))]
-    Tcp(String),
-}
+pub struct NotifyServer(tempfile::TempDir);
 
 impl NotifyServer {
     pub fn box_args(&self) -> Vec<String> {
-        match self {
-            #[cfg(target_os = "linux")]
-            NotifyServer::Unix(dir) => {
-                let socket_mount_dir = std::path::Path::new(SOCKET_PATH_IN_SANDBOX)
-                    .parent()
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_string();
-                vec![
-                    "-v".to_string(),
-                    format!("{}:{}:ro:dir", dir.path().display(), socket_mount_dir),
-                    "--env".to_string(),
-                    format!("PI_NOTIFY_SOCKET={}", SOCKET_PATH_IN_SANDBOX),
-                ]
-            }
-            #[cfg(not(target_os = "linux"))]
-            NotifyServer::Tcp(addr) => vec![
-                "--env".to_string(),
-                format!("PI_NOTIFY_ADDR={}", addr),
-            ],
-        }
+        let socket_mount_dir = std::path::Path::new(SOCKET_PATH_IN_SANDBOX)
+            .parent()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+        vec![
+            "-v".to_string(),
+            format!("{}:{}:ro:dir", self.0.path().display(), socket_mount_dir),
+            "--env".to_string(),
+            format!("PI_NOTIFY_SOCKET={}", SOCKET_PATH_IN_SANDBOX),
+        ]
     }
 }
 
-#[cfg(target_os = "linux")]
-pub fn start_notify_server() -> Option<NotifyServer> {
+pub fn start_notify_server() -> NotifyServer {
     use std::fs;
     use std::os::unix::{fs::PermissionsExt, net::UnixListener};
 
@@ -107,25 +76,5 @@ pub fn start_notify_server() -> Option<NotifyServer> {
         }
     });
 
-    Some(NotifyServer::Unix(dir))
-}
-
-#[cfg(not(target_os = "linux"))]
-pub fn start_notify_server() -> Option<NotifyServer> {
-    use std::net::TcpListener;
-
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind notify socket");
-    let port = listener
-        .local_addr()
-        .expect("Failed to read notify socket address")
-        .port();
-
-    thread::spawn(move || {
-        for conn in listener.incoming() {
-            let Ok(stream) = conn else { continue };
-            thread::spawn(move || handle_connection(stream));
-        }
-    });
-
-    Some(NotifyServer::Tcp(format!("host.docker.internal:{port}")))
+    NotifyServer(dir)
 }
