@@ -29,22 +29,24 @@
             ${sessionVars}
           '';
 
-          zshrc = lib.replaceStrings
-            [
-              "@nix_zsh_completions@"
-              "@zsh@"
-              "@prompt@"
-              "@coreutils@"
-              "@shell_extra@"
-            ]
-            [
-              "${pkgs.nix-zsh-completions}"
-              "${pkgs.zsh}"
-              (lib.escapeShellArg prompt)
-              "${pkgs.coreutils}"
-              shellExtra
-            ]
-            (builtins.readFile ./zshrc);
+          zshrc = ''
+            typeset -U path cdpath fpath manpath
+
+            for profile in ''${(z)NIX_PROFILES}; do
+              fpath+=($profile/share/zsh/site-functions $profile/share/zsh/$ZSH_VERSION/functions $profile/share/zsh/vendor-completions)
+            done
+            fpath=(${pkgs.nix-zsh-completions}/share/zsh/site-functions $fpath)
+
+            HELPDIR="${pkgs.zsh}/share/zsh/$ZSH_VERSION/help"
+          ''
+          + (builtins.readFile ./zshrc)
+          + ''
+            eval "$(${pkgs.coreutils}/bin/dircolors -b)"
+
+            PROMPT=${lib.escapeShellArg prompt}
+
+            ${shellExtra}
+          '';
 
           zshConfig = pkgs.symlinkJoin {
             name = "zsh-config";
@@ -54,12 +56,14 @@
             ];
           };
         in
-        pkgs.runCommand "zsh" {
-          nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
-          passthru.shellPath = "/bin/zsh";
-        } ''
-          makeBinaryWrapper ${pkgs.zsh}/bin/zsh $out/bin/zsh --inherit-argv0 --set ZDOTDIR ${zshConfig}
-        ''
+        pkgs.runCommand "zsh"
+          {
+            nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+            passthru.shellPath = "/bin/zsh";
+          }
+          ''
+            makeBinaryWrapper ${pkgs.zsh}/bin/zsh $out/bin/zsh --inherit-argv0 --set ZDOTDIR ${zshConfig}
+          ''
       ) { };
     };
 }

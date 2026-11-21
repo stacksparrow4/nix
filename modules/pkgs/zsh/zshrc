@@ -1,15 +1,5 @@
-typeset -U path cdpath fpath manpath
-
-for profile in ${(z)NIX_PROFILES}; do
-  fpath+=($profile/share/zsh/site-functions $profile/share/zsh/$ZSH_VERSION/functions $profile/share/zsh/vendor-completions)
-done
-fpath=(@nix_zsh_completions@/share/zsh/site-functions $fpath)
-
-HELPDIR="@zsh@/share/zsh/$ZSH_VERSION/help"
-
 bindkey -v
 KEYTIMEOUT=1
-PROMPT=@prompt@
 
 bindkey -M viins '^P' up-line-or-history
 bindkey -M viins '^N' down-line-or-history
@@ -74,8 +64,6 @@ zcompdump="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump-$ZSH_VERSION"
 mkdir -p "${zcompdump:h}"
 compinit -d "$zcompdump"
 
-eval "$(@coreutils@/bin/dircolors -b)"
-
 alias ls='ls --color=auto'
 
 alias cdtmp='cd "$(mktemp -d)"'
@@ -122,5 +110,3 @@ alias nss-unstable='nix-search --channel=unstable -d -m 3'
 export UV_LINK_MODE=symlink
 
 alias nixurl='nix store prefetch-file'
-
-@shell_extra@
