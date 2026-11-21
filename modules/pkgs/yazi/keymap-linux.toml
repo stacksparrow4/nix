@@ -1,3 +1,0 @@
-[[mgr.prepend_keymap]]
-on = ["D"]
-run = "shell 'dragon-drop \"$@\"' --confirm"

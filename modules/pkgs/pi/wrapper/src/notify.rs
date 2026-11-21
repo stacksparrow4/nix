@@ -26,10 +26,10 @@ fn handle_connection<S: std::io::Read>(stream: S) {
 }
 
 fn notify_icon(title: &str) -> String {
-    if title == "Warming pi cache" {
-        if let Ok(icon) = std::env::var("SPRRW_PI_NOTIFY_ICON_CACHE_WARM") {
-            return icon;
-        }
+    if title == "Warming pi cache"
+        && let Ok(icon) = std::env::var("SPRRW_PI_NOTIFY_ICON_CACHE_WARM")
+    {
+        return icon;
     }
     std::env::var("SPRRW_PI_NOTIFY_ICON").unwrap()
 }
@@ -41,25 +41,21 @@ fn build_notify_command(title: &str, body: &str) -> Command {
     cmd
 }
 
-pub struct NotifyServer(tempfile::TempDir);
-
-impl NotifyServer {
-    pub fn box_args(&self) -> Vec<String> {
-        let socket_mount_dir = std::path::Path::new(SOCKET_PATH_IN_SANDBOX)
-            .parent()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
-        vec![
-            "-v".to_string(),
-            format!("{}:{}:ro:dir", self.0.path().display(), socket_mount_dir),
-            "--env".to_string(),
-            format!("PI_NOTIFY_SOCKET={}", SOCKET_PATH_IN_SANDBOX),
-        ]
-    }
+pub fn notify_server_box_args(td: &tempfile::TempDir) -> Vec<String> {
+    let socket_mount_dir = std::path::Path::new(SOCKET_PATH_IN_SANDBOX)
+        .parent()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
+    vec![
+        "-v".to_string(),
+        format!("{}:{}:ro:dir", td.path().display(), socket_mount_dir),
+        "--env".to_string(),
+        format!("PI_NOTIFY_SOCKET={}", SOCKET_PATH_IN_SANDBOX),
+    ]
 }
 
-pub fn start_notify_server() -> NotifyServer {
+pub fn start_notify_server() -> tempfile::TempDir {
     use std::fs;
     use std::os::unix::{fs::PermissionsExt, net::UnixListener};
 
@@ -76,5 +72,5 @@ pub fn start_notify_server() -> NotifyServer {
         }
     });
 
-    NotifyServer(dir)
+    dir
 }

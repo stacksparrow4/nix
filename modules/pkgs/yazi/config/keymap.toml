@@ -6,6 +6,10 @@ run = "quit"
 on = ["d"]
 run = "remove --permanently"
 
+[[mgr.prepend_keymap]]
+on = ["D"]
+run = "shell 'dragon-drop \"$@\"' --confirm"
+
 [[spot.prepend_keymap]]
 on = "q"
 run = "close"

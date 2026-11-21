@@ -11,7 +11,7 @@ use clap_complete::Shell;
 use regex::Regex;
 use tempfile::{TempDir, tempdir};
 
-use crate::notify::start_notify_server;
+use crate::notify::{notify_server_box_args, start_notify_server};
 use crate::remote::{SOCKET_NAME, serve_local, start_remote_server, validate_remote_arg};
 
 mod notify;
@@ -681,8 +681,7 @@ fn main() {
         format!("{}:{}:ro:dir", bridge_dir.path().display(), BRIDGE_DIR),
     ];
 
-    let notify_server = start_notify_server();
-    let notify_args: Vec<String> = notify_server.box_args();
+    let notify_server_temp_dir = start_notify_server();
 
     let subagent_args: Vec<String> = match &subagent_pipe_dir {
         Some(dir) => {
@@ -770,7 +769,7 @@ fn main() {
         .arg("--clipboard")
         .args(network_args)
         .args(bridge_args)
-        .args(notify_args)
+        .args(notify_server_box_args(&notify_server_temp_dir))
         .args(subagent_args)
         .args(agents_md_args)
         .args(match target {
