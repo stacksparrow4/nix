@@ -6,20 +6,19 @@
       ...
     }:
     {
-      packages.yazi =
-        pkgs.runCommand "yazi"
-          {
-            nativeBuildInputs = [ pkgs.makeWrapper ];
-          }
-          ''
-            mkdir -p $out/bin
-            ln -s ${pkgs.yazi}/bin/yazi $out/bin
-            wrapProgram $out/bin/yazi \
+      packages.yazi = pkgs.symlinkJoin {
+        name = "yazi";
+        paths = [ pkgs.yazi ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          for prog in yazi ya; do
+            wrapProgram "$out/bin/$prog" \
               --set YAZI_CONFIG_HOME ${./config} \
               --prefix PATH : ${
                 lib.makeBinPath (
                   with pkgs;
                   [
+                    git
                     file
                     jq
                     ffmpegthumbnailer
@@ -29,6 +28,8 @@
                   ]
                 )
               }
-          '';
+          done
+        '';
+      };
     };
 }
