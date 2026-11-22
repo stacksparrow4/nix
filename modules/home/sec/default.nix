@@ -5,7 +5,6 @@
     imports = with config.flake.modules.homeManager; [
       cracking
       forensics
-      metasploit
       mobile
       pwn
       pwnproxy

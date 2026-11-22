@@ -231,7 +231,6 @@ fn prepare_settings_overlay() -> (TempDir, String) {
 
 const DEFAULT_EXTENSIONS: &[&str] = &[
     "ask-mode.ts",
-    "save.ts",
     "goal.ts",
     "brave-search.ts",
     "footer.ts",
