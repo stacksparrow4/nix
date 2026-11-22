@@ -17,9 +17,9 @@ function continuationPrompt(objective: string): string {
 
 Objective: ${objective}
 
-Choose the next concrete action toward the objective and avoid repeating work that is already done.
+Choose the next concrete action toward the objective and avoid repeating work that is already done. Maintain up-to-date and correct notes, remove incorrect or outdated notes.
 
-Before deciding the goal is achieved, verify against real evidence (files, command output, test results) that every requirement is met. Treat uncertainty as not done. When — and only when — the objective is fully achieved, call complete_goal. Do not call complete_goal for any other reason.`;
+Before deciding the goal is achieved, verify with evidence that every requirement is met. Call complete_goal if and only if the goal is fully verified to be achieved.`;
 }
 
 export default function goalExtension(pi: ExtensionAPI) {
