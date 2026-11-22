@@ -30,9 +30,9 @@ export default function goalExtension(pi: ExtensionAPI) {
   // be skipped and complete_goal would be "not found" in the new session.
   let goal: Goal | null = null;
   let lastObjective: string | null = null;
-  let continuationQueued = false;
+  let resetDispatched = false;
   let toolRegistered = false;
-  let handover: { turns: number; forcedAbort: boolean; dispatched: boolean } | null = null;
+  let handover: { turns: number; forcedAbort: boolean } | null = null;
 
   // Only load complete_goal tool when /goal is used to avoid polluting context
   // This causes a cache invalidation (increasing token cost), however as i use goal early on its fine.
@@ -55,7 +55,6 @@ export default function goalExtension(pi: ExtensionAPI) {
           return { content: [{ type: "text", text: "No goal is set." }], isError: true };
         }
         goal = { ...goal, status: "complete" };
-        continuationQueued = false;
         return { content: [{ type: "text", text: "Goal marked complete." }], terminate: true };
       },
     });
@@ -115,7 +114,6 @@ export default function goalExtension(pi: ExtensionAPI) {
       const objective = goal.objective;
       goal = null;
       handover = null;
-      continuationQueued = false;
       await ctx.waitForIdle();
       await ctx.newSession({
         withSession: async (newCtx) => {
@@ -145,7 +143,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     ensureToolRegistered();
     goal = { objective, status: "active" };
     lastObjective = objective;
-    continuationQueued = false;
+    resetDispatched = false;
     handover = null;
     ctx.ui.notify(`Goal set: ${objective}`, "info");
     pi.sendMessage(
@@ -175,7 +173,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     const percent = ctx.getContextUsage()?.percent;
     if (percent == null || percent < goalLimitPercent) return;
 
-    handover = { turns: 0, forcedAbort: false, dispatched: false };
+    handover = { turns: 0, forcedAbort: false };
     ctx.ui.notify(`Context at ${percent.toFixed(1)}%, handing over goal.`, "info");
     pi.sendMessage(
       {
@@ -185,12 +183,6 @@ export default function goalExtension(pi: ExtensionAPI) {
       },
       { deliverAs: "steer" },
     );
-  });
-
-  pi.on("agent_settled", () => {
-    if (!goal || goal.status !== "active" || !handover || handover.dispatched) return;
-    handover.dispatched = true;
-    pi.sendUserMessage("/internal-goal-handover", { expandPromptTemplates: true });
   });
 
   pi.on("agent_end", (event, ctx) => {
@@ -203,27 +195,13 @@ export default function goalExtension(pi: ExtensionAPI) {
     if (wasAborted && !handover?.forcedAbort) {
       goal = null;
       handover = null;
-      continuationQueued = false;
       ctx.ui.notify("Goal cancelled.", "info");
-      return;
     }
+  });
 
-    if (handover) return;
-
-    if (ctx.hasPendingMessages()) return;
-    if (continuationQueued) return;
-    continuationQueued = true;
-    queueMicrotask(() => {
-      continuationQueued = false;
-      if (!goal || goal.status !== "active") return;
-      pi.sendMessage(
-        {
-          customType: "goal",
-          content: continuationPrompt(goal.objective),
-          display: true,
-        },
-        { triggerTurn: true, deliverAs: "followUp" },
-      );
-    });
+  pi.on("agent_settled", () => {
+    if (!goal || goal.status !== "active" || resetDispatched) return;
+    resetDispatched = true;
+    pi.sendUserMessage("/internal-goal-handover", { expandPromptTemplates: true });
   });
 }

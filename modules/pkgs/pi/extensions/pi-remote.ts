@@ -27,7 +27,7 @@ const READ_AGENTS_MD = process.env.PI_READ_AGENTS_MD === "1";
 const LOCAL_AGENTS_MD = "/AGENTS.md";
 const TOOL_NAME = FULL_REMOTE ? "bash" : "command";
 const DEFAULT_TIMEOUT_SECONDS = 10;
-const MAX_TIMEOUT_SECONDS = 180;
+const MAX_TIMEOUT_SECONDS = 60;
 const REMOTE_FILE_OP_TIMEOUT_SECONDS = 30;
 
 interface ExecOptions {
