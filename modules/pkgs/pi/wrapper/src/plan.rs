@@ -48,6 +48,7 @@ pub struct Plan {
     pub bare: bool,
     pub search: bool,
     pub agents_md: Option<PathBuf>,
+    pub notes: Option<PathBuf>,
     pub volumes: Vec<String>,
     pub extra_sandbox_args: Vec<String>,
     pub pi_args: Vec<String>,
@@ -80,6 +81,11 @@ impl Plan {
             check_local_only(path, config, &target, args.local.is_some())?;
         }
 
+        let notes = args
+            .notes
+            .map(|name| resolve_notes(&name, &target))
+            .transpose()?;
+
         let models = resolve_models(trim_list(args.models), pi_config.as_ref())?;
 
         let brave_search = !(args.no_brave_search || args.local.is_some());
@@ -111,6 +117,7 @@ impl Plan {
             bare: args.bare,
             search: args.search,
             agents_md,
+            notes,
             volumes: args.volume,
             extra_sandbox_args,
             pi_args: args.args,
@@ -154,6 +161,24 @@ fn resolve_agents_md() -> Result<PathBuf, String> {
         ));
     }
     Ok(path)
+}
+
+fn resolve_notes(name: &str, target: &Target) -> Result<PathBuf, String> {
+    if !matches!(target, Target::Sandbox) {
+        return Err("--notes is not supported with --vm or --remote".to_string());
+    }
+    if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        return Err(format!(
+            "Invalid notes name '{name}': must be alphanumeric or '-'"
+        ));
+    }
+    let dir = env::home_dir()
+        .expect("Could not find home directory")
+        .join(".pi/notes")
+        .join(name);
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("Failed to create notes dir {}: {e}", dir.display()))?;
+    Ok(dir)
 }
 
 fn check_local_only(

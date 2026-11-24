@@ -5,6 +5,7 @@ use tempfile::{TempDir, tempdir};
 use crate::{
     backend::{BRIDGE_DIR, Backend},
     local_net::{self, LocalNet},
+    notes::NotesFs,
     notify,
     plan::{CwdMode, Plan, Target},
     settings::SettingsOverlay,
@@ -16,6 +17,7 @@ const CONTROL_SOCKET: &str = "/tmp/pi-subagent/control.sock";
 
 pub struct Session {
     backend: Backend,
+    _notes: Option<NotesFs>,
     local_net: Option<LocalNet>,
     subagent_dir: Option<TempDir>,
     notify_dir: TempDir,
@@ -27,12 +29,17 @@ impl Session {
         let subagent_dir = matches!(plan.target, Target::Sandbox)
             .then(|| tempdir().expect("Failed to create temporary subagent dir"));
         let local_net = plan.local.as_deref().map(LocalNet::start).transpose()?;
-        let backend = Backend::start(plan, &sandbox_args(plan, subagent_dir.as_ref()))?;
+        let notes = plan.notes.as_deref().map(NotesFs::mount).transpose()?;
+        let backend = Backend::start(
+            plan,
+            &sandbox_args(plan, subagent_dir.as_ref(), notes.as_ref()),
+        )?;
         let notify_dir = notify::start_notify_server()?;
         let settings = SettingsOverlay::create();
 
         Ok(Session {
             backend,
+            _notes: notes,
             local_net,
             subagent_dir,
             notify_dir,
@@ -133,7 +140,11 @@ impl Session {
     }
 }
 
-fn sandbox_args(plan: &Plan, subagent_dir: Option<&TempDir>) -> Vec<String> {
+fn sandbox_args(
+    plan: &Plan,
+    subagent_dir: Option<&TempDir>,
+    notes: Option<&NotesFs>,
+) -> Vec<String> {
     let mut args: Vec<String> = match plan.cwd {
         Some(CwdMode::Rw) => vec!["--cwd".to_string(), "--ro-git".to_string()],
         Some(CwdMode::Ro) => vec!["--ro-cwd".to_string()],
@@ -152,6 +163,15 @@ fn sandbox_args(plan: &Plan, subagent_dir: Option<&TempDir>) -> Vec<String> {
             VolType::Dir,
         ));
         args.extend(volumes::env("PI_SUBAGENT_SOCKET", CONTROL_SOCKET));
+    }
+
+    if let Some(notes) = notes {
+        args.extend(volume(
+            notes.path().display(),
+            "/notes",
+            VolAccess::Rw,
+            VolType::Dir,
+        ));
     }
 
     args.extend(plan.extra_sandbox_args.iter().cloned());

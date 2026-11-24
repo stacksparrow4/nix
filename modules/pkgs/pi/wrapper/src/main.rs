@@ -7,6 +7,7 @@ use crate::session::Session;
 mod backend;
 mod config;
 mod local_net;
+mod notes;
 mod notify;
 mod plan;
 mod prompt;
@@ -90,8 +91,12 @@ struct Args {
     system: Option<String>,
 
     /// Disable brave search tool and extension
-    #[arg(short, long)]
+    #[arg(long)]
     no_brave_search: bool,
+
+    /// Mount the named notes store at /notes (~/.pi/notes/<NAME>)
+    #[arg(short, long, value_name = "NAME")]
+    notes: Option<String>,
 
     /// Positional arguments passed directly to Pi
     args: Vec<String>,
