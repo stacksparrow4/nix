@@ -22,10 +22,8 @@ import { Type } from "typebox";
 
 
 const SOCKET_PATH = "/tmp/pi-remote/pi.sock";
-const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
 const READ_AGENTS_MD = process.env.PI_READ_AGENTS_MD === "1";
 const LOCAL_AGENTS_MD = "/AGENTS.md";
-const TOOL_NAME = FULL_REMOTE ? "bash" : "command";
 const DEFAULT_TIMEOUT_SECONDS = 10;
 const MAX_TIMEOUT_SECONDS = 60;
 const REMOTE_FILE_OP_TIMEOUT_SECONDS = 30;
@@ -546,7 +544,7 @@ export default async function(pi: ExtensionAPI) {
 
   pi.on("tool_call", async (event) => {
     const input = event.input;
-    if (event.toolName !== TOOL_NAME || !input) return undefined;
+    if (event.toolName !== "bash" || !input) return undefined;
     const timeout = input.timeout;
     if (timeout === undefined) {
       input.timeout = DEFAULT_TIMEOUT_SECONDS;
@@ -581,12 +579,12 @@ export default async function(pi: ExtensionAPI) {
 
   pi.registerTool({
     ...builtIn,
-    name: TOOL_NAME,
-    label: TOOL_NAME,
-    description: `Execute a ${FULL_REMOTE ? "bash " : ""}command. Returns stdout and stderr. Output may be truncated if it is too long. If no timeout is given, a default of ${DEFAULT_TIMEOUT_SECONDS} seconds is applied. The maximum timeout is ${MAX_TIMEOUT_SECONDS} seconds.`,
-    promptSnippet: FULL_REMOTE ? "Execute bash commands" : "Execute commands",
+    name: "bash",
+    label: "bash",
+    description: `Execute a bash command. Returns stdout and stderr. Output may be truncated if it is too long. If no timeout is given, a default of ${DEFAULT_TIMEOUT_SECONDS} seconds is applied. The maximum timeout is ${MAX_TIMEOUT_SECONDS} seconds.`,
+    promptSnippet: "Execute bash commands",
     parameters: Type.Object({
-      command: Type.String({ description: `${FULL_REMOTE ? "Bash command" : "Command"} to execute` }),
+      command: Type.String({ description: "Bash command to execute" }),
       timeout: Type.Optional(
         Type.Number({
           description: `Timeout in seconds (optional, defaults to ${DEFAULT_TIMEOUT_SECONDS}s if omitted, maximum ${MAX_TIMEOUT_SECONDS}s)`,
@@ -642,49 +640,47 @@ export default async function(pi: ExtensionAPI) {
     return { systemPrompt };
   });
 
-  if (FULL_REMOTE) {
-    const cwd = await remotePwdCached();
+  const cwd = await remotePwdCached();
 
-    // Resolve Tab file completion against the bridge (tool/remote sandbox)
-    // filesystem instead of the pi sandbox the TUI runs in. addAutocompleteProvider
-    // lives on the per-session UI context, so register it on session_start.
-    let autocompleteRegistered = false;
-    pi.on("session_start", (_event, ctx) => {
-      if (autocompleteRegistered) return;
-      ctx.ui?.addAutocompleteProvider?.(createRemoteAutocompleteProvider);
-      autocompleteRegistered = true;
-    });
+  // Resolve Tab file completion against the bridge (tool/remote sandbox)
+  // filesystem instead of the pi sandbox the TUI runs in. addAutocompleteProvider
+  // lives on the per-session UI context, so register it on session_start.
+  let autocompleteRegistered = false;
+  pi.on("session_start", (_event, ctx) => {
+    if (autocompleteRegistered) return;
+    ctx.ui?.addAutocompleteProvider?.(createRemoteAutocompleteProvider);
+    autocompleteRegistered = true;
+  });
 
-    pi.registerTool(withRemoteCwd({
-      ...createReadToolDefinition(cwd, {
-        operations: {
-          readFile: remoteReadFile,
-          access: (p) => remoteAccess(p, "r"),
-          detectImageMimeType: remoteDetectImageMimeType,
-        },
-      }),
-      description:
-        "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
-    }, cwd));
+  pi.registerTool(withRemoteCwd({
+    ...createReadToolDefinition(cwd, {
+      operations: {
+        readFile: remoteReadFile,
+        access: (p) => remoteAccess(p, "r"),
+        detectImageMimeType: remoteDetectImageMimeType,
+      },
+    }),
+    description:
+      "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete.",
+  }, cwd));
 
-    pi.registerTool(withRemoteCwd(
-      createWriteToolDefinition(cwd, {
-        operations: {
-          writeFile: remoteWriteFile,
-          mkdir: remoteMkdir,
-        },
-      }),
-      cwd,
-    ));
+  pi.registerTool(withRemoteCwd(
+    createWriteToolDefinition(cwd, {
+      operations: {
+        writeFile: remoteWriteFile,
+        mkdir: remoteMkdir,
+      },
+    }),
+    cwd,
+  ));
 
-    pi.registerTool(withRemoteCwd(withoutLocalEditPreview(
-      createEditToolDefinition(cwd, {
-        operations: {
-          readFile: remoteReadFile,
-          writeFile: remoteWriteFile,
-          access: (p) => remoteAccess(p, "rw"),
-        },
-      }),
-    ), cwd));
-  }
+  pi.registerTool(withRemoteCwd(withoutLocalEditPreview(
+    createEditToolDefinition(cwd, {
+      operations: {
+        readFile: remoteReadFile,
+        writeFile: remoteWriteFile,
+        access: (p) => remoteAccess(p, "rw"),
+      },
+    }),
+  ), cwd));
 }

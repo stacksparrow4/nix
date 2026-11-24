@@ -1,22 +1,20 @@
-use std::{
-    env,
-    io::{BufRead, BufReader, Write},
-    process::{Child, Command, Stdio},
-    thread::sleep,
-    time::Duration,
-};
-
 use clap::{CommandFactory, Parser};
 use clap_complete::Shell;
-use regex::Regex;
-use tempfile::{TempDir, tempdir};
 
-use crate::notify::{notify_server_box_args, start_notify_server};
-use crate::remote::{SOCKET_NAME, serve_local, start_remote_server, validate_remote_arg};
+use crate::plan::Plan;
+use crate::session::Session;
 
+mod backend;
 mod config;
+mod local_net;
 mod notify;
+mod plan;
+mod prompt;
 mod remote;
+mod session;
+mod settings;
+mod vm;
+mod volumes;
 
 /// Pi sandbox wrapper. For Pi help, use pi -- --help
 #[derive(Parser, Debug)]
@@ -31,9 +29,9 @@ struct Args {
     #[arg(long)]
     no_tools: bool,
 
-    /// Specify which tools to use
-    #[arg(short, long)]
-    tools: Option<String>,
+    /// Comma separated list of tools to use
+    #[arg(short, long, value_delimiter = ',')]
+    tools: Vec<String>,
 
     /// Search mode - only provide brave search
     #[arg(short, long)]
@@ -45,13 +43,13 @@ struct Args {
 
     /// Print mode
     // This technically does not need pass through however keeping it here for backwards
-    // compatability
+    // compatibility
     #[arg(short, long)]
     print: bool,
 
     // Sandbox arguments
     /// Share CWD
-    #[arg(short, long)]
+    #[arg(short, long, conflicts_with = "ro_cwd")]
     cwd: bool,
 
     /// Share CWD read-only
@@ -66,9 +64,9 @@ struct Args {
     #[arg(short, long)]
     volume: Vec<String>,
 
-    /// Comma seperated list of allowed models
-    #[arg(short, long)]
-    models: Option<String>,
+    /// Comma separated list of allowed models
+    #[arg(short, long, value_delimiter = ',')]
+    models: Vec<String>,
 
     /// Disable network, and specify a SOCAT target for the LLM connection
     #[arg(short, long)]
@@ -83,9 +81,9 @@ struct Args {
     #[arg(long)]
     no_extensions: bool,
 
-    /// Specify which extensions to use
-    #[arg(short, long)]
-    extensions: Option<String>,
+    /// Comma separated list of extensions to use
+    #[arg(short, long, value_delimiter = ',')]
+    extensions: Vec<String>,
 
     /// Custom system prompt
     #[arg(long)]
@@ -97,12 +95,8 @@ struct Args {
 
     /// Execute commands on a remote host.
     /// Use the template <CMD>. The remote must be a unix/bash host.
-    #[arg(long)]
+    #[arg(long, conflicts_with = "vm")]
     remote: Option<String>,
-
-    /// Like --remote, but for non unix hosts. Use the template <CMD>.
-    #[arg(long)]
-    universal_remote: Option<String>,
 
     /// Execute commands inside a VM
     #[arg(long)]
@@ -117,725 +111,26 @@ struct Args {
     args: Vec<String>,
 }
 
-enum Target {
-    Sandbox,
-    Vm,
-    Remote { universal: bool },
-}
-
-enum VolType {
-    File,
-    Dir,
-}
-
-enum VolAccess {
-    RO,
-    RW,
-}
-
-fn generate_absolute_volume(host_path: &str, box_path: &str, a: VolAccess, t: VolType) -> String {
-    format!(
-        "{}:{}:{}:{}",
-        host_path,
-        box_path,
-        match a {
-            VolAccess::RO => "ro",
-            VolAccess::RW => "rw",
-        },
-        match t {
-            VolType::File => "file",
-            VolType::Dir => "dir",
-        }
-    )
-}
-
-fn generate_home_volume(host_path: &str, box_path: &str, a: VolAccess, t: VolType) -> String {
-    generate_absolute_volume(
-        &format!(
-            "{}/{}",
-            env::home_dir()
-                .expect("Could not find home directory")
-                .to_string_lossy(),
-            host_path
-        ),
-        &format!("~/{}", box_path),
-        a,
-        t,
-    )
-}
-
-fn generate_pi_volume(host_path: &str, box_path: &str, a: VolAccess, t: VolType) -> String {
-    generate_home_volume(
-        &format!(".pi/agent/{}", host_path),
-        &format!(".pi/agent/{}", box_path),
-        a,
-        t,
-    )
-}
-
-fn generate_home_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
-    generate_home_volume(fname, fname, a, t)
-}
-
-fn generate_pi_mirror_volume(fname: &str, a: VolAccess, t: VolType) -> String {
-    generate_pi_volume(fname, fname, a, t)
-}
-
-const SETTINGS_STRIP_KEYS: &[&str] = &["packages", "extensions", "skills", "prompts", "themes"];
-
-fn prepare_settings_overlay() -> (TempDir, String) {
-    let user_path = env::home_dir()
-        .expect("Could not find home directory")
-        .join(".pi/agent/settings.json");
-
-    let mut settings = std::fs::read_to_string(&user_path)
-        .ok()
-        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
-        .filter(serde_json::Value::is_object)
-        .unwrap_or_else(|| serde_json::json!({}));
-
-    let obj = settings
-        .as_object_mut()
-        .expect("settings overlay is always a JSON object");
-
-    for key in SETTINGS_STRIP_KEYS {
-        obj.remove(*key);
-    }
-
-    obj.insert(
-        "lastChangelogVersion".to_string(),
-        serde_json::json!(std::env::var("SPRRW_PI_VERSION").unwrap()),
-    );
-    obj.insert("cacheWarming".to_string(), serde_json::json!("idle"));
-    obj.insert("showCacheMissNotices".to_string(), serde_json::json!(true));
-    obj.insert(
-        "enableInstallTelemetry".to_string(),
-        serde_json::json!(false),
-    );
-    obj.insert("theme".to_string(), serde_json::json!("moonfly"));
-    obj.insert("tuiMode".to_string(), serde_json::json!("regular"));
-    obj.insert(
-        "warnings".to_string(),
-        serde_json::json!({"anthropicExtraUsage": false}),
-    );
-
-    let dir = tempdir().expect("Failed to create temporary settings dir");
-    let path = dir.path().join("settings.json");
-    std::fs::write(
-        &path,
-        serde_json::to_string_pretty(&settings).expect("Failed to serialize settings overlay"),
-    )
-    .expect("Failed to write settings overlay");
-
-    (dir, path.to_string_lossy().into_owned())
-}
-
-const DEFAULT_EXTENSIONS: &[&str] = &[
-    "ask-mode.ts",
-    "goal.ts",
-    "brave-search.ts",
-    "footer.ts",
-    "notify.ts",
-    "subagent.ts",
-    "cache-warming.ts",
-    "openrouter.ts",
-    "vi-mode.ts",
-    "btw.ts",
-];
-const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
-const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
-const BRIDGE_DIR: &str = "/tmp/pi-remote";
-
-const CONTROL_DIR: &str = "/tmp/pi-subagent";
-const CONTROL_SOCKET: &str = "/tmp/pi-subagent/control.sock";
-
-/// Start a sandbox serving tool calls from the inside, and wait for its socket to appear.
-fn start_tool_sandbox(sandbox_args: &[String], no_network: bool) -> (TempDir, Child) {
-    let dir = tempdir().expect("Failed to create temporary bridge dir");
-
-    let mut cmd = Command::new("box");
-    cmd.arg("--docker") // Use docker to be able to install tools
-        .arg("-v")
-        .arg(format!("{}:{}:rw:dir", dir.path().display(), BRIDGE_DIR))
-        .args(if no_network {
-            vec!["--no-network"]
-        } else {
-            vec![]
-        })
-        .args(sandbox_args);
-
-    let bin = std::env::var("SPRRW_SUBAGENT_BIN").unwrap();
-    cmd.env(
-        "SPRRW_ADDITIONAL_PATH",
-        match std::env::var("SPRRW_ADDITIONAL_PATH") {
-            Ok(existing) => format!("{}:{}", bin, existing),
-            _ => bin.to_string(),
-        },
-    );
-
-    let mut proc = cmd
-        .arg("--")
-        .arg(std::env::var("SPRRW_PI_WRAPPER_LINUX").unwrap())
-        .arg("--internal-serve")
-        .arg(format!("{}/{}", BRIDGE_DIR, SOCKET_NAME))
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .spawn()
-        .expect("Failed to start tool sandbox");
-
-    let socket = dir.path().join(SOCKET_NAME);
-
-    while !socket.exists() {
-        if let Some(status) = proc
-            .try_wait()
-            .expect("Failed to poll the tool sandbox process")
-        {
-            eprintln!("Tool sandbox exited before it was ready ({})", status);
-            std::process::exit(1);
-        }
-
-        sleep(Duration::from_millis(25));
-    }
-
-    (dir, proc)
-}
-
-fn wait_for_ssh(ssh_port: &str, ready_check: &str, vm_proc: &mut Child) {
-    let start = std::time::Instant::now();
-    let timeout = Duration::from_secs(120);
-
-    loop {
-        if let Some(status) = vm_proc.try_wait().expect("Failed to poll the VM process") {
-            eprintln!("VM exited before SSH was ready ({})", status);
-            std::process::exit(1);
-        }
-
-        let ready = Command::new("sshpass")
-            .args([
-                "-p",
-                "password",
-                "ssh",
-                "-n",
-                "-o",
-                "StrictHostKeyChecking=no",
-                "-o",
-                "UserKnownHostsFile=/dev/null",
-                "-o",
-                "LogLevel=ERROR",
-                "-o",
-                "ConnectTimeout=2",
-                "-p",
-                ssh_port,
-                "localhost",
-                ready_check,
-            ])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false);
-
-        if ready {
-            return;
-        }
-
-        if start.elapsed() >= timeout {
-            eprintln!("Timed out waiting for VM SSH on port {}", ssh_port);
-            std::process::exit(1);
-        }
-
-        sleep(Duration::from_millis(250));
-    }
-}
-
 fn main() {
-    let args = Args::parse();
+    if let Err(e) = run(Args::parse()) {
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
+}
 
+fn run(args: Args) -> Result<(), String> {
     if let Some(shell) = args.completions {
         let mut cmd = Args::command();
         let name = cmd.get_name().to_string();
         clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
-        return;
+        return Ok(());
     }
 
     if let Some(socket_path) = args.internal_serve.as_deref() {
-        serve_local(socket_path);
+        return remote::serve_local(socket_path);
     }
 
-    let real_pi_location = std::env::var("SPRRW_PI").unwrap();
-
-    let agents_md_args: Vec<String> = if args.agents {
-        let path = env::current_dir()
-            .expect("Failed to get the current working directory")
-            .join("AGENTS.md");
-
-        if !path.is_file() {
-            eprintln!(
-                "--agents was supplied but {} does not exist",
-                path.display()
-            );
-            std::process::exit(2);
-        }
-
-        vec![
-            "-v".to_string(),
-            generate_absolute_volume(
-                &path.to_string_lossy(),
-                "/AGENTS.md",
-                VolAccess::RO,
-                VolType::File,
-            ),
-        ]
-    } else {
-        vec![]
-    };
-
-    let target = match (
-        args.remote.as_deref(),
-        args.universal_remote.as_deref(),
-        args.vm,
-    ) {
-        (None, None, false) => Target::Sandbox,
-        (None, None, true) => Target::Vm,
-        (Some(template), None, false) => {
-            validate_remote_arg(template);
-            Target::Remote { universal: false }
-        }
-        (None, Some(template), false) => {
-            validate_remote_arg(template);
-            Target::Remote { universal: true }
-        }
-        _ => {
-            eprintln!("Can only specify one of --remote, --universal-remote, or --vm.");
-            std::process::exit(2);
-        }
-    };
-
-    let pi_config = if args.cwd || args.ro_cwd {
-        let cwd = env::current_dir().expect("Failed to get the current working directory");
-        config::find_config(&cwd)
-    } else {
-        None
-    };
-
-    let models: Option<String> = match &pi_config {
-        Some((path, config)) => {
-            if config.local_only {
-                if args.local.is_none() {
-                    eprintln!("{} requires --local", path.display());
-                    std::process::exit(2);
-                }
-                if !matches!(target, Target::Sandbox) {
-                    eprintln!(
-                        "{} is local-only and cannot be used with --vm, --remote, or \
-                        --universal-remote",
-                        path.display()
-                    );
-                    std::process::exit(2);
-                }
-            }
-
-            match (&config.models_list, &args.models) {
-                (None, requested) => requested.clone(),
-                (Some(allowed), None) => Some(allowed.join(",")),
-                (Some(allowed), Some(requested)) => {
-                    for model in requested.split(',').map(str::trim) {
-                        if !allowed.iter().any(|a| a == model) {
-                            eprintln!(
-                                "Model '{}' is not in \"models-list\" of {}",
-                                model,
-                                path.display()
-                            );
-                            std::process::exit(2);
-                        }
-                    }
-                    Some(requested.clone())
-                }
-            }
-        }
-        None => args.models.clone(),
-    };
-
-    let brave_search = !(args.no_brave_search || args.local.is_some());
-
-    let all_tools: Vec<String> = if args.bare {
-        vec![]
-    } else {
-        args.tools
-            .as_deref()
-            .map_or(vec![], |ts| {
-                ts.split(',').map(|t| t.trim().to_string()).collect()
-            })
-            .into_iter()
-            .chain(if args.no_tools || args.search {
-                vec![]
-            } else if matches!(target, Target::Remote { universal: true }) {
-                vec!["command".to_string()]
-            } else {
-                DEFAULT_TOOLS.iter().map(|t| t.to_string()).collect()
-            })
-            .chain(if brave_search {
-                Some("web_search".to_string())
-            } else {
-                None
-            })
-            .collect()
-    };
-
-    let all_extensions: Vec<String> = args
-        .extensions
-        .as_deref()
-        .map_or(vec![], |es| {
-            es.split(',').map(|e| e.trim().to_string()).collect()
-        })
-        .into_iter()
-        .chain(if args.no_extensions {
-            vec![]
-        } else {
-            DEFAULT_EXTENSIONS.iter().map(|e| e.to_string()).collect()
-        })
-        .chain(REQUIRED_EXTENSIONS.iter().map(|e| e.to_string()))
-        .collect();
-
-    let system = args.system.unwrap_or_else(|| {
-        let date_suffix = format!(
-            "\n\nCurrent date: {}",
-            chrono::Local::now().format("%A, %B %-d, %Y")
-        );
-
-        if args.bare {
-            return String::from("You are a technical assistant.");
-        }
-
-        if args.search {
-            return format!(
-                "You are a technical research assistant that searches the web to \
-                provide information.{}",
-                date_suffix
-            );
-        }
-
-        let mut guidelines = vec![];
-
-        if all_tools.contains(&"bash".to_string())
-            && let Target::Sandbox = target
-            && args.local.is_none()
-        {
-            guidelines.push(
-                "Avoid recalling information about source available software and \
-                instead answer definitively by cloning the source to /tmp and referring to it",
-            );
-            guidelines.push("`uv` is available for Python packages");
-            guidelines.push(
-                "You are in an Alpine container with a read-only /nix volume \
-                mounted in. Use apk to install packages.",
-            );
-            guidelines.push("Never use `find` on the root directory for performance reasons.");
-        }
-
-        if all_tools.contains(&"command".to_string()) {
-            guidelines.push(
-                "The command tool is not necessarily bash (although this is the most \
-                common option), it could also be other shells such as Windows Powershell",
-            );
-        }
-
-        if args.local.is_some() {
-            guidelines.push("You are in a sandbox with no network access.");
-        }
-
-        if brave_search {
-            guidelines.push("Perform web searches when you are unsure of current information");
-        }
-
-        if args.cwd || args.ro_cwd {
-            guidelines.push(
-                "The user has mounted data into the sanbox at the current working \
-                directory. The user's question will be in reference to the data in the current \
-                working directory.",
-            );
-        }
-
-        if args.cwd {
-            guidelines.push("When writing code, never use comments unless explicitly asked.");
-            guidelines.push("Never test the code you wrote unless explicitly asked.");
-        }
-
-        guidelines.push(
-            "When asking the user a question, only ask one question at a time. \
-            This means that your next questions can use the context from the previous answer.",
-        );
-
-        format!(
-            "You are a pragmatic, task-oriented terminal agent. You focus solely on completing \
-                the user's requests.{}{}{}",
-            if guidelines.is_empty() {
-                ""
-            } else {
-                "\n\nGuidelines:\n"
-            },
-            guidelines
-                .into_iter()
-                .map(|g| format!("- {}", g))
-                .collect::<Vec<String>>()
-                .join("\n"),
-            date_suffix
-        )
-    });
-
-    let subagent_pipe_dir = match target {
-        Target::Sandbox => Some(tempdir().unwrap()),
-        _ => None,
-    };
-
-    let sandbox_args: Vec<String> = if args.cwd {
-        vec!["--cwd".to_string(), "--ro-git".to_string()]
-    } else if args.ro_cwd {
-        vec!["--ro-cwd".to_string()]
-    } else {
-        vec![]
-    }
-    .into_iter()
-    .chain(
-        args.volume
-            .into_iter()
-            .flat_map(|v| vec!["-v".to_string(), v]),
-    )
-    .chain(if let Some(spd) = &subagent_pipe_dir {
-        vec![
-            "-v".to_string(),
-            format!("{}:{}:rw:dir", spd.path().display(), CONTROL_DIR),
-            "--env".to_string(),
-            format!("PI_SUBAGENT_SOCKET={}", CONTROL_SOCKET),
-        ]
-    } else {
-        vec![]
-    })
-    .chain(args.additional_sandbox_args.map_or(vec![], |a| {
-        shlex::split(&a).expect("Invalid value for additional_sandbox_args")
-    }))
-    .collect();
-
-    let (socat_info, in_sandbox_shell_prefix, network_args) =
-        if let Some(socat_arg) = args.local.as_ref() {
-            let socat_tmp_dir = tempdir().expect("Failed to create temporary socat dir");
-
-            let socat_tmp_dir_str = socat_tmp_dir.path().to_string_lossy().to_string();
-
-            let socat = Command::new("socat")
-                .arg(format!("UNIX-LISTEN:{}/llama.sock,fork", socat_tmp_dir_str))
-                .arg(socat_arg)
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .spawn()
-                .expect("Failed to start socat");
-
-            (
-                Some((socat_tmp_dir, socat)),
-                "socat TCP-LISTEN:8033,reuseaddr,fork UNIX-CONNECT:/tmp/llama/llama.sock \
-                &>/dev/null & ",
-                vec![
-                    "--no-network".to_string(),
-                    "-v".to_string(),
-                    format!("{}:/tmp/llama:ro:dir", socat_tmp_dir_str),
-                ],
-            )
-        } else {
-            (None, "", vec![])
-        };
-
-    let (vm_proc, host_template) = match target {
-        Target::Vm => {
-            let mut proc = Command::new("box")
-                .arg("--vm")
-                .args(&sandbox_args)
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::null())
-                .spawn()
-                .expect("Failed to start VM box");
-
-            let mut stdout_reader = BufReader::new(proc.stdout.as_mut().unwrap());
-
-            let mut first_line = String::new();
-            let _ = stdout_reader
-                .read_line(&mut first_line)
-                .expect("Failed to read first line of VM process");
-
-            let re = Regex::new(r"^Forwarding SSH to port (\d+)$").unwrap();
-
-            let ssh_port = re
-                .captures(first_line.trim())
-                .expect("Failed to extract SSH port")[1]
-                .to_string();
-
-            let ready_check = if args.cwd || args.ro_cwd {
-                "mountpoint -q ~/box"
-            } else {
-                "true"
-            };
-
-            wait_for_ssh(&ssh_port, ready_check, &mut proc);
-
-            let starter = if args.cwd || args.ro_cwd {
-                "'cd ~/box &&' "
-            } else {
-                ""
-            };
-
-            (
-                Some(proc),
-                Some(format!(
-                    "sshpass -p password ssh -n -o StrictHostKeyChecking=no -o \
-                        UserKnownHostsFile=/dev/null -o LogLevel=ERROR -p {ssh_port} localhost \
-                        'exec 0</dev/null;' {starter}<CMD>"
-                )),
-            )
-        }
-        _ => (None, args.remote.or(args.universal_remote)),
-    };
-
-    let (bridge_dir, tool_proc) = match host_template {
-        Some(template) => (start_remote_server(&template), None),
-        None => {
-            let (dir, proc) = start_tool_sandbox(&sandbox_args, args.local.is_some());
-            (dir, Some(proc))
-        }
-    };
-
-    let bridge_args = vec![
-        "-v".to_string(),
-        format!("{}:{}:ro:dir", bridge_dir.path().display(), BRIDGE_DIR),
-    ];
-
-    let notify_server_temp_dir = start_notify_server();
-
-    let subagent_args: Vec<String> = match &subagent_pipe_dir {
-        Some(dir) => {
-            vec![
-                "-v".to_string(),
-                format!("{}:{}:rw:dir", dir.path().display(), CONTROL_DIR),
-                "--env".to_string(),
-                format!("PI_SUBAGENT_CONTROL={}", CONTROL_SOCKET),
-            ]
-        }
-        None => vec![],
-    };
-
-    let pi_cmd: Vec<String> = [
-        real_pi_location,
-        "--approve".to_string(),
-        "--no-tools".to_string(),
-        "--no-extensions".to_string(),
-    ]
-    .into_iter()
-    .chain(if args.print {
-        vec!["-p".to_string()]
-    } else {
-        vec![]
-    })
-    .chain(if all_tools.is_empty() {
-        vec![]
-    } else {
-        vec!["--tools".to_string(), all_tools.join(",")]
-    })
-    .chain(
-        all_extensions
-            .into_iter()
-            .flat_map(|e| vec!["-e".to_string(), format!("~/.pi/agent/extensions/{}", e)]),
-    )
-    .chain(["-e".to_string(), "builtin:llama.cpp".to_string()])
-    .chain(["--system-prompt".to_string(), system])
-    .chain(models.map_or(vec![], |models| vec!["--models".to_string(), models]))
-    .chain(args.args)
-    .collect();
-
-    let joined_pi_cmd = shlex::try_join(pi_cmd.iter().map(|s| s.as_str()))
-        .expect("Failed to create shell script for pi_cmd");
-
-    let (_settings_overlay_dir, settings_overlay_path) = prepare_settings_overlay();
-
-    let _ = Command::new("box")
-        .args(
-            [
-                generate_pi_mirror_volume("auth.json", VolAccess::RW, VolType::File),
-                generate_absolute_volume(
-                    &settings_overlay_path,
-                    "~/.pi/agent/settings.json",
-                    VolAccess::RW,
-                    VolType::File,
-                ),
-                generate_pi_mirror_volume("models-store.json", VolAccess::RW, VolType::File),
-                generate_pi_mirror_volume("models.json", VolAccess::RO, VolType::File),
-                generate_pi_mirror_volume("sessions", VolAccess::RW, VolType::Dir),
-                generate_absolute_volume(
-                    &std::env::var("SPRRW_EXTENSIONS").unwrap(),
-                    "~/.pi/agent/extensions",
-                    VolAccess::RO,
-                    VolType::Dir,
-                ),
-                generate_absolute_volume(
-                    &std::env::var("SPRRW_PROMPTS").unwrap(),
-                    "~/.pi/agent/prompts",
-                    VolAccess::RO,
-                    VolType::Dir,
-                ),
-                generate_absolute_volume(
-                    &std::env::var("SPRRW_THEMES").unwrap(),
-                    "~/.pi/agent/themes",
-                    VolAccess::RO,
-                    VolType::Dir,
-                ),
-            ]
-            .into_iter()
-            .flat_map(|v| vec!["-v".to_string(), v]),
-        )
-        .arg("--clipboard")
-        .args(network_args)
-        .args(bridge_args)
-        .args(notify_server_box_args(&notify_server_temp_dir))
-        .args(subagent_args)
-        .args(agents_md_args)
-        .args(match target {
-            Target::Remote { universal: true } => vec![],
-            _ => vec!["--env", "PI_REMOTE_FILE_TOOLS=1"],
-        })
-        .args(match target {
-            Target::Remote { .. } => vec![],
-            _ => vec!["--env", "PI_READ_AGENTS_MD=1"],
-        })
-        .args(if brave_search {
-            vec![
-                "-v".to_string(),
-                generate_home_mirror_volume(".config/brave-search", VolAccess::RO, VolType::Dir),
-            ]
-        } else {
-            vec![]
-        })
-        .args(["--downgrade-term", "--", "sh", "-c"])
-        .arg(format!("{}{}", in_sandbox_shell_prefix, joined_pi_cmd))
-        .status()
-        .expect("Failed to launch sandboxed pi");
-
-    if let Some(mut tool_proc) = tool_proc {
-        // Use sigterm instead of kill to allow box --docker to cleanup
-        unsafe { libc::kill(tool_proc.id() as i32, libc::SIGTERM) };
-        let _ = tool_proc.wait();
-    }
-
-    if let Some(mut vm_proc) = vm_proc {
-        let _ = vm_proc
-            .stdin
-            .as_ref()
-            .expect("Failed to obtain stdin of vm process")
-            .write("exit\n".as_bytes())
-            .expect("Failed to send exit message");
-
-        let _ = vm_proc.wait().expect("Failed to wait for vm process");
-    }
-
-    if let Some((_, mut socat_proc)) = socat_info {
-        socat_proc.kill().expect("Socat could not be killed");
-    }
+    let plan = Plan::from_args(args)?;
+    let session = Session::start(&plan)?;
+    session.launch(&plan)
 }

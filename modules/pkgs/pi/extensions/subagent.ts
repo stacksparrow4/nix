@@ -22,7 +22,6 @@ import {
 } from "@earendil-works/pi-tui";
 
 const CONTROL_PATH = process.env.PI_SUBAGENT_CONTROL;
-const FULL_REMOTE = process.env.PI_REMOTE_FILE_TOOLS === "1";
 
 const MAX_CONCURRENT = 4;
 
@@ -625,7 +624,7 @@ export default function (pi: ExtensionAPI) {
 		const model = lastCtx?.model ? `${lastCtx.model.provider}/${lastCtx.model.id}` : undefined;
 		const thinking = lastCtx?.thinkingLevel;
 
-		const tools = FULL_REMOTE ? ["bash", "read", "write", "edit"] : ["command"];
+		const tools = ["bash", "read", "write", "edit"];
 		const extensions = [path.join(EXT_DIR, "pi-remote.ts")];
 
 		const args: string[] = ["--mode", "json", "-p", "--no-session", "--approve"];

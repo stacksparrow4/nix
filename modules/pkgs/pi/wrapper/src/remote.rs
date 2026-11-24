@@ -21,11 +21,12 @@ use std::{
 };
 
 use base64::prelude::*;
+use serde::Deserialize;
 use serde_json::json;
 use tempfile::{tempdir, TempDir};
 use wait_timeout::ChildExt;
 
-const CMD_PLACEHOLDER: &str = "<CMD>";
+pub const CMD_PLACEHOLDER: &str = "<CMD>";
 pub const SOCKET_NAME: &str = "pi.sock";
 
 /// How a command received over the bridge is turned into a process.
@@ -36,11 +37,17 @@ enum Executor {
     Local,
 }
 
-pub fn validate_remote_arg(remote_arg: &str) {
-    if !remote_arg.contains(CMD_PLACEHOLDER) {
-        eprintln!("error: --remote template must contain {CMD_PLACEHOLDER}");
-        std::process::exit(2);
+#[derive(Deserialize)]
+struct Request {
+    command: String,
+    timeout: Option<f64>,
+}
+
+pub fn validate_remote_template(template: &str) -> Result<(), String> {
+    if !template.contains(CMD_PLACEHOLDER) {
+        return Err(format!("--remote template must contain {CMD_PLACEHOLDER}"));
     }
+    Ok(())
 }
 
 fn send_msg(writer: &Mutex<UnixStream>, obj: serde_json::Value) -> bool {
@@ -142,20 +149,23 @@ fn handle_remote_connection(stream: UnixStream, executor: Arc<Executor>) {
         return;
     }
 
-    let req: serde_json::Value = match serde_json::from_str(&line) {
-        Ok(v) => v,
-        Err(_) => return,
+    let req: Request = match serde_json::from_str(&line) {
+        Ok(req) => req,
+        Err(e) => {
+            send_msg(&writer, json!({"type": "error", "message": format!("invalid request: {e}")}));
+            return;
+        }
     };
 
-    let command = req["command"]
-        .as_str()
-        .expect("Command was not supplied")
-        .to_string();
-    let timeout = req["timeout"]
-        .as_f64()
-        .map(Duration::from_secs_f64);
+    let timeout = match req.timeout.map(Duration::try_from_secs_f64).transpose() {
+        Ok(timeout) => timeout,
+        Err(e) => {
+            send_msg(&writer, json!({"type": "error", "message": format!("invalid timeout: {e}")}));
+            return;
+        }
+    };
 
-    let mut child = match spawn_command(&executor, &command) {
+    let mut child = match spawn_command(&executor, &req.command) {
         Ok(c) => c,
         Err(e) => {
             send_msg(&writer, json!({"type": "error", "message": e.to_string()}));
@@ -240,29 +250,26 @@ fn accept_loop(listener: UnixListener, executor: Executor) {
     }
 }
 
-fn bind_socket(path: &Path) -> UnixListener {
-    let listener = UnixListener::bind(path).expect("Failed to bind remote socket");
+pub fn bind_private_socket(path: &Path) -> Result<UnixListener, String> {
+    let listener = UnixListener::bind(path)
+        .map_err(|e| format!("Failed to bind socket {}: {e}", path.display()))?;
     let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o600));
-    listener
+    Ok(listener)
 }
 
-pub fn start_remote_server(template: &str) -> TempDir {
+pub fn start_remote_server(template: &str) -> Result<TempDir, String> {
     let dir = tempdir().expect("Failed to create temporary remote dir");
-    let socket_path = dir.path().join(SOCKET_NAME);
-    let template = template.to_string();
-    thread::spawn(move || {
-        let listener = bind_socket(&socket_path);
-        accept_loop(listener, Executor::Template(template));
-    });
-    dir
+    let listener = bind_private_socket(&dir.path().join(SOCKET_NAME))?;
+    let executor = Executor::Template(template.to_string());
+    thread::spawn(move || accept_loop(listener, executor));
+    Ok(dir)
 }
 
-pub fn serve_local(socket_path: &str) -> ! {
+pub fn serve_local(socket_path: &str) -> Result<(), String> {
     let path = Path::new(socket_path);
     let _ = fs::remove_file(path);
 
-    let listener = bind_socket(path);
+    let listener = bind_private_socket(path)?;
     accept_loop(listener, Executor::Local);
-
-    std::process::exit(0);
+    Ok(())
 }

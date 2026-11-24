@@ -1,4 +1,8 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Display,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use serde::Deserialize;
 
@@ -12,35 +16,37 @@ pub struct PiConfig {
     pub models_list: Option<Vec<String>>,
 }
 
-fn fail(path: &Path, msg: impl std::fmt::Display) -> ! {
-    eprintln!("Invalid {}: {}", path.display(), msg);
-    std::process::exit(2);
+impl PiConfig {
+    fn validate(&self) -> Result<(), &'static str> {
+        let Some(models) = &self.models_list else {
+            return Ok(());
+        };
+        if models.is_empty() {
+            return Err("\"models-list\" must not be empty");
+        }
+        if models.iter().any(|m| m.trim().is_empty() || m.contains(',')) {
+            return Err("\"models-list\" entries must be non-empty and must not contain ','");
+        }
+        Ok(())
+    }
 }
 
-pub fn find_config(cwd: &Path) -> Option<(PathBuf, PiConfig)> {
-    for dir in cwd.ancestors() {
-        let path = dir.join(CONFIG_FILE);
-        if !path.exists() {
-            continue;
-        }
+fn invalid(path: &Path, msg: impl Display) -> String {
+    format!("Invalid {}: {}", path.display(), msg)
+}
 
-        let contents = std::fs::read_to_string(&path).unwrap_or_else(|e| fail(&path, e));
-        let config: PiConfig = serde_json::from_str(&contents).unwrap_or_else(|e| fail(&path, e));
+pub fn find_config(cwd: &Path) -> Result<Option<(PathBuf, PiConfig)>, String> {
+    let Some(path) = cwd
+        .ancestors()
+        .map(|dir| dir.join(CONFIG_FILE))
+        .find(|path| path.exists())
+    else {
+        return Ok(None);
+    };
 
-        if let Some(models) = &config.models_list {
-            if models.is_empty() {
-                fail(&path, "\"models-list\" must not be empty");
-            }
-            if models.iter().any(|m| m.trim().is_empty() || m.contains(',')) {
-                fail(
-                    &path,
-                    "\"models-list\" entries must be non-empty and must not contain ','",
-                );
-            }
-        }
+    let contents = fs::read_to_string(&path).map_err(|e| invalid(&path, e))?;
+    let config: PiConfig = serde_json::from_str(&contents).map_err(|e| invalid(&path, e))?;
+    config.validate().map_err(|e| invalid(&path, e))?;
 
-        return Some((path, config));
-    }
-
-    None
+    Ok(Some((path, config)))
 }

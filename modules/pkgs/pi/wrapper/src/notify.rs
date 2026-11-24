@@ -1,12 +1,19 @@
 use std::{
     io::{BufRead, BufReader},
+    path::Path,
     process::{Command, Stdio},
     thread,
 };
 
-pub const SOCKET_NAME: &str = "notify.sock";
+use tempfile::{TempDir, tempdir};
 
-pub const SOCKET_PATH_IN_SANDBOX: &str = "/tmp/pi-notify/notify.sock";
+use crate::{
+    remote::bind_private_socket,
+    volumes::{self, VolAccess, VolType, volume},
+};
+
+const SOCKET_NAME: &str = "notify.sock";
+const SANDBOX_DIR: &str = "/tmp/pi-notify";
 
 fn handle_connection<S: std::io::Read>(stream: S) {
     let mut reader = BufReader::new(stream);
@@ -41,36 +48,25 @@ fn build_notify_command(title: &str, body: &str) -> Command {
     cmd
 }
 
-pub fn notify_server_box_args(td: &tempfile::TempDir) -> Vec<String> {
-    let socket_mount_dir = std::path::Path::new(SOCKET_PATH_IN_SANDBOX)
-        .parent()
-        .unwrap()
-        .to_string_lossy()
-        .to_string();
-    vec![
-        "-v".to_string(),
-        format!("{}:{}:ro:dir", td.path().display(), socket_mount_dir),
-        "--env".to_string(),
-        format!("PI_NOTIFY_SOCKET={}", SOCKET_PATH_IN_SANDBOX),
-    ]
+pub fn box_args(dir: &Path) -> Vec<String> {
+    let mut args: Vec<String> = volume(dir.display(), SANDBOX_DIR, VolAccess::Ro, VolType::Dir).into();
+    args.extend(volumes::env(
+        "PI_NOTIFY_SOCKET",
+        format!("{SANDBOX_DIR}/{SOCKET_NAME}"),
+    ));
+    args
 }
 
-pub fn start_notify_server() -> tempfile::TempDir {
-    use std::fs;
-    use std::os::unix::{fs::PermissionsExt, net::UnixListener};
-
-    let dir = tempfile::tempdir().expect("Failed to create temporary notify dir");
-    let socket_path = dir.path().join(SOCKET_NAME);
+pub fn start_notify_server() -> Result<TempDir, String> {
+    let dir = tempdir().expect("Failed to create temporary notify dir");
+    let listener = bind_private_socket(&dir.path().join(SOCKET_NAME))?;
 
     thread::spawn(move || {
-        let listener = UnixListener::bind(&socket_path).expect("Failed to bind notify socket");
-        let _ = fs::set_permissions(&socket_path, fs::Permissions::from_mode(0o600));
-
         for conn in listener.incoming() {
             let Ok(stream) = conn else { continue };
             thread::spawn(move || handle_connection(stream));
         }
     });
 
-    dir
+    Ok(dir)
 }
