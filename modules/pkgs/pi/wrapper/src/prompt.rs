@@ -47,7 +47,9 @@ impl Plan {
                 starting a task. Maintain up to date notes, this means adding, editing, deleting \
                 and refactoring/reorganising notes to ensure they are neat. To avoid flooding \
                 agent context, notes have limits: files ≤{NOTE_MAX_BYTES} bytes, names \
-                ≤{NAME_MAX_BYTES} bytes, ≤{DIR_MAX_ENTRIES} entries per directory."
+                ≤{NAME_MAX_BYTES} bytes, ≤{DIR_MAX_ENTRIES} entries per directory. Do not \
+                immediately read all notes, keep your context clear by reading only notes \
+                related to your current work."
             )
         })
     }
