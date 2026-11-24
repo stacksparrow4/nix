@@ -48,6 +48,7 @@
         ++ (with self'.packages; [
           ssh
           proxychains
+          bat
         ]);
 
       sprrw.term.shellExtra = ''

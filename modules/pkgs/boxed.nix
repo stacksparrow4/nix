@@ -277,6 +277,12 @@
           shareCwd = true;
           prog = "${pkgs.qpdf}/bin/qpdf";
         };
+
+        bat = self'.wrappers.mkSandbox {
+          name = "bat";
+          shareCwd = true;
+          prog = "${pkgs.bat}/bin/bat";
+        };
       };
     };
 }
