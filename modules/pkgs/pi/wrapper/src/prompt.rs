@@ -44,9 +44,9 @@ impl Plan {
         self.notes.is_some().then(|| {
             format!(
                 "Persistent notes are stored in the directory /notes. Search notes before \
-                starting a task. Maintain up to date notes while performing a task, and clean \
-                and delete outdated, incorrect, or unneeded notes. To avoid flooding agent \
-                context, notes have limits: files ≤{NOTE_MAX_BYTES} bytes, names \
+                starting a task. Maintain up to date notes, this means adding, editing, deleting \
+                and refactoring/reorganising notes to ensure they are neat. To avoid flooding \
+                agent context, notes have limits: files ≤{NOTE_MAX_BYTES} bytes, names \
                 ≤{NAME_MAX_BYTES} bytes, ≤{DIR_MAX_ENTRIES} entries per directory."
             )
         })
