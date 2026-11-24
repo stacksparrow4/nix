@@ -8,13 +8,15 @@ use serde::Deserialize;
 
 use crate::{models::ModelsList, notes::NotesName};
 
-pub const CONFIG_FILE: &str = ".pi-config.json";
+pub const CONFIG_FILE: &str = "pi-config.json";
 
 #[derive(Deserialize, Default, Debug)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct PiConfig {
     #[serde(default)]
     pub local_only: bool,
+    #[serde(default)]
+    pub allow_testing: bool,
     pub models_list: Option<ModelsList>,
     pub notes: Option<NotesName>,
 }

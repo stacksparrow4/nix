@@ -49,6 +49,7 @@ pub struct Plan {
     pub custom_system: Option<String>,
     pub bare: bool,
     pub search: bool,
+    pub allow_testing: bool,
     pub agents_md: Option<PathBuf>,
     pub notes: Option<PathBuf>,
     pub volumes: Vec<String>,
@@ -117,6 +118,8 @@ impl Plan {
             custom_system: args.system,
             bare: args.bare,
             search: args.search,
+            allow_testing: args.allow_testing
+                || pi_config.as_ref().is_some_and(|(_, c)| c.allow_testing),
             agents_md,
             notes,
             volumes: args.volume,

@@ -91,6 +91,10 @@ struct Args {
     #[arg(long)]
     system: Option<String>,
 
+    /// Allow the agent to test code it writes without being explicitly asked
+    #[arg(long)]
+    allow_testing: bool,
+
     /// Disable brave search tool and extension
     #[arg(long)]
     no_brave_search: bool,

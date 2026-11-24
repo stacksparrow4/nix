@@ -87,7 +87,9 @@ impl Plan {
 
         if self.cwd == Some(CwdMode::Rw) {
             guidelines.push("When writing code, never use comments unless explicitly asked.");
-            guidelines.push("Never test the code you wrote unless explicitly asked.");
+            if !self.allow_testing {
+                guidelines.push("Never test the code you wrote unless explicitly asked.");
+            }
         }
 
         guidelines.push(
