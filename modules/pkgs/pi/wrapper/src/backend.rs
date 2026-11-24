@@ -10,9 +10,9 @@ use tempfile::{TempDir, tempdir};
 
 use crate::{
     plan::{Plan, Target},
-    remote::{SOCKET_NAME, start_remote_server},
+    remote::{INTERNAL_SERVE_ENV, SOCKET_NAME, start_remote_server},
     vm::Vm,
-    volumes::{VolAccess, VolType, volume},
+    volumes::{self, VolAccess, VolType, volume},
 };
 
 pub const BRIDGE_DIR: &str = "/tmp/pi-remote";
@@ -68,6 +68,10 @@ impl ToolSandbox {
             cmd.arg("--no-network");
         }
         cmd.args(sandbox_args);
+        cmd.args(volumes::env(
+            INTERNAL_SERVE_ENV,
+            format!("{BRIDGE_DIR}/{SOCKET_NAME}"),
+        ));
 
         let bin = env::var("SPRRW_SUBAGENT_BIN").unwrap();
         let path = match env::var("SPRRW_ADDITIONAL_PATH") {
@@ -79,8 +83,6 @@ impl ToolSandbox {
         let proc = cmd
             .arg("--")
             .arg(env::var("SPRRW_PI_WRAPPER_LINUX").unwrap())
-            .arg("--internal-serve")
-            .arg(format!("{BRIDGE_DIR}/{SOCKET_NAME}"))
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .spawn()

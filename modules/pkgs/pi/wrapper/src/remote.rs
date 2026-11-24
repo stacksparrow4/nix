@@ -28,6 +28,7 @@ use wait_timeout::ChildExt;
 
 pub const CMD_PLACEHOLDER: &str = "<CMD>";
 pub const SOCKET_NAME: &str = "pi.sock";
+pub const INTERNAL_SERVE_ENV: &str = "SPRRW_PI_INTERNAL_SERVE";
 
 /// How a command received over the bridge is turned into a process.
 enum Executor {

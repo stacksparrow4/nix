@@ -93,11 +93,6 @@ struct Args {
     #[arg(short, long)]
     no_brave_search: bool,
 
-    /// Internal: serve tool calls on the given unix socket, executing them in this process's
-    /// context. Used inside the tool sandbox, you should never need to supply this option.
-    #[arg(long, hide = true)]
-    internal_serve: Option<String>,
-
     /// Positional arguments passed directly to Pi
     args: Vec<String>,
 }
@@ -117,8 +112,8 @@ fn run(args: Args) -> Result<(), String> {
         return Ok(());
     }
 
-    if let Some(socket_path) = args.internal_serve.as_deref() {
-        return remote::serve_local(socket_path);
+    if let Ok(socket_path) = std::env::var(remote::INTERNAL_SERVE_ENV) {
+        return remote::serve_local(&socket_path);
     }
 
     let plan = Plan::from_args(args)?;
