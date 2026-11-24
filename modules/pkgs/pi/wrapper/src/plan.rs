@@ -50,7 +50,6 @@ pub struct Plan {
     pub agents_md: Option<PathBuf>,
     pub volumes: Vec<String>,
     pub extra_sandbox_args: Vec<String>,
-    pub print: bool,
     pub pi_args: Vec<String>,
 }
 
@@ -114,7 +113,6 @@ impl Plan {
             agents_md,
             volumes: args.volume,
             extra_sandbox_args,
-            print: args.print,
             pi_args: args.args,
         })
     }

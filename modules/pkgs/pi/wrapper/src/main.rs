@@ -24,30 +24,6 @@ struct Args {
     #[arg(long, value_name = "SHELL")]
     completions: Option<Shell>,
 
-    // Pass through args
-    /// Disable tools by default
-    #[arg(long)]
-    no_tools: bool,
-
-    /// Comma separated list of tools to use
-    #[arg(short, long, value_delimiter = ',')]
-    tools: Vec<String>,
-
-    /// Search mode - only provide brave search
-    #[arg(short, long)]
-    search: bool,
-
-    /// Bare mode - provide almost nothing
-    #[arg(short, long)]
-    bare: bool,
-
-    /// Print mode
-    // This technically does not need pass through however keeping it here for backwards
-    // compatibility
-    #[arg(short, long)]
-    print: bool,
-
-    // Sandbox arguments
     /// Share CWD
     #[arg(short, long, conflicts_with = "ro_cwd")]
     cwd: bool,
@@ -64,10 +40,6 @@ struct Args {
     #[arg(short, long)]
     volume: Vec<String>,
 
-    /// Comma separated list of allowed models
-    #[arg(short, long, value_delimiter = ',')]
-    models: Vec<String>,
-
     /// Disable network, and specify a SOCAT target for the LLM connection
     #[arg(short, long)]
     local: Option<String>,
@@ -76,7 +48,35 @@ struct Args {
     #[arg(long)]
     additional_sandbox_args: Option<String>,
 
-    // Specific args
+    /// Execute commands on a remote host.
+    /// Use the template <CMD>. The remote must be a unix/bash host.
+    #[arg(long, conflicts_with = "vm")]
+    remote: Option<String>,
+
+    /// Execute commands inside a VM
+    #[arg(long)]
+    vm: bool,
+
+    /// Disable tools by default
+    #[arg(long)]
+    no_tools: bool,
+
+    /// Comma separated list of tools to use
+    #[arg(short, long, value_delimiter = ',')]
+    tools: Vec<String>,
+
+    /// Search mode - only provide brave search
+    #[arg(short, long)]
+    search: bool,
+
+    /// Bare mode - provide almost nothing
+    #[arg(short, long)]
+    bare: bool,
+
+    /// Comma separated list of allowed models
+    #[arg(short, long, value_delimiter = ',')]
+    models: Vec<String>,
+
     /// Disable extensions by default
     #[arg(long)]
     no_extensions: bool,
@@ -93,21 +93,12 @@ struct Args {
     #[arg(short, long)]
     no_brave_search: bool,
 
-    /// Execute commands on a remote host.
-    /// Use the template <CMD>. The remote must be a unix/bash host.
-    #[arg(long, conflicts_with = "vm")]
-    remote: Option<String>,
-
-    /// Execute commands inside a VM
-    #[arg(long)]
-    vm: bool,
-
     /// Internal: serve tool calls on the given unix socket, executing them in this process's
     /// context. Used inside the tool sandbox, you should never need to supply this option.
     #[arg(long, hide = true)]
     internal_serve: Option<String>,
 
-    /// Positional arguments for Pi
+    /// Positional arguments passed directly to Pi
     args: Vec<String>,
 }
 

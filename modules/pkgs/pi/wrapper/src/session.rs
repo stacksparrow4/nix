@@ -166,10 +166,6 @@ fn pi_command(plan: &Plan) -> Vec<String> {
         "--no-extensions".to_string(),
     ];
 
-    if plan.print {
-        cmd.push("-p".to_string());
-    }
-
     if !plan.tools.is_empty() {
         cmd.extend(["--tools".to_string(), plan.tools.join(",")]);
     }

@@ -18,7 +18,7 @@
             '';
           in
           ''
-            ${self'.packages.pi}/bin/pi --system "$(cat ${systemFile})" -p --no-tools --no-extensions -- --thinking off "$@" | sed -rz 's/^\n+//; s/\n+$/\n/g'
+            ${self'.packages.pi}/bin/pi --system "$(cat ${systemFile})" --no-tools --no-extensions -- -p --thinking off "$@" | sed -rz 's/^\n+//; s/\n+$/\n/g'
           '';
       };
     };
