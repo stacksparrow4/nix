@@ -35,7 +35,7 @@ impl Backend {
                 Backend::Vm { _vm: vm, server }
             }
             Target::Remote(template) => Backend::Remote {
-                server: start_remote_server(template)?,
+                server: start_remote_server(template.as_str())?,
             },
         })
     }

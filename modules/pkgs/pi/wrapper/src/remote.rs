@@ -44,11 +44,24 @@ struct Request {
     timeout: Option<f64>,
 }
 
-pub fn validate_remote_template(template: &str) -> Result<(), String> {
-    if !template.contains(CMD_PLACEHOLDER) {
-        return Err(format!("--remote template must contain {CMD_PLACEHOLDER}"));
+#[derive(Clone, Debug)]
+pub struct RemoteTemplate(String);
+
+impl RemoteTemplate {
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
-    Ok(())
+}
+
+impl std::str::FromStr for RemoteTemplate {
+    type Err = String;
+
+    fn from_str(template: &str) -> Result<Self, Self::Err> {
+        if !template.contains(CMD_PLACEHOLDER) {
+            return Err(format!("template must contain {CMD_PLACEHOLDER}"));
+        }
+        Ok(RemoteTemplate(template.to_string()))
+    }
 }
 
 fn send_msg(writer: &Mutex<UnixStream>, obj: serde_json::Value) -> bool {

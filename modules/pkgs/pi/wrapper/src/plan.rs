@@ -6,7 +6,9 @@ use std::{
 use crate::{
     Args,
     config::{self, PiConfig},
-    remote::validate_remote_template,
+    models::{self, ModelName},
+    notes::NotesName,
+    remote::RemoteTemplate,
 };
 
 const DEFAULT_EXTENSIONS: &[&str] = &[
@@ -33,7 +35,7 @@ pub enum CwdMode {
 pub enum Target {
     Sandbox,
     Vm,
-    Remote(String),
+    Remote(RemoteTemplate),
 }
 
 pub struct Plan {
@@ -56,7 +58,7 @@ pub struct Plan {
 
 impl Plan {
     pub fn from_args(args: Args) -> Result<Plan, String> {
-        let target = resolve_target(args.remote, args.vm)?;
+        let target = resolve_target(args.remote, args.vm);
 
         let cwd = if args.cwd {
             Some(CwdMode::Rw)
@@ -81,12 +83,11 @@ impl Plan {
             check_local_only(path, config, &target, args.local.is_some())?;
         }
 
-        let notes = args
-            .notes
+        let notes = resolve_notes_name(args.notes, pi_config.as_ref())?
             .map(|name| resolve_notes(&name, &target))
             .transpose()?;
 
-        let models = resolve_models(trim_list(args.models), pi_config.as_ref())?;
+        let models = resolve_models(args.models, pi_config.as_ref())?;
 
         let brave_search = !(args.no_brave_search || args.local.is_some());
 
@@ -141,14 +142,11 @@ fn trim_list(items: Vec<String>) -> Vec<String> {
         .collect()
 }
 
-fn resolve_target(remote: Option<String>, vm: bool) -> Result<Target, String> {
+fn resolve_target(remote: Option<RemoteTemplate>, vm: bool) -> Target {
     match remote {
-        Some(template) => {
-            validate_remote_template(&template)?;
-            Ok(Target::Remote(template))
-        }
-        None if vm => Ok(Target::Vm),
-        None => Ok(Target::Sandbox),
+        Some(template) => Target::Remote(template),
+        None if vm => Target::Vm,
+        None => Target::Sandbox,
     }
 }
 
@@ -163,19 +161,32 @@ fn resolve_agents_md() -> Result<PathBuf, String> {
     Ok(path)
 }
 
-fn resolve_notes(name: &str, target: &Target) -> Result<PathBuf, String> {
+fn resolve_notes_name(
+    requested: Option<NotesName>,
+    pi_config: Option<&(PathBuf, PiConfig)>,
+) -> Result<Option<NotesName>, String> {
+    let fixed = pi_config.and_then(|(path, config)| Some((path, config.notes.as_ref()?)));
+
+    match (fixed, requested) {
+        (Some((path, fixed)), Some(requested)) if *fixed != requested => Err(format!(
+            "Notes '{}' conflicts with \"notes\" '{}' in {}",
+            requested,
+            fixed,
+            path.display()
+        )),
+        (Some((_, fixed)), _) => Ok(Some(fixed.clone())),
+        (None, requested) => Ok(requested),
+    }
+}
+
+fn resolve_notes(name: &NotesName, target: &Target) -> Result<PathBuf, String> {
     if !matches!(target, Target::Sandbox) {
         return Err("--notes is not supported with --vm or --remote".to_string());
-    }
-    if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
-        return Err(format!(
-            "Invalid notes name '{name}': must be alphanumeric or '-'"
-        ));
     }
     let dir = env::home_dir()
         .expect("Could not find home directory")
         .join(".pi/notes")
-        .join(name);
+        .join(name.as_str());
     std::fs::create_dir_all(&dir)
         .map_err(|e| format!("Failed to create notes dir {}: {e}", dir.display()))?;
     Ok(dir)
@@ -203,13 +214,13 @@ fn check_local_only(
 }
 
 fn resolve_models(
-    requested: Vec<String>,
+    requested: Vec<ModelName>,
     pi_config: Option<&(PathBuf, PiConfig)>,
 ) -> Result<Option<String>, String> {
     let allowed = pi_config.and_then(|(path, config)| Some((path, config.models_list.as_ref()?)));
 
     match allowed {
-        Some((_, allowed)) if requested.is_empty() => Ok(Some(allowed.join(","))),
+        Some((_, allowed)) if requested.is_empty() => Ok(Some(models::join(allowed))),
         Some((path, allowed)) => {
             if let Some(model) = requested.iter().find(|&m| !allowed.contains(m)) {
                 return Err(format!(
@@ -218,10 +229,10 @@ fn resolve_models(
                     path.display()
                 ));
             }
-            Ok(Some(requested.join(",")))
+            Ok(Some(models::join(&requested)))
         }
         None if requested.is_empty() => Ok(None),
-        None => Ok(Some(requested.join(","))),
+        None => Ok(Some(models::join(&requested))),
     }
 }
 

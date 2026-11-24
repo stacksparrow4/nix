@@ -6,6 +6,8 @@ use std::{
 
 use serde::Deserialize;
 
+use crate::{models::ModelsList, notes::NotesName};
+
 pub const CONFIG_FILE: &str = ".pi-config.json";
 
 #[derive(Deserialize, Default, Debug)]
@@ -13,22 +15,8 @@ pub const CONFIG_FILE: &str = ".pi-config.json";
 pub struct PiConfig {
     #[serde(default)]
     pub local_only: bool,
-    pub models_list: Option<Vec<String>>,
-}
-
-impl PiConfig {
-    fn validate(&self) -> Result<(), &'static str> {
-        let Some(models) = &self.models_list else {
-            return Ok(());
-        };
-        if models.is_empty() {
-            return Err("\"models-list\" must not be empty");
-        }
-        if models.iter().any(|m| m.trim().is_empty() || m.contains(',')) {
-            return Err("\"models-list\" entries must be non-empty and must not contain ','");
-        }
-        Ok(())
-    }
+    pub models_list: Option<ModelsList>,
+    pub notes: Option<NotesName>,
 }
 
 fn invalid(path: &Path, msg: impl Display) -> String {
@@ -46,7 +34,6 @@ pub fn find_config(cwd: &Path) -> Result<Option<(PathBuf, PiConfig)>, String> {
 
     let contents = fs::read_to_string(&path).map_err(|e| invalid(&path, e))?;
     let config: PiConfig = serde_json::from_str(&contents).map_err(|e| invalid(&path, e))?;
-    config.validate().map_err(|e| invalid(&path, e))?;
 
     Ok(Some((path, config)))
 }

@@ -108,6 +108,43 @@ struct State {
     next_fh: u64,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize)]
+#[serde(try_from = "String")]
+pub struct NotesName(String);
+
+impl NotesName {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl TryFrom<String> for NotesName {
+    type Error = String;
+
+    fn try_from(name: String) -> Result<Self, Self::Error> {
+        if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+            return Err(format!(
+                "Invalid notes name '{name}': must be non-empty and alphanumeric or '-'"
+            ));
+        }
+        Ok(NotesName(name))
+    }
+}
+
+impl std::str::FromStr for NotesName {
+    type Err = String;
+
+    fn from_str(name: &str) -> Result<Self, Self::Err> {
+        name.to_string().try_into()
+    }
+}
+
+impl std::fmt::Display for NotesName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 fn errno(e: nix::errno::Errno) -> Errno {
     Errno::from_i32(e as i32)
 }

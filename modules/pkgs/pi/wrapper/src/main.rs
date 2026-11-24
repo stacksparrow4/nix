@@ -7,6 +7,7 @@ use crate::session::Session;
 mod backend;
 mod config;
 mod local_net;
+mod models;
 mod notes;
 mod notify;
 mod plan;
@@ -52,7 +53,7 @@ struct Args {
     /// Execute commands on a remote host.
     /// Use the template <CMD>. The remote must be a unix/bash host.
     #[arg(long, conflicts_with = "vm")]
-    remote: Option<String>,
+    remote: Option<remote::RemoteTemplate>,
 
     /// Execute commands inside a VM
     #[arg(long)]
@@ -76,7 +77,7 @@ struct Args {
 
     /// Comma separated list of allowed models
     #[arg(short, long, value_delimiter = ',')]
-    models: Vec<String>,
+    models: Vec<models::ModelName>,
 
     /// Disable extensions by default
     #[arg(long)]
@@ -96,7 +97,7 @@ struct Args {
 
     /// Mount the named notes store at /notes (~/.pi/notes/<NAME>)
     #[arg(short, long, value_name = "NAME")]
-    notes: Option<String>,
+    notes: Option<notes::NotesName>,
 
     /// Positional arguments passed directly to Pi
     args: Vec<String>,
