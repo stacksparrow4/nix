@@ -14,6 +14,7 @@ use tempfile::{TempDir, tempdir};
 use crate::notify::{notify_server_box_args, start_notify_server};
 use crate::remote::{SOCKET_NAME, serve_local, start_remote_server, validate_remote_arg};
 
+mod config;
 mod notify;
 mod remote;
 
@@ -245,8 +246,6 @@ const REQUIRED_EXTENSIONS: &[&str] = &["pi-remote.ts"];
 const DEFAULT_TOOLS: &[&str] = &["read", "write", "edit", "bash", "complete_goal"];
 const BRIDGE_DIR: &str = "/tmp/pi-remote";
 
-const LOCAL_ONLY_MARKER: &str = ".pi-local-only";
-
 const CONTROL_DIR: &str = "/tmp/pi-subagent";
 const CONTROL_SOCKET: &str = "/tmp/pi-subagent/control.sock";
 
@@ -364,21 +363,6 @@ fn main() {
         serve_local(socket_path);
     }
 
-    if args.local.is_none() && (args.cwd || args.ro_cwd) {
-        let cwd = env::current_dir().expect("Failed to get the current working directory");
-        if let Some(marker) = cwd
-            .ancestors()
-            .map(|dir| dir.join(LOCAL_ONLY_MARKER))
-            .find(|path| path.exists())
-        {
-            eprintln!(
-                "Found {}, this directory may only be accessed with --local",
-                marker.display()
-            );
-            std::process::exit(2);
-        }
-    }
-
     let real_pi_location = std::env::var("SPRRW_PI").unwrap();
 
     let agents_md_args: Vec<String> = if args.agents {
@@ -426,6 +410,51 @@ fn main() {
             eprintln!("Can only specify one of --remote, --universal-remote, or --vm.");
             std::process::exit(2);
         }
+    };
+
+    let pi_config = if args.cwd || args.ro_cwd {
+        let cwd = env::current_dir().expect("Failed to get the current working directory");
+        config::find_config(&cwd)
+    } else {
+        None
+    };
+
+    let models: Option<String> = match &pi_config {
+        Some((path, config)) => {
+            if config.local_only {
+                if args.local.is_none() {
+                    eprintln!("{} requires --local", path.display());
+                    std::process::exit(2);
+                }
+                if !matches!(target, Target::Sandbox) {
+                    eprintln!(
+                        "{} is local-only and cannot be used with --vm, --remote, or \
+                        --universal-remote",
+                        path.display()
+                    );
+                    std::process::exit(2);
+                }
+            }
+
+            match (&config.models_list, &args.models) {
+                (None, requested) => requested.clone(),
+                (Some(allowed), None) => Some(allowed.join(",")),
+                (Some(allowed), Some(requested)) => {
+                    for model in requested.split(',').map(str::trim) {
+                        if !allowed.iter().any(|a| a == model) {
+                            eprintln!(
+                                "Model '{}' is not in \"models-list\" of {}",
+                                model,
+                                path.display()
+                            );
+                            std::process::exit(2);
+                        }
+                    }
+                    Some(requested.clone())
+                }
+            }
+        }
+        None => args.models.clone(),
     };
 
     let brave_search = !(args.no_brave_search || args.local.is_some());
@@ -718,10 +747,7 @@ fn main() {
     )
     .chain(["-e".to_string(), "builtin:llama.cpp".to_string()])
     .chain(["--system-prompt".to_string(), system])
-    .chain(
-        args.models
-            .map_or(vec![], |models| vec!["--models".to_string(), models]),
-    )
+    .chain(models.map_or(vec![], |models| vec!["--models".to_string(), models]))
     .chain(args.args)
     .collect();
 
