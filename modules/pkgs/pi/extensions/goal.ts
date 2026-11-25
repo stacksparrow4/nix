@@ -34,6 +34,7 @@ export default function goalExtension(pi: ExtensionAPI) {
   let toolRegistered = false;
   let handover: { turns: number; forcedAbort: boolean } | null = null;
   let breakLoop = false;
+  let handoverNow = false;
 
   // Only load complete_goal tool when /goal is used to avoid polluting context
   // This causes a cache invalidation (increasing token cost), however as i use goal early on its fine.
@@ -85,11 +86,25 @@ export default function goalExtension(pi: ExtensionAPI) {
   });
 
   pi.registerCommand("goal-limit", {
-    description: "Hand over to a fresh agent when context usage reaches a percentage (e.g. 10%, or 'off')",
+    description:
+      "Hand over to a fresh agent when context usage reaches a percentage (e.g. 10%, 'off', or 'now' for a one-off handover at the end of the current turn)",
     handler: async (args, ctx) => {
       const value = args.trim();
       if (!value) {
         ctx.ui.notify(goalLimitPercent === null ? "Goal limit: off" : `Goal limit: ${goalLimitPercent}%`, "info");
+        return;
+      }
+      if (value === "now") {
+        if (!goal || goal.status !== "active") {
+          ctx.ui.notify("No active goal.", "info");
+          return;
+        }
+        if (handover || resetDispatched) {
+          ctx.ui.notify("Handover already in progress.", "info");
+          return;
+        }
+        handoverNow = true;
+        ctx.ui.notify("Goal will hand over at the end of the current turn.", "info");
         return;
       }
       if (value === "off") {
@@ -100,7 +115,7 @@ export default function goalExtension(pi: ExtensionAPI) {
       const match = value.match(/^(\d+(?:\.\d+)?)\s*%?$/);
       const percent = match ? Number(match[1]) : NaN;
       if (!(percent > 0 && percent <= 100)) {
-        ctx.ui.notify("Usage: /goal-limit <percent>% | off", "info");
+        ctx.ui.notify("Usage: /goal-limit <percent>% | off | now", "info");
         return;
       }
       goalLimitPercent = percent;
@@ -177,6 +192,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     resetDispatched = false;
     handover = null;
     breakLoop = false;
+    handoverNow = false;
     ctx.ui.notify(`Goal set: ${objective}`, "info");
     pi.sendMessage(
       {
@@ -201,12 +217,16 @@ export default function goalExtension(pi: ExtensionAPI) {
       return;
     }
 
-    if (goalLimitPercent === null || breakLoop) return;
+    if (breakLoop) return;
     const percent = ctx.getContextUsage()?.percent;
-    if (percent == null || percent < goalLimitPercent) return;
+    if (!handoverNow && (goalLimitPercent === null || percent == null || percent < goalLimitPercent)) return;
 
+    handoverNow = false;
     handover = { turns: 0, forcedAbort: false };
-    ctx.ui.notify(`Context at ${percent.toFixed(1)}%, handing over goal.`, "info");
+    ctx.ui.notify(
+      percent == null ? "Handing over goal." : `Context at ${percent.toFixed(1)}%, handing over goal.`,
+      "info",
+    );
     pi.sendMessage(
       {
         customType: "goal-handover",
