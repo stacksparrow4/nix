@@ -11,7 +11,8 @@ import { type Component, Markdown, type TUI, truncateToWidth, visibleWidth } fro
 const WIDGET_KEY = "btw";
 const COLLAPSED_LINES = 10;
 const MAX_TOOL_ROUNDS = 2;
-const EXPAND_KEY = "ctrl+shift+b";
+const EXPAND_KEY = "ctrl+shift+o";
+const DISMISS_KEY = "ctrl+shift+b";
 
 const TOOLS_DISABLED =
   "Tool calls are disabled for /btw. Answer using only the existing conversation context.";
@@ -93,7 +94,7 @@ export default function (pi: ExtensionAPI) {
     };
 
     const footer = (width: number, left: string) => {
-      const right = theme.fg("dim", "/btw to dismiss");
+      const right = theme.fg("dim", `${DISMISS_KEY} to dismiss`);
       const gap = Math.max(1, width - visibleWidth(left) - visibleWidth(right) - 2);
       return truncateToWidth("  " + left + " ".repeat(gap) + right, width);
     };
@@ -220,11 +221,11 @@ export default function (pi: ExtensionAPI) {
   };
 
   pi.registerCommand("btw", {
-    description: "Ask a side question without adding it to the conversation (no args: dismiss)",
+    description: "Ask a side question without adding it to the conversation",
     handler: async (args, ctx) => {
       const question = args.trim();
       if (!question) {
-        clear(ctx);
+        ctx.ui.notify("Usage: /btw <question>", "error");
         return;
       }
       if (!ctx.hasUI) {
@@ -264,6 +265,14 @@ export default function (pi: ExtensionAPI) {
       if (!state) return;
       expanded = !expanded;
       requestRender();
+    },
+  });
+
+  pi.registerShortcut(DISMISS_KEY, {
+    description: "Dismiss /btw answer",
+    handler: async (ctx) => {
+      if (!state) return;
+      clear(ctx);
     },
   });
 
