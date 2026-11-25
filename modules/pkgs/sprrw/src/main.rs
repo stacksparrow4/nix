@@ -3,7 +3,7 @@ mod flatpak;
 
 use std::path::PathBuf;
 use std::process::Command;
-use std::{iter, process::Stdio};
+use std::iter;
 
 use clap::{CommandFactory, Parser, Subcommand};
 use clap_complete::Shell;

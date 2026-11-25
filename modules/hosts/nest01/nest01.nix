@@ -23,7 +23,7 @@
     ])
     ++ [
       (
-        { config, ... }:
+        { config, pkgs, ... }:
         {
           home-manager.users.sprrw =
             { pkgs, config, ... }:
@@ -142,7 +142,12 @@
           hardware.nvidia = {
             modesetting.enable = true;
             open = false;
-            package = config.boot.kernelPackages.nvidiaPackages.stable;
+            package =
+              let
+                oldNixpkgs = builtins.getFlake "github:NixOS/nixpkgs/94c3211b0ee8ba969a3f12eb4aff8ba0f72971dd";
+                oldPkgs = oldNixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+              in
+              (oldPkgs.linuxPackagesFor config.boot.kernelPackages.kernel).nvidiaPackages.stable;
           };
           services.xserver.videoDrivers = [ "nvidia" ];
           hardware.nvidia-container-toolkit.enable = true;
