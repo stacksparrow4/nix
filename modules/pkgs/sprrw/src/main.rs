@@ -183,7 +183,6 @@ fn build(config: &Config) {
 }
 
 fn update(config: &Config) {
-    flatpak::update();
     for update_flake in &config.update_flakes {
         run_cmd(
             Command::new("git")
@@ -200,4 +199,5 @@ fn update(config: &Config) {
                 .arg(update_flake),
         );
     }
+    flatpak::update(); // Happens after due to user interaction possibly needed for git pull
 }
