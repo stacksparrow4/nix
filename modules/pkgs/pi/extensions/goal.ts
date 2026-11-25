@@ -143,6 +143,10 @@ export default function goalExtension(pi: ExtensionAPI) {
     ensureToolRegistered();
     goal = { objective, status: "active" };
     lastObjective = objective;
+    if (!ctx.isIdle()) {
+      ctx.ui.notify(`Goal set: ${objective} (starts in a fresh session after the current run)`, "info");
+      return;
+    }
     resetDispatched = false;
     handover = null;
     ctx.ui.notify(`Goal set: ${objective}`, "info");
@@ -197,6 +201,14 @@ export default function goalExtension(pi: ExtensionAPI) {
       handover = null;
       ctx.ui.notify("Goal cancelled.", "info");
     }
+  });
+
+  pi.on("input", (event, ctx) => {
+    if (!goal || goal.status !== "active") return;
+    if (event.source === "extension" || !event.streamingBehavior) return;
+    goal = null;
+    handover = null;
+    ctx.ui.notify("Goal cancelled. Use /goal-resume to resume it.", "info");
   });
 
   pi.on("agent_settled", () => {
