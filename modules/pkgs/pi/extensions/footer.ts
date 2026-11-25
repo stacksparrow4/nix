@@ -489,7 +489,7 @@ export default function (pi: ExtensionAPI) {
     try {
       if (useStatusFallback) {
         lastCtx?.ui?.setStatus?.("tps", tpsText);
-        lastCtx?.ui?.setStatus?.("goal", goalState.active ? "◎ goal" : undefined);
+        lastCtx?.ui?.setStatus?.("goal", goalState.active ? "goal" : undefined);
       } else {
         capturedTui?.requestRender();
       }
@@ -515,7 +515,7 @@ export default function (pi: ExtensionAPI) {
 
             if (goalState.active) {
               const suffix = goalState.handover ? " (handover)" : goalState.lastLap ? " (last lap)" : "";
-              parts.push(theme.fg("accent", `◎ goal${suffix}`));
+              parts.push(theme.fg("accent", `goal${suffix}`));
             }
 
             const cacheHit = latestCacheHitRate(c);
