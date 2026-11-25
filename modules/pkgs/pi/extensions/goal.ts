@@ -33,6 +33,7 @@ export default function goalExtension(pi: ExtensionAPI) {
   let resetDispatched = false;
   let toolRegistered = false;
   let handover: { turns: number; forcedAbort: boolean } | null = null;
+  let breakLoop = false;
 
   // Only load complete_goal tool when /goal is used to avoid polluting context
   // This causes a cache invalidation (increasing token cost), however as i use goal early on its fine.
@@ -107,6 +108,32 @@ export default function goalExtension(pi: ExtensionAPI) {
     },
   });
 
+  pi.registerCommand("goal-last-lap", {
+    description: "Let the current goal run finish without resetting the context (on/off, toggles by default)",
+    handler: async (args, ctx) => {
+      if (!goal || goal.status !== "active") {
+        ctx.ui.notify("No active goal.", "info");
+        return;
+      }
+      if (resetDispatched) {
+        ctx.ui.notify("Too late: the goal reset is already in progress.", "info");
+        return;
+      }
+      const value = args.trim();
+      if (value === "on") breakLoop = true;
+      else if (value === "off") breakLoop = false;
+      else if (!value) breakLoop = !breakLoop;
+      else {
+        ctx.ui.notify("Usage: /goal-last-lap [on|off]", "info");
+        return;
+      }
+      ctx.ui.notify(
+        breakLoop ? "Last lap: the goal will end without resetting the context." : "Last lap off: the goal loop will continue.",
+        "info",
+      );
+    },
+  });
+
   pi.registerCommand("internal-goal-handover", {
     description: "Internal: restart the active goal in a fresh session",
     handler: async (_args, ctx) => {
@@ -149,6 +176,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     }
     resetDispatched = false;
     handover = null;
+    breakLoop = false;
     ctx.ui.notify(`Goal set: ${objective}`, "info");
     pi.sendMessage(
       {
@@ -164,7 +192,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     if (!goal || goal.status !== "active") return;
 
     if (handover) {
-      if (handover.forcedAbort) return;
+      if (handover.forcedAbort || breakLoop) return;
       handover.turns += 1;
       if (handover.turns >= HANDOVER_MAX_TURNS && event.toolResults.length > 0) {
         handover.forcedAbort = true;
@@ -173,7 +201,7 @@ export default function goalExtension(pi: ExtensionAPI) {
       return;
     }
 
-    if (goalLimitPercent === null) return;
+    if (goalLimitPercent === null || breakLoop) return;
     const percent = ctx.getContextUsage()?.percent;
     if (percent == null || percent < goalLimitPercent) return;
 
@@ -211,8 +239,15 @@ export default function goalExtension(pi: ExtensionAPI) {
     ctx.ui.notify("Goal cancelled. Use /goal-resume to resume it.", "info");
   });
 
-  pi.on("agent_settled", () => {
+  pi.on("agent_settled", (_event, ctx) => {
     if (!goal || goal.status !== "active" || resetDispatched) return;
+    if (breakLoop) {
+      goal = null;
+      handover = null;
+      breakLoop = false;
+      ctx.ui.notify("Goal loop ended; context kept. Use /goal-resume to restart.", "info");
+      return;
+    }
     resetDispatched = true;
     pi.sendUserMessage("/internal-goal-handover", { expandPromptTemplates: true });
   });
