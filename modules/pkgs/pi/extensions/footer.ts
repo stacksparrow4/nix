@@ -368,6 +368,16 @@ export default function (pi: ExtensionAPI) {
   // this one can still settle afterwards and must not touch the stale ctx.
   let disposed = false;
 
+  let goalState: { active: boolean; lastLap?: boolean; handover?: boolean } = { active: false };
+  pi.events.on("goal:state", (data: any) => {
+    goalState = {
+      active: !!data?.active,
+      lastLap: !!data?.lastLap,
+      handover: !!data?.handover,
+    };
+    refresh();
+  });
+
   // Background usage snapshots, one per provider, seeded from the shared
   // on-disk cache so a last-known value shows even while a fetch is rate-limited.
   interface UsageState {
@@ -479,6 +489,7 @@ export default function (pi: ExtensionAPI) {
     try {
       if (useStatusFallback) {
         lastCtx?.ui?.setStatus?.("tps", tpsText);
+        lastCtx?.ui?.setStatus?.("goal", goalState.active ? "◎ goal" : undefined);
       } else {
         capturedTui?.requestRender();
       }
@@ -501,6 +512,11 @@ export default function (pi: ExtensionAPI) {
             if (disposed) return [];
             const c = lastCtx ?? ctx;
             const parts: string[] = [];
+
+            if (goalState.active) {
+              const suffix = goalState.handover ? " (handover)" : goalState.lastLap ? " (last lap)" : "";
+              parts.push(theme.fg("accent", `◎ goal${suffix}`));
+            }
 
             const cacheHit = latestCacheHitRate(c);
             if (cacheHit !== undefined) parts.push(theme.fg("dim", `CH${cacheHit.toFixed(1)}%`));

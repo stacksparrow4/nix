@@ -10,7 +10,17 @@ const HANDOVER_PROMPT =
   "The conversation is about to be handed over to the next agent. Update the current documentation with handover notes. At most 5 turns, but most of the time it can be done in less.";
 const HANDOVER_MAX_TURNS = 5;
 
-let goalLimitPercent: number | null = null;
+// Lives on globalThis so it survives /reload, which re-evaluates this module.
+const LIMIT_KEY = Symbol.for("sprrw.goal.limitPercent");
+const limitStore = globalThis as unknown as { [LIMIT_KEY]?: number | null };
+
+function getGoalLimit(): number | null {
+  return limitStore[LIMIT_KEY] ?? null;
+}
+
+function setGoalLimit(percent: number | null) {
+  limitStore[LIMIT_KEY] = percent;
+}
 
 function continuationPrompt(objective: string): string {
   return `Continue working toward the active goal.
@@ -36,6 +46,16 @@ export default function goalExtension(pi: ExtensionAPI) {
   let breakLoop = false;
   let handoverNow = false;
 
+  function publish() {
+    const active = goal?.status === "active";
+    pi.events.emit("goal:state", {
+      active,
+      objective: active ? goal!.objective : undefined,
+      lastLap: active && breakLoop,
+      handover: active && (handover !== null || handoverNow),
+    });
+  }
+
   // Only load complete_goal tool when /goal is used to avoid polluting context
   // This causes a cache invalidation (increasing token cost), however as i use goal early on its fine.
   function ensureToolRegistered() {
@@ -57,6 +77,7 @@ export default function goalExtension(pi: ExtensionAPI) {
           return { content: [{ type: "text", text: "No goal is set." }], isError: true };
         }
         goal = { ...goal, status: "complete" };
+        publish();
         return { content: [{ type: "text", text: "Goal marked complete." }], terminate: true };
       },
     });
@@ -91,7 +112,8 @@ export default function goalExtension(pi: ExtensionAPI) {
     handler: async (args, ctx) => {
       const value = args.trim();
       if (!value) {
-        ctx.ui.notify(goalLimitPercent === null ? "Goal limit: off" : `Goal limit: ${goalLimitPercent}%`, "info");
+        const limit = getGoalLimit();
+        ctx.ui.notify(limit === null ? "Goal limit: off" : `Goal limit: ${limit}%`, "info");
         return;
       }
       if (value === "now") {
@@ -104,11 +126,12 @@ export default function goalExtension(pi: ExtensionAPI) {
           return;
         }
         handoverNow = true;
+        publish();
         ctx.ui.notify("Goal will hand over at the end of the current turn.", "info");
         return;
       }
       if (value === "off") {
-        goalLimitPercent = null;
+        setGoalLimit(null);
         ctx.ui.notify("Goal limit disabled.", "info");
         return;
       }
@@ -118,7 +141,7 @@ export default function goalExtension(pi: ExtensionAPI) {
         ctx.ui.notify("Usage: /goal-limit <percent>% | off | now", "info");
         return;
       }
-      goalLimitPercent = percent;
+      setGoalLimit(percent);
       ctx.ui.notify(`Goal limit set to ${percent}%`, "info");
     },
   });
@@ -142,6 +165,7 @@ export default function goalExtension(pi: ExtensionAPI) {
         ctx.ui.notify("Usage: /goal-last-lap [on|off]", "info");
         return;
       }
+      publish();
       ctx.ui.notify(
         breakLoop ? "Last lap: the goal will end without resetting the context." : "Last lap off: the goal loop will continue.",
         "info",
@@ -156,6 +180,7 @@ export default function goalExtension(pi: ExtensionAPI) {
       const objective = goal.objective;
       goal = null;
       handover = null;
+      publish();
       await ctx.waitForIdle();
       await ctx.newSession({
         withSession: async (newCtx) => {
@@ -185,6 +210,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     ensureToolRegistered();
     goal = { objective, status: "active" };
     lastObjective = objective;
+    publish();
     if (!ctx.isIdle()) {
       ctx.ui.notify(`Goal set: ${objective} (starts in a fresh session after the current run)`, "info");
       return;
@@ -193,6 +219,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     handover = null;
     breakLoop = false;
     handoverNow = false;
+    publish();
     ctx.ui.notify(`Goal set: ${objective}`, "info");
     pi.sendMessage(
       {
@@ -219,10 +246,12 @@ export default function goalExtension(pi: ExtensionAPI) {
 
     if (breakLoop) return;
     const percent = ctx.getContextUsage()?.percent;
-    if (!handoverNow && (goalLimitPercent === null || percent == null || percent < goalLimitPercent)) return;
+    const limit = getGoalLimit();
+    if (!handoverNow && (limit === null || percent == null || percent < limit)) return;
 
     handoverNow = false;
     handover = { turns: 0, forcedAbort: false };
+    publish();
     ctx.ui.notify(
       percent == null ? "Handing over goal." : `Context at ${percent.toFixed(1)}%, handing over goal.`,
       "info",
@@ -247,6 +276,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     if (wasAborted && !handover?.forcedAbort) {
       goal = null;
       handover = null;
+      publish();
       ctx.ui.notify("Goal cancelled.", "info");
     }
   });
@@ -256,15 +286,24 @@ export default function goalExtension(pi: ExtensionAPI) {
     if (event.source === "extension" || !event.streamingBehavior) return;
     goal = null;
     handover = null;
+    publish();
     ctx.ui.notify("Goal cancelled. Use /goal-resume to resume it.", "info");
   });
 
-  pi.on("agent_settled", (_event, ctx) => {
+  pi.on("agent_settled", (event, ctx) => {
     if (!goal || goal.status !== "active" || resetDispatched) return;
+    if (event.aborted && !handover?.forcedAbort) {
+      goal = null;
+      handover = null;
+      publish();
+      ctx.ui.notify("Goal cancelled.", "info");
+      return;
+    }
     if (breakLoop) {
       goal = null;
       handover = null;
       breakLoop = false;
+      publish();
       ctx.ui.notify("Goal loop ended; context kept. Use /goal-resume to restart.", "info");
       return;
     }
