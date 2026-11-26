@@ -235,7 +235,7 @@ export default function goalExtension(pi: ExtensionAPI) {
     if (!goal || goal.status !== "active") return;
 
     if (handover) {
-      if (handover.forcedAbort || breakLoop) return;
+      if (handover.forcedAbort) return;
       handover.turns += 1;
       if (handover.turns >= HANDOVER_MAX_TURNS && event.toolResults.length > 0) {
         handover.forcedAbort = true;
@@ -244,7 +244,6 @@ export default function goalExtension(pi: ExtensionAPI) {
       return;
     }
 
-    if (breakLoop) return;
     const percent = ctx.getContextUsage()?.percent;
     const limit = getGoalLimit();
     if (!handoverNow && (limit === null || percent == null || percent < limit)) return;
