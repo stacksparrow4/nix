@@ -6,6 +6,7 @@ import * as path from "node:path";
 import {
 	AssistantMessageComponent,
 	getMarkdownTheme,
+	ModelSelectorComponent,
 	ToolExecutionComponent,
 	UserMessageComponent,
 } from "@earendil-works/pi-coding-agent";
@@ -353,6 +354,7 @@ export default function (pi: ExtensionAPI) {
 	let server: net.Server | undefined;
 	let lastCtx: any;
 	let promptFile: string | undefined;
+	let subagentModel: string | undefined;
 	// The currently attached (/sa-attach) overlay, if any. Only one at a time.
 	let attached: { sa: LiveSubagent; overlay: SubagentOverlay } | undefined;
 
@@ -621,7 +623,8 @@ export default function (pi: ExtensionAPI) {
 	}
 
 	function buildSubagentArgs(task: string): string[] {
-		const model = lastCtx?.model ? `${lastCtx.model.provider}/${lastCtx.model.id}` : undefined;
+		const model =
+			subagentModel ?? (lastCtx?.model ? `${lastCtx.model.provider}/${lastCtx.model.id}` : undefined);
 		const thinking = lastCtx?.thinkingLevel;
 
 		const tools = ["bash", "read", "write", "edit"];
@@ -1013,6 +1016,52 @@ export default function (pi: ExtensionAPI) {
 			} finally {
 				attached = undefined;
 			}
+		},
+	});
+
+	pi.registerCommand("sa-model", {
+		description:
+			"Choose the model used by subagents (`/sa-model default` to follow the conversation model)",
+		handler: async (args: string, ctx: any) => {
+			const arg = args?.trim() ?? "";
+			if (arg === "default") {
+				subagentModel = undefined;
+			} else {
+				if (ctx.mode !== "tui") {
+					ctx.ui.notify("Selecting a subagent model is only available in the interactive TUI.", "error");
+					return;
+				}
+				const registry = ctx.modelRegistry;
+				const runtime = {
+					getAvailableSnapshot: () => registry.getAvailable(),
+					getModel: (provider: string, id: string) => registry.find(provider, id),
+					refresh: (options?: any) => registry.refresh(options),
+					getError: () => registry.getError(),
+				};
+				const current = subagentModel
+					? registry.find(...(subagentModel.split(/\/(.*)/s, 2) as [string, string]))
+					: ctx.model;
+				const choice = await ctx.ui.custom(
+					(tui: TUI, _theme: Theme, _kb: any, done: (r: any) => void) =>
+						new ModelSelectorComponent(
+							tui,
+							current,
+							runtime as any,
+							ctx.scopedModels ?? [],
+							(model: any) => done(model),
+							() => done(undefined),
+							arg || undefined,
+						),
+				);
+				if (!choice) return;
+				subagentModel = `${choice.provider}/${choice.id}`;
+			}
+			ctx.ui.notify(
+				subagentModel
+					? `Subagents will use ${subagentModel}.`
+					: "Subagents will use the conversation model.",
+				"info",
+			);
 		},
 	});
 

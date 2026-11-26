@@ -513,9 +513,10 @@ export default function (pi: ExtensionAPI) {
             const c = lastCtx ?? ctx;
             const parts: string[] = [];
 
+            let goalLabel = "";
             if (goalState.active) {
               const suffix = goalState.handover ? " (handover)" : goalState.lastLap ? " (last lap)" : "";
-              parts.push(theme.fg("accent", `goal${suffix}`));
+              goalLabel = theme.fg("accent", `goal${suffix}`) + " ";
             }
 
             const cacheHit = latestCacheHitRate(c);
@@ -562,11 +563,11 @@ export default function (pi: ExtensionAPI) {
               const label =
                 cost === undefined ? `(${routedProvider})` : `(${routedProvider} ${formatCost(cost)})`;
               const withProvider = `${label} ${right}`;
-              if (visibleWidth(left) + 2 + visibleWidth(withProvider) <= width) {
+              if (visibleWidth(left) + 2 + visibleWidth(goalLabel) + visibleWidth(withProvider) <= width) {
                 right = withProvider;
               }
             }
-            right = theme.fg("dim", right);
+            right = goalLabel + theme.fg("dim", right);
 
             const leftW = visibleWidth(left);
             const rightW = visibleWidth(right);
