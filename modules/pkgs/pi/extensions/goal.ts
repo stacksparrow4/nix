@@ -1,4 +1,5 @@
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import { matchesKey } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 type Goal = {
@@ -9,6 +10,7 @@ type Goal = {
 const HANDOVER_PROMPT =
   "The conversation is about to be handed over to the next agent. Update the current documentation with handover notes. At most 5 turns, but most of the time it can be done in less.";
 const HANDOVER_MAX_TURNS = 5;
+const RESET_DELAY_MS = 5000;
 
 // Lives on globalThis so it survives /reload, which re-evaluates this module.
 const LIMIT_KEY = Symbol.for("sprrw.goal.limitPercent");
@@ -45,6 +47,15 @@ export default function goalExtension(pi: ExtensionAPI) {
   let handover: { turns: number; forcedAbort: boolean } | null = null;
   let breakLoop = false;
   let handoverNow = false;
+  let pendingReset: ReturnType<typeof setTimeout> | null = null;
+  let unsubscribeEscape: (() => void) | null = null;
+
+  function clearPendingReset() {
+    if (pendingReset) clearTimeout(pendingReset);
+    pendingReset = null;
+    unsubscribeEscape?.();
+    unsubscribeEscape = null;
+  }
 
   function publish() {
     const active = goal?.status === "active";
@@ -121,7 +132,7 @@ export default function goalExtension(pi: ExtensionAPI) {
           ctx.ui.notify("No active goal.", "info");
           return;
         }
-        if (handover || resetDispatched) {
+        if (handover || resetDispatched || pendingReset) {
           ctx.ui.notify("Handover already in progress.", "info");
           return;
         }
@@ -207,6 +218,7 @@ export default function goalExtension(pi: ExtensionAPI) {
   });
 
   function startGoal(objective: string, ctx: ExtensionCommandContext) {
+    clearPendingReset();
     ensureToolRegistered();
     goal = { objective, status: "active" };
     lastObjective = objective;
@@ -282,7 +294,9 @@ export default function goalExtension(pi: ExtensionAPI) {
 
   pi.on("input", (event, ctx) => {
     if (!goal || goal.status !== "active") return;
-    if (event.source === "extension" || !event.streamingBehavior) return;
+    if (event.source === "extension") return;
+    if (!event.streamingBehavior && !pendingReset) return;
+    clearPendingReset();
     goal = null;
     handover = null;
     publish();
@@ -290,7 +304,7 @@ export default function goalExtension(pi: ExtensionAPI) {
   });
 
   pi.on("agent_settled", (event, ctx) => {
-    if (!goal || goal.status !== "active" || resetDispatched) return;
+    if (!goal || goal.status !== "active" || resetDispatched || pendingReset) return;
     if (event.aborted && !handover?.forcedAbort) {
       goal = null;
       handover = null;
@@ -306,7 +320,32 @@ export default function goalExtension(pi: ExtensionAPI) {
       ctx.ui.notify("Goal loop ended; context kept. Use /goal-resume to restart.", "info");
       return;
     }
-    resetDispatched = true;
-    pi.sendUserMessage("/internal-goal-handover", { expandPromptTemplates: true });
+    ctx.ui.notify(`Resetting context in ${RESET_DELAY_MS / 1000}s... (Esc to cancel)`, "info");
+    if (ctx.hasUI) {
+      unsubscribeEscape = ctx.ui.onTerminalInput((data) => {
+        if (!pendingReset || !matchesKey(data, "escape")) return;
+        clearPendingReset();
+        goal = null;
+        handover = null;
+        breakLoop = false;
+        publish();
+        ctx.ui.notify("Goal cancelled; context kept. Use /goal-resume to resume it.", "info");
+        return { consume: true };
+      });
+    }
+    pendingReset = setTimeout(() => {
+      clearPendingReset();
+      if (!goal || goal.status !== "active" || resetDispatched) return;
+      if (breakLoop) {
+        goal = null;
+        handover = null;
+        breakLoop = false;
+        publish();
+        ctx.ui.notify("Goal loop ended; context kept. Use /goal-resume to restart.", "info");
+        return;
+      }
+      resetDispatched = true;
+      pi.sendUserMessage("/internal-goal-handover", { expandPromptTemplates: true });
+    }, RESET_DELAY_MS);
   });
 }
