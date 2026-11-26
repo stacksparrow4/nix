@@ -111,6 +111,10 @@ impl Session {
             args.extend(volumes::env("PI_READ_AGENTS_MD", 1));
         }
 
+        if let Some(goal) = &plan.default_goal {
+            args.extend(volumes::env("PI_DEFAULT_GOAL", goal));
+        }
+
         if plan.brave_search {
             args.extend(home_volume(
                 ".config/brave-search",

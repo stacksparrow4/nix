@@ -19,6 +19,7 @@ pub struct PiConfig {
     pub allow_testing: bool,
     pub models_list: Option<ModelsList>,
     pub notes: Option<NotesName>,
+    pub default_goal: Option<String>,
 }
 
 fn invalid(path: &Path, msg: impl Display) -> String {

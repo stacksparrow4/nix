@@ -52,6 +52,7 @@ pub struct Plan {
     pub allow_testing: bool,
     pub agents_md: Option<PathBuf>,
     pub notes: Option<PathBuf>,
+    pub default_goal: Option<String>,
     pub volumes: Vec<String>,
     pub extra_sandbox_args: Vec<String>,
     pub pi_args: Vec<String>,
@@ -90,6 +91,12 @@ impl Plan {
 
         let models = resolve_models(args.models, pi_config.as_ref())?;
 
+        let default_goal = pi_config
+            .as_ref()
+            .and_then(|(_, c)| c.default_goal.clone())
+            .map(|g| g.trim().to_string())
+            .filter(|g| !g.is_empty());
+
         let brave_search = !(args.no_brave_search || args.local.is_some());
 
         let tools = resolve_tools(
@@ -122,6 +129,7 @@ impl Plan {
                 || pi_config.as_ref().is_some_and(|(_, c)| c.allow_testing),
             agents_md,
             notes,
+            default_goal,
             volumes: args.volume,
             extra_sandbox_args,
             pi_args: args.args,

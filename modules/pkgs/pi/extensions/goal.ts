@@ -86,7 +86,7 @@ export default function goalExtension(pi: ExtensionAPI) {
   pi.registerCommand("goal", {
     description: "Set a long-running goal the agent pursues until complete",
     handler: async (args, ctx) => {
-      const objective = args.trim();
+      const objective = args.trim() || process.env.PI_DEFAULT_GOAL?.trim();
       if (!objective) {
         ctx.ui.notify("Usage: /goal <objective>", "info");
         return;
