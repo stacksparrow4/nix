@@ -11,6 +11,7 @@
           sharedPaths ? [ ], # { hostPath, boxPath, ro ? false, type = "dir"|"file", needsCreate ? true }. Can contain shell characters such as $() but will be wrapped in double quotes
           downgradeTerm ? false, # sets term to xterm-256color for tools that don't support terminfo
           network ? false,
+          gpu ? false, # forwards GPU devices and driver paths (bwrap and docker backends)
           wayland ? false,
           x11 ? false,
           roDotGit ? false,
@@ -45,6 +46,7 @@
                 ) sharedPaths)
                 ++ (if downgradeTerm then [ "--downgrade-term" ] else [ ])
                 ++ (if network then [ ] else [ "--no-network" ])
+                ++ (if gpu then [ "--gpu" ] else [ ])
                 ++ (if wayland then [ "--wayland" ] else [ ])
                 ++ (if x11 then [ "--x11" ] else [ ])
                 ++ (if roDotGit then [ "--ro-git" ] else [ ])

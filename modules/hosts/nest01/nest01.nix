@@ -1,6 +1,7 @@
 {
   inputs,
   self,
+  moduleWithSystem,
   ...
 }:
 
@@ -22,7 +23,8 @@
       tailscale
     ])
     ++ [
-      (
+      (moduleWithSystem (
+        { self', ... }:
         { config, pkgs, ... }:
         {
           home-manager.users.sprrw =
@@ -54,9 +56,14 @@
                   nest01Dir = "${config.home.homeDirectory}/${config.sprrw.nixosRepoPath}/modules/hosts/nest01";
                 in
                 {
-                  packages = with pkgs; [
-                    audacity
-                  ];
+                  packages =
+                    with pkgs;
+                    [
+                      audacity
+                    ]
+                    ++ (with self'.packages; [
+                      noita-ew
+                    ]);
 
                   file.".background-image".source = ./bg.png;
 
@@ -156,7 +163,7 @@
 
           system.stateVersion = "24.11";
         }
-      )
+      ))
     ];
   };
 }

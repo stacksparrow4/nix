@@ -24,7 +24,7 @@ pub struct Cli {
     #[arg(long = "docker-image", value_name = "IMAGE")]
     pub docker_image: Option<String>,
 
-    /// Forward GPUs to the container (Docker backend only)
+    /// Forward GPU devices and driver paths to the sandbox
     #[arg(long)]
     pub gpu: bool,
 

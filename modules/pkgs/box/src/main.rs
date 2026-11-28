@@ -35,8 +35,8 @@ fn main() {
         std::process::exit(1);
     }
 
-    if args.gpu && !args.docker {
-        println!("Cannot specify --gpu without the Docker backend (--docker)");
+    if args.gpu && args.vm {
+        println!("Cannot specify --gpu with the VM backend (--vm)");
         std::process::exit(1);
     }
 

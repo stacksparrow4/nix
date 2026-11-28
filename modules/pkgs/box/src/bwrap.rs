@@ -8,6 +8,37 @@ use crate::mount::{BOX_HOME, Mount, MountType};
 
 const CLIPBOARD_SOCKET: &str = "/tmp/sprrw-clipboard.sock";
 
+fn add_gpu_mounts(bwrap_args: &mut Vec<String>) {
+    let mut devices = vec!["dri".to_string()];
+    if let Ok(entries) = std::fs::read_dir("/dev") {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if name.starts_with("nvidia") {
+                devices.push(name);
+            }
+        }
+    }
+    devices.sort();
+    devices.dedup();
+
+    for name in devices {
+        let path = format!("/dev/{name}");
+        if Path::new(&path).exists() {
+            bwrap_args.extend(["--dev-bind".to_string(), path.clone(), path]);
+        }
+    }
+
+    for path in ["/run/opengl-driver", "/run/opengl-driver-32"] {
+        if Path::new(path).exists() {
+            bwrap_args.extend([
+                "--ro-bind".to_string(),
+                path.to_string(),
+                path.to_string(),
+            ]);
+        }
+    }
+}
+
 pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
     let mut container_args = get_container_args(args, volume_mounts, vec![]);
 
@@ -82,6 +113,10 @@ pub fn run(args: &Cli, volume_mounts: Vec<Mount>) -> ! {
 
     for m in container_args.mounts.iter() {
         subprocess_args.extend(m.to_bwrap_args());
+    }
+
+    if args.gpu {
+        add_gpu_mounts(&mut subprocess_args);
     }
 
     for var in ["WAYLAND_DISPLAY", "DISPLAY", "XDG_RUNTIME_DIR"] {
