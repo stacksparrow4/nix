@@ -11,6 +11,7 @@
         .packages.${system}.default;
     in
     {
+      # This should be run through steam as a "non steam game" so it exists within the steam flatpak
       packages.noita-ew = pkgs.writeTextFile {
         name = "noita-ew";
         executable = true;
