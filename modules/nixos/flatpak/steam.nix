@@ -30,6 +30,9 @@
             "!/run/media"
             "!/mnt"
             "!/media"
+            "/nix/store:ro"
+            "/run/opengl-driver:ro"
+            "/run/opengl-driver-32:ro"
           ];
         };
         "io.github.everestapi.Olympus".Context = {
